@@ -1,0 +1,2514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BreathPatch Monitor</title>
+<meta name="theme-color" content="#0a0e0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: bedside-monitor screen. Waveform strip and numerics on top, trend, biomarker tiles, breath-by-breath chart and event log below. Deliberately dark only. */
+:root {
+  --bg: #0a0e0d;
+  --panel: #111816;
+  --panel-2: #0d1311;
+  --line: #22302b;
+  --fg: #dfe8e4;
+  --muted: #7f908a;
+  --resp: #f1cf4a;        /* respiration trace, the usual monitor yellow */
+  --resp-dim: #6d5f22;
+  --ok: #4fd1a1;
+  --warn: #f29a4a;
+  --alarm: #ff5b4f;
+  --motion: #3a4a45;
+  --num: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --ui: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); font-size: 14px; }
+.app { max-width: 1280px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 32px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 12px; }
+header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand { font-family: var(--num); font-size: 24px; font-weight: 600; letter-spacing: .02em; margin-right: auto; }
+.brand span { color: var(--muted); font-weight: 500; }
+button, select, .filebtn { font: 500 13px var(--ui); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+button:hover:not(:disabled), select:hover, .filebtn:hover { border-color: var(--muted); }
+button:focus-visible, select:focus-visible, input:focus-visible, .filebtn:focus-within { outline: 2px solid var(--resp); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+button.primary { background: var(--resp); color: #1d1a08; border-color: var(--resp); }
+button.rec.on { background: var(--alarm); color: #fff; border-color: var(--alarm); }
+.filebtn { display: inline-flex; align-items: center; position: relative; }
+.filebtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.conn { font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.conn #devText { color: var(--fg); opacity: .8; }
+.banner { margin: 0; padding: 10px 14px; border: 1px solid #5a3d22; border-left: 3px solid var(--warn); border-radius: 0 6px 6px 0; background: var(--panel); color: var(--fg); font-size: 13px; line-height: 1.5; }
+.banner b { color: var(--warn); font-weight: 500; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.live { background: var(--ok); }
+.dot.stale { background: var(--alarm); }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; padding: 10px 14px 0; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.panel-head b { color: var(--resp); font-weight: 500; letter-spacing: .08em; }
+.panel-head .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+canvas { display: block; width: 100%; }
+#wave { height: 300px; }
+#trend { height: 150px; }
+#breathChart { height: 190px; }
+.numerics { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.rr { display: flex; align-items: baseline; gap: 8px; }
+.rr-label { font-family: var(--mono); font-size: 12px; color: var(--resp); letter-spacing: .08em; }
+.rr-value { font-family: var(--num); font-weight: 600; font-size: 112px; line-height: .9; color: var(--resp); font-variant-numeric: tabular-nums; }
+.rr-unit { font-family: var(--num); font-size: 20px; color: var(--muted); }
+.state { font: 600 15px var(--num); letter-spacing: .1em; text-transform: uppercase; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); align-self: flex-start; }
+.state.ok { color: var(--ok); border-color: var(--ok); }
+.state.motion { color: var(--fg); background: var(--motion); border-color: var(--motion); }
+.state.alarm { color: #fff; background: var(--alarm); border-color: var(--alarm); }
+@media (prefers-reduced-motion: no-preference) { .state.alarm { animation: blink 1s steps(2, start) infinite; } }
+@keyframes blink { to { opacity: .35; } }
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.metric .k { font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.metric .v { font-family: var(--num); font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.metric .v small { font-size: 14px; color: var(--muted); margin-left: 3px; }
+.session { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 14px; }
+.session .stats { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-right: auto; }
+.session .stats b { color: var(--fg); font-weight: 500; }
+label.chk { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; cursor: pointer; }
+/* biomarkers */
+.bio { display: flex; flex-direction: column; gap: 12px; padding-bottom: 14px; }
+.bio-note { padding: 0 14px; font-size: 12.5px; color: var(--muted); max-width: 100ch; line-height: 1.55; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; padding: 0 14px; }
+.tile { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 12px 12px 11px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tile .name { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.tag { font: 500 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+.tag.exp { color: var(--warn); border-color: #5a3d22; }
+.tile .big { font-family: var(--num); font-size: 34px; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--fg); }
+.tile .big small { font-size: 16px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+.tile .big.hot { color: var(--alarm); }
+.tile .big.amber { color: var(--warn); }
+.tile .big.good { color: var(--ok); }
+.tile .sub { font-size: 12.5px; color: var(--muted); line-height: 1.5; font-variant-numeric: tabular-nums; }
+.tile .sub b { color: var(--fg); font-weight: 500; }
+.tile.off { opacity: .55; }
+.subhead { padding: 4px 14px 0; font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+.subhead b { color: var(--resp); font-weight: 500; letter-spacing: .08em; }
+.chartwrap { padding: 0 14px; }
+.events { margin: 0 14px; max-height: 300px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { position: sticky; top: 0; background: var(--panel-2); font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+td { font-variant-numeric: tabular-nums; }
+td.ev { white-space: nowrap; font-weight: 500; }
+td.ev.pause { color: var(--alarm); }
+td.ev.reduced { color: var(--warn); }
+td.ev.periodic { color: var(--resp); }
+tr:last-child td { border-bottom: 0; }
+.empty { color: var(--muted); padding: 14px 10px; }
+.exports { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px; }
+/* sleep */
+.sleep { display: flex; flex-direction: column; gap: 12px; padding-bottom: 14px; }
+.sleep-top { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 12px; padding: 0 14px; }
+.score-card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.score-num { font-family: var(--num); font-weight: 600; font-size: 96px; line-height: .9; font-variant-numeric: tabular-nums; color: var(--muted); }
+.score-num small { font-size: 22px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+.score-num.s-good { color: var(--ok); } .score-num.s-ok { color: var(--resp); } .score-num.s-fair { color: var(--warn); } .score-num.s-poor { color: var(--alarm); }
+.score-meta { display: flex; flex-direction: column; gap: 2px; }
+.score-meta #slGrade { font: 600 18px var(--num); letter-spacing: .06em; text-transform: uppercase; }
+.score-meta #slNote { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.comps { display: flex; flex-direction: column; gap: 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; min-width: 0; }
+.comp { display: grid; grid-template-columns: 150px minmax(0, 1fr) 56px; gap: 4px 12px; align-items: center; }
+.comp .cn { font-size: 13px; }
+.comp .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.comp .bar i { display: block; height: 100%; background: var(--resp); border-radius: 4px; }
+.comp .pts { font: 500 14px var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.comp .cd { grid-column: 1 / -1; font-size: 12px; color: var(--muted); margin-top: -2px; }
+.sleep-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; padding: 0 14px; }
+.sstat { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sstat .k { font-size: 11px; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; }
+.sstat .v { font-family: var(--num); font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.sstat .v small { font-size: 13px; color: var(--muted); margin-left: 3px; }
+#sleepChart { height: 230px; }
+.hist-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 0 14px; color: var(--muted); font-size: 13px; }
+.hist-controls .grow { flex: 1 1 auto; }
+td .del { padding: 2px 8px; font-size: 12px; }
+.chip { font: 500 10px var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; margin-left: 6px; white-space: nowrap; }
+@media (max-width: 820px) { .sleep-top { grid-template-columns: minmax(0, 1fr); } .comp { grid-template-columns: 110px minmax(0, 1fr) 48px; } .score-num { font-size: 76px; } }
+/* movement experiments */
+.move { display: flex; flex-direction: column; gap: 12px; padding-bottom: 14px; }
+.labels { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px; }
+button.lab.on { background: var(--ok); color: #06261b; border-color: var(--ok); }
+#specChart { height: 150px; }
+td.lb { white-space: nowrap; font-weight: 500; }
+.log { font-family: var(--mono); font-size: 12px; color: var(--muted); min-height: 1.4em; overflow-wrap: anywhere; }
+.help { font-size: 12.5px; color: var(--muted); line-height: 1.6; max-width: 100ch; }
+.help code { font-family: var(--mono); color: var(--fg); }
+@media (max-width: 820px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .rr-value { font-size: 88px; }
+  #wave { height: 220px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">BreathPatch <span>Monitor</span></div>
+    <div class="conn"><span class="dot" id="dot"></span><span id="connText">Not connected</span><span id="devText"></span></div>
+    <button class="primary" id="btnBle" type="button">Connect Bluetooth</button>
+    <button id="btnUsb" type="button">Connect USB</button>
+    <button id="btnDemo" type="button">Demo</button>
+    <select id="speed" aria-label="Demo speed" title="Demo speed">
+      <option value="1">1×</option><option value="5">5×</option><option value="20">20×</option>
+    </select>
+    <label class="filebtn" title="Analyse a waveform CSV saved earlier">Open recording<input type="file" id="fileIn" accept=".csv,text/csv"></label>
+    <button id="btnStop" type="button" disabled>Disconnect</button>
+    <button id="btnInstall" type="button" hidden>Install app</button>
+  </header>
+  <p class="banner" id="banner" hidden></p>
+
+  <div class="grid">
+    <section class="panel" aria-label="Breathing waveform">
+      <div class="panel-head"><span><b>RESP</b> &nbsp;breathing waveform</span>
+        <span><label for="win">window</label>
+          <select id="win" aria-label="Waveform window">
+            <option value="15">15 s</option><option value="30" selected>30 s</option><option value="60">60 s</option>
+          </select></span>
+      </div>
+      <canvas id="wave" aria-label="Live breathing waveform with breath markers"></canvas>
+    </section>
+
+    <section class="panel numerics" aria-label="Respiratory rate">
+      <div class="rr-label">RR</div>
+      <div class="rr"><span class="rr-value" id="rr">--</span><span class="rr-unit">br/min</span></div>
+      <div class="state" id="state">No signal</div>
+      <div class="metrics">
+        <div class="metric"><span class="k">Depth</span><span class="v" id="mDepth">--<small>%</small></span></div>
+        <div class="metric"><span class="k">Amplitude</span><span class="v" id="mAmp">--<small>mg</small></span></div>
+        <div class="metric"><span class="k">Last breath</span><span class="v" id="mSince">--<small>s ago</small></span></div>
+        <div class="metric"><span class="k">Breaths</span><span class="v" id="mCount">--</span></div>
+        <div class="metric"><span class="k">Battery</span><span class="v" id="mBatt">--<small>V</small></span></div>
+        <div class="metric"><span class="k">Samples lost</span><span class="v" id="mLost">0</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel" aria-label="Respiratory rate trend">
+    <div class="panel-head"><span><b>RR TREND</b> &nbsp;last 10 minutes</span><span>grey = movement &nbsp; red = apnoea</span></div>
+    <canvas id="trend" aria-label="Respiratory rate trend"></canvas>
+  </section>
+
+  <section class="panel session" aria-label="Session">
+    <div class="stats">
+      <span>Session <b id="sDur">0:00</b></span>
+      <span>Mean RR <b id="sMean">--</b></span>
+      <span>Range <b id="sRange">--</b></span>
+      <span>Valid <b id="sValid">--</b></span>
+      <span>Apnoea alarms <b id="sApn">0</b></span>
+    </div>
+    <label class="chk" for="sound"><input type="checkbox" id="sound"> Apnoea sound</label>
+    <button class="rec" id="btnRec" type="button">Record</button>
+    <button id="btnSaveRate" type="button" disabled>Save rate CSV</button>
+    <button id="btnSaveWave" type="button" disabled>Save waveform CSV</button>
+  </section>
+
+  <section class="panel move" aria-label="Movement experiments">
+    <div class="panel-head"><span><b>MOVEMENT</b> &nbsp;breathing rate while moving, experimental</span>
+      <span class="tools"><label class="chk" for="rawOn"><input type="checkbox" id="rawOn" checked> Raw sensor stream</label>
+        <button id="btnWalkDemo" type="button">Walk demo</button></span>
+    </div>
+    <p class="bio-note">While you walk, each step shakes the chest far more than a breath does, so the breath-by-breath rate above pauses. This panel estimates the rate a different way. It finds your step rhythm, cancels it, and looks for the breathing rhythm in the last 30 seconds of raw sensor data. A rate is shown only when that rhythm clearly stands out, otherwise it shows <b>--</b>. Needs firmware 1.6 or later. Tap an activity below while you test, so every recording says what you were doing.</p>
+    <div class="tiles">
+      <div class="tile"><div class="name">Activity</div><div class="big" id="mvAct">--</div><div class="sub" id="mvActSub">Needs the raw sensor stream</div></div>
+      <div class="tile"><div class="name">Step rate</div><div class="big" id="mvCad">--</div><div class="sub" id="mvCadSub">Steps per minute while walking</div></div>
+      <div class="tile"><div class="name">Breathing rate, estimated <span class="tag exp">experimental</span></div><div class="big" id="mvRr">--</div><div class="sub" id="mvRrSub">Over the last 30 s, works still or moving</div></div>
+      <div class="tile"><div class="name">Cross-check at rest</div><div class="big" id="mvX">--</div><div class="sub" id="mvXSub">Estimate vs breath-by-breath rate while still</div></div>
+    </div>
+    <div class="subhead"><span><b>BREATHING SPECTRUM</b> &nbsp;last 30 s, steps cancelled</span><span>peak = breathing rate &nbsp; dashed = stride rhythm</span></div>
+    <div class="chartwrap"><canvas id="specChart" aria-label="Breathing-band spectrum of the last 30 seconds"></canvas></div>
+    <div class="subhead"><span><b>ACTIVITY</b> &nbsp;tap what you are doing now</span><span id="labNow">no activity set</span></div>
+    <div class="labels" id="labels">
+      <button class="lab" type="button" data-l="Sitting">Sitting</button>
+      <button class="lab" type="button" data-l="Standing">Standing</button>
+      <button class="lab" type="button" data-l="Lying">Lying</button>
+      <button class="lab" type="button" data-l="Talking">Talking</button>
+      <button class="lab" type="button" data-l="Walking">Walking</button>
+      <button class="lab" type="button" data-l="Stairs">Stairs</button>
+      <button class="lab" type="button" data-l="Running">Running</button>
+      <button class="lab" type="button" data-l="Recovery">Recovery</button>
+      <button type="button" data-l="">End activity</button>
+    </div>
+    <div class="events">
+      <table>
+        <thead><tr><th>Activity</th><th>Start</th><th>Duration</th><th>RR breath by breath</th><th>RR estimated</th><th>Steps/min</th><th>Estimate shown</th></tr></thead>
+        <tbody id="segBody"><tr><td class="empty" colspan="7">No activities yet.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="exports">
+      <button id="btnSaveSegs" type="button">Save activity table CSV</button>
+      <button id="btnSaveRaw" type="button" disabled>Save raw sensor CSV</button>
+    </div>
+  </section>
+
+  <section class="panel bio" aria-label="Breathing biomarkers">
+    <div class="panel-head"><span><b>BIOMARKERS</b> &nbsp;from respiratory effort, research use</span>
+      <span class="tools"><label for="polarity">inhalation is</label>
+        <select id="polarity" aria-label="Which direction of the waveform is inhalation">
+          <option value="auto">auto (shorter phase)</option><option value="rise">upward stroke</option><option value="fall">downward stroke</option>
+        </select></span>
+    </div>
+    <p class="bio-note">Computed in this page from the waveform and breath markers, breath by breath. Movement periods are excluded and the amplitude baseline is re-learnt after each one. These measure chest or abdominal effort, not airflow.</p>
+    <div class="tiles">
+      <div class="tile"><div class="name">Inter-breath interval</div><div class="big" id="bIbi">--</div><div class="sub" id="bIbiSub">Waiting for breaths</div></div>
+      <div class="tile"><div class="name">Respiratory pause</div><div class="big" id="bPause">--</div><div class="sub" id="bPauseSub">Gap minus one typical breath, flagged at 10 s or more</div></div>
+      <div class="tile"><div class="name">Relative amplitude</div><div class="big" id="bRel">--</div><div class="sub" id="bRelSub">Peak to trough vs baseline</div></div>
+      <div class="tile"><div class="name">Variability <span class="tag">2 min</span></div><div class="big" id="bVar">--</div><div class="sub" id="bVarSub">Coefficient of variation, needs 10 breaths</div></div>
+      <div class="tile"><div class="name">Insp / exp timing <span class="tag exp">experimental</span></div><div class="big" id="bTi">--</div><div class="sub" id="bTiSub">Ti / Ttot, needs 5 clean cycles</div></div>
+      <div class="tile"><div class="name">Periodic breathing <span class="tag exp">experimental</span></div><div class="big" id="bPb">--</div><div class="sub" id="bPbSub">Needs 5 min of data</div></div>
+      <div class="tile"><div class="name">Effort reduction index <span class="tag exp">experimental</span></div><div class="big" id="bEri">--</div><div class="sub" id="bEriSub">Pauses and reduced-effort events per hour</div></div>
+      <div class="tile"><div class="name">Recovery after events <span class="tag exp">experimental</span></div><div class="big" id="bRec">--</div><div class="sub" id="bRecSub">First breaths after a pause or reduced effort</div></div>
+      <div class="tile"><div class="name">Stability index <span class="tag exp">experimental</span></div><div class="big" id="bStab">--</div><div class="sub" id="bStabSub">Needs 10 min without movement</div></div>
+      <div class="tile off"><div class="name">Thoraco-abdominal phase</div><div class="big">n/a</div><div class="sub">Needs a second sensor on the abdomen, sampled on the same clock.</div></div>
+    </div>
+
+    <div class="subhead"><span><b>BREATH BY BREATH</b> &nbsp;last 60 breaths</span><span>top: interval (s), red = pause &nbsp; bottom: amplitude vs baseline, line = 70 %</span></div>
+    <div class="chartwrap"><canvas id="breathChart" aria-label="Breath-by-breath interval and amplitude"></canvas></div>
+
+    <div class="subhead"><span><b>EVENTS</b> &nbsp;newest first</span><span id="evCount">0 events</span></div>
+    <div class="events">
+      <table>
+        <thead><tr><th>Event</th><th>Start</th><th>Duration</th><th>Detail</th><th>Recovery</th></tr></thead>
+        <tbody id="evBody"><tr><td class="empty" colspan="5">No events yet.</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="exports">
+      <button id="btnSaveBreaths" type="button">Save breath table CSV</button>
+      <button id="btnSaveEvents" type="button">Save events CSV</button>
+      <button id="btnSaveSummary" type="button">Save biomarker summary CSV</button>
+    </div>
+  </section>
+
+  <section class="panel sleep" aria-label="Sleep score">
+    <div class="panel-head"><span><b>SLEEP</b> &nbsp;score from movement and breathing, wellness use</span>
+      <span class="tools"><label for="nightProfile">simulate</label>
+        <select id="nightProfile" aria-label="Simulated night">
+          <option value="good">Good night</option><option value="restless">Restless night</option><option value="breathing">Disturbed breathing</option>
+        </select>
+        <button id="btnNight" type="button">Simulate a night</button></span>
+    </div>
+    <p class="bio-note">For a real night: put the patch on at bedtime, connect, press <b>Record</b> and leave this page open with the laptop on charge. In the morning stop recording, save the waveform CSV, rate how you feel and save the night. The score estimates sleep from movement and breathing only. It does not measure sleep stages and it is not a diagnosis.</p>
+    <div class="sleep-top">
+      <div class="score-card"><div class="score-num" id="slScore">--</div>
+        <div class="score-meta"><span id="slGrade">No night yet</span><span id="slNote">Needs at least 10 minutes of data. A full score needs 3 hours.</span></div></div>
+      <div class="comps" id="slComps"></div>
+    </div>
+    <div class="sleep-stats" id="slStats"></div>
+    <div class="subhead"><span><b>NIGHT TIMELINE</b></span><span>estimated from movement and breathing, not sleep stages</span></div>
+    <div class="chartwrap"><canvas id="sleepChart" aria-label="Night timeline of wake and breathing states"></canvas></div>
+
+    <div class="subhead"><span><b>NIGHT HISTORY</b> &nbsp;kept in this browser on this computer</span><span id="histSummary"></span></div>
+    <div class="hist-controls">
+      <label for="rating">How rested do you feel this morning?</label>
+      <select id="rating" aria-label="Morning rating">
+        <option value="">not rated</option><option value="1">1, exhausted</option><option value="2">2, tired</option>
+        <option value="3">3, okay</option><option value="4">4, rested</option><option value="5">5, fully rested</option>
+      </select>
+      <button id="btnSaveNight" type="button">Save this night</button>
+      <span class="grow"></span>
+      <button id="btnExportHist" type="button">Export history CSV</button>
+      <button id="btnClearHist" type="button">Clear history</button>
+    </div>
+    <div class="events">
+      <table>
+        <thead><tr><th>Night</th><th>Source</th><th>Score</th><th>Asleep</th><th>Efficiency</th><th>Events/h</th><th>Feeling</th><th></th></tr></thead>
+        <tbody id="histBody"><tr><td class="empty" colspan="8">No saved nights yet.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="exports">
+      <button id="btnSaveSleep" type="button">Save sleep report CSV</button>
+      <button id="btnSaveEpochs" type="button">Save 30 s epochs CSV</button>
+    </div>
+  </section>
+
+  <div class="log" id="log" role="status"></div>
+  <p class="help">Open this file in Chrome or Edge on a laptop. Bluetooth needs the patch powered and not connected to any other app. USB needs the firmware built with <code>SERIAL_MODE 2</code> and the Arduino Serial Monitor closed. <b>Demo</b> plays a 12 minute scripted session that triggers every biomarker: a pause at 3:20 with recovery breaths, reduced effort at 5:00, irregular rhythm at 5:35 and periodic breathing from 7:00. Use 20× to see it in under a minute. <b>Open recording</b> re-analyses a waveform CSV saved with Record, including a whole night. Over Bluetooth the page reconnects by itself if the link drops, and the session continues. On a phone, open this page from its https address in Chrome (Android) or Bluefy (iPhone). <b>Simulate a night</b> builds an 8 hour night and scores it in a few seconds. <b>Walk demo</b> simulates standing and walking with raw sensor data, to try the Movement panel.</p>
+</div>
+
+<script>
+// biomarkers.js : breath-by-breath respiratory biomarkers from the BreathPatch waveform.
+// Input per sample: filtered breathing signal (mg), breath marker from the firmware, movement flag.
+// Pure JavaScript with no page dependencies, so the same code runs in the monitor page and in Node tests.
+// Every metric here is derived from chest/abdomen effort (tilt), not airflow. Research use only.
+
+const FS_DEFAULT = 6667 / 256;
+
+// Thresholds. Kept together so they are easy to find and change while testing.
+const BM = {
+  PAUSE_S: 10,          // pause = breath gap minus one typical breath, at least this long
+  REDUCE_FRAC: 0.70,    // reduced effort = breath amplitude below 70 % of the pre-event baseline
+  REDUCE_MIN_S: 10,     // ... sustained for at least this long
+  VAR_WIN_S: 120,       // window for variability and timing
+  VAR_MIN_BREATHS: 10,
+  PB_WIN_S: 300,        // periodic breathing: amplitude envelope analysed over 5 minutes
+  PB_STEP_S: 10,
+  PB_MIN_PERIOD_S: 30,  // waxing and waning cycle length searched, seconds
+  PB_MAX_PERIOD_S: 100,
+  PB_RATIO: 0.5,        // share of envelope power inside that band needed to flag
+  PB_REPEAT: 0.4,       // and the envelope must correlate with itself one cycle later (repeats, not a one-off dip)
+  PB_DEPTH: 0.3,        // and minimum envelope modulation (std / mean)
+  PB_MIN_COVER: 0.8,    // fraction of the window that must be movement-free
+  RECOVERY_BREATHS: 10, // breaths followed after each event
+  OVERSHOOT: 1.2,       // a recovery breath above 120 % of baseline counts as overshoot
+  STABILITY_MIN_S: 600  // stability index needs 10 minutes of movement-free data
+};
+
+function median(a) {
+  if (!a.length) return NaN;
+  const s = a.slice().sort((x, y) => x - y), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+function mean(a) { return a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN; }
+function cv(a) {
+  if (a.length < 2) return NaN;
+  const m = mean(a);
+  return Math.sqrt(a.reduce((s, x) => s + (x - m) * (x - m), 0) / (a.length - 1)) / m;
+}
+
+class BreathAnalytics {
+  constructor(fs = FS_DEFAULT) { this.fs = fs; this.polarity = 'auto'; this.reset(); }
+
+  reset() {
+    this.CH = 65536;
+    this.chunks = [];
+    this.n = 0;
+    this.validSamples = 0;
+    this.inMotion = false;
+    this.segStart = 0;
+    this.seg = [];                // breath marker indices since the last movement
+    this.breaths = [];            // one record per breath marker
+    this.events = [];             // pauses, reduced effort runs, periodic breathing episodes
+    this.base = 0;                // running amplitude baseline (mg), held during reduced breaths
+    this.baseSeed = [];
+    this.ibiNormal = [];          // recent breath intervals that were not pauses
+    this.run = null;              // open reduced-effort run
+    this.pending = [];            // events still collecting recovery breaths
+    this.env = [];                // 1 Hz amplitude envelope, NaN during movement
+    this.envNext = this.fs;
+    this.pb = [];                 // periodic breathing evaluations
+    this.pbOpen = null;
+    this.nextPb = BM.PB_WIN_S * this.fs;
+    this.varHist = [];            // per-minute variability snapshots for the session index
+    this.nextVar = 60 * this.fs;
+    this.lastAmp = 0;
+    this.epLen = 30 * this.fs;    // 30 s epochs for the sleep report
+    this.ep = [];                 // per epoch: samples, samples in movement, movement episodes started
+  }
+
+  // ---------------------------------------------------------------- sample storage
+  val(i) { return this.chunks[(i / this.CH) | 0].v[i % this.CH]; }
+  flags(i) { return this.chunks[(i / this.CH) | 0].m[i % this.CH]; }   // bit0 movement, bit1 breath marker
+  argmax(a, b) { let k = a, m = -Infinity; for (let i = a; i <= b; i++) { const v = this.val(i); if (v > m) { m = v; k = i; } } return k; }
+  argmin(a, b) { let k = a, m = Infinity; for (let i = a; i <= b; i++) { const v = this.val(i); if (v < m) { m = v; k = i; } } return k; }
+  get t() { return this.n / this.fs; }
+  medIbi() { return this.ibiNormal.length >= 3 ? median(this.ibiNormal.slice(-10)) : 4.0; }
+
+  push(v, breath, motion) {
+    const i = this.n++;
+    const c = (i / this.CH) | 0, o = i % this.CH;
+    if (!this.chunks[c]) this.chunks[c] = { v: new Float32Array(this.CH), m: new Uint8Array(this.CH) };
+    this.chunks[c].v[o] = v;
+    this.chunks[c].m[o] = (motion ? 1 : 0) | (breath ? 2 : 0);
+    const e = (i / this.epLen) | 0;
+    const acc = this.ep[e] || (this.ep[e] = { n: 0, mot: 0, moves: 0 });
+    acc.n++;
+    if (motion) { acc.mot++; if (!this.inMotion) acc.moves++; }
+
+    if (motion) {
+      if (!this.inMotion) {          // movement breaks the breath chain; nothing spans it
+        this.inMotion = true;
+        this.seg = [];
+        this.run = null;
+        this.finishRecovery(true);
+      }
+    } else {
+      this.validSamples++;
+      if (this.inMotion) {           // new posture may change the scale, so re-learn the baseline
+        this.inMotion = false;
+        this.segStart = i;
+        this.seg = [];
+        this.base = 0;
+        this.baseSeed = [];
+      }
+      if (breath) this.onMarker(i);
+    }
+
+    if (i + 1 >= this.envNext) { this.envNext += this.fs; this.env.push(this.envValue(i)); }
+    if (i >= this.nextPb) { this.nextPb += BM.PB_STEP_S * this.fs; this.evalPeriodic(i); }
+    if (i >= this.nextVar) { this.nextVar += 60 * this.fs; const w = this.windowStats(i); if (w.n >= BM.VAR_MIN_BREATHS) this.varHist.push({ t: i / this.fs, ibiCv: w.ibiCv, ampCv: w.ampCv }); }
+  }
+
+  sinceLast(i) { const ref = this.seg.length ? this.seg[this.seg.length - 1] : this.segStart; return (i - ref) / this.fs; }
+
+  envValue(i) {
+    if (this.inMotion || !this.seg.length) return NaN;
+    return this.sinceLast(i) > 1.5 * this.medIbi() ? 0 : this.lastAmp;
+  }
+
+  // ---------------------------------------------------------------- per breath
+  onMarker(i) {
+    const seg = this.seg;
+    seg.push(i);
+    if (seg.length < 2) return;
+    const prev = seg[seg.length - 2];
+    const ibi = (i - prev) / this.fs;
+    let mx = -Infinity, mn = Infinity;
+    for (let k = prev; k <= i; k++) { const v = this.val(k); if (v > mx) mx = v; if (v < mn) mn = v; }
+    const amp = mx - mn;
+    const med = this.medIbi();
+    const pauseS = ibi - med;
+    const isPause = pauseS >= BM.PAUSE_S;
+    if (!isPause) { this.ibiNormal.push(ibi); if (this.ibiNormal.length > 20) this.ibiNormal.shift(); }
+
+    if (!this.base && !isPause) { this.baseSeed.push(amp); if (this.baseSeed.length >= 5) this.base = median(this.baseSeed); }
+    const rec = { i, t: i / this.fs, ibi, amp, rel: this.base ? amp / this.base : NaN, pause: isPause,
+                  rise: NaN, fall: NaN, event: null };
+    this.breaths.push(rec);
+    if (this.base && !isPause && rec.rel >= BM.REDUCE_FRAC) this.base += 0.05 * (amp - this.base);
+    this.lastAmp = amp;
+
+    // Shape of the cycle that started at the trough before the previous marker:
+    // trough -> peak (rise) -> trough (fall). Which half is inhalation is decided later (polarity).
+    if (seg.length >= 3 && !isPause) {
+      const a = seg[seg.length - 3], prevRec = this.breaths[this.breaths.length - 2];
+      if (prevRec && prevRec.i === prev && !prevRec.pause) {
+        const T1 = this.argmin(a, prev), P = this.argmax(prev, i), T2 = this.argmin(P, i);
+        const rise = (P - T1) / this.fs, fall = (T2 - P) / this.fs;
+        if (rise > 0 && fall > 0) { prevRec.rise = rise; prevRec.fall = fall; }
+      }
+    }
+
+    this.collectRecovery(rec);
+
+    if (isPause) {
+      this.closeRun();
+      this.finishRecovery(true);
+      const ev = { type: 'pause', start: prev / this.fs + med, dur: pauseS, minRel: 0,
+                   preBase: this.base, preIbi: med, recovery: null };
+      this.events.push(ev);
+      rec.event = ev;
+      this.pending.push({ ev, from: this.breaths.length, recs: [] });  // the next breaths are the recovery
+    } else {
+      this.trackRun(rec, prev);
+    }
+  }
+
+  trackRun(rec, prev) {
+    if (!this.base || !isFinite(rec.rel)) return;
+    if (rec.rel < BM.REDUCE_FRAC) {
+      if (!this.run) this.run = { startIdx: prev, recs: [], preBase: this.base, preIbi: this.medIbi() };
+      this.run.recs.push(rec);
+      this.run.endIdx = rec.i;
+    } else {
+      this.closeRun(rec);
+    }
+  }
+
+  closeRun(firstNormal) {
+    const r = this.run;
+    this.run = null;
+    if (!r) return;
+    const dur = (r.endIdx - r.startIdx) / this.fs;
+    if (dur < BM.REDUCE_MIN_S) return;
+    this.finishRecovery(true);
+    const ev = { type: 'reduced', start: r.startIdx / this.fs, dur, minRel: Math.min(...r.recs.map(x => x.rel)),
+                 meanRel: mean(r.recs.map(x => x.rel)), preBase: r.preBase, preIbi: r.preIbi, recovery: null };
+    this.events.push(ev);
+    r.recs.forEach(x => { x.event = ev; });
+    const p = { ev, from: this.breaths.length - (firstNormal ? 1 : 0), recs: [] };
+    this.pending.push(p);
+    if (firstNormal) p.recs.push(firstNormal);   // the breath that ended the run is the first recovery breath
+  }
+
+  collectRecovery(rec) {
+    const idx = this.breaths.length - 1;
+    for (const p of this.pending) if (idx >= p.from && !p.recs.includes(rec)) p.recs.push(rec);
+    this.finishRecovery(false);
+  }
+
+  finishRecovery(force) {
+    this.pending = this.pending.filter(p => {
+      const r = p.recs, base = p.ev.preBase;
+      const settled = r.length >= 3 && r[r.length - 1].amp <= BM.OVERSHOOT * base;
+      if (!force && !settled && r.length < BM.RECOVERY_BREATHS) return true;
+      if (!r.length || !base) { p.ev.recovery = { incomplete: true }; return false; }
+      const first = r.slice(0, 3);
+      let over = 0;
+      for (const x of r) { if (x.amp > BM.OVERSHOOT * base) over++; else break; }
+      p.ev.recovery = {
+        peakAmp: Math.max(...first.map(x => x.amp)) / base,      // biggest of the first 3 breaths vs baseline
+        rate: p.ev.preIbi / mean(first.map(x => x.ibi)),          // their breathing rate vs baseline rate
+        overshoot: over,                                           // breaths above 120 % before settling
+        breaths: r.length,
+        incomplete: force && r.length < 3
+      };
+      return false;
+    });
+  }
+
+  // ---------------------------------------------------------------- periodic breathing
+  evalPeriodic(i) {
+    const W = BM.PB_WIN_S, t = i / this.fs;
+    if (this.env.length < W) return;
+    const w = this.env.slice(-W);
+    const ok = w.filter(x => isFinite(x));
+    if (ok.length < BM.PB_MIN_COVER * W) { this.pb.push({ t, valid: false }); this.closePeriodic(t); return; }
+    const m = mean(ok);
+    if (!(m > 0)) { this.pb.push({ t, valid: false }); this.closePeriodic(t); return; }
+    const x = w.map(v => (isFinite(v) ? v : m) - m);
+    const sd = Math.sqrt(x.reduce((s, v) => s + v * v, 0) / (W - 1));
+    const depth = sd / m;
+    // Repetition: normalised autocorrelation of the envelope at lags inside the cycle band.
+    const e0 = x.reduce((s2, v) => s2 + v * v, 0) / W;
+    let repeat = -1, lag = NaN;
+    for (let L = BM.PB_MIN_PERIOD_S; L <= BM.PB_MAX_PERIOD_S; L++) {
+      let acc = 0;
+      for (let j = 0; j + L < W; j++) acc += x[j] * x[j + L];
+      const r = e0 > 0 ? (acc / (W - L)) / e0 : 0;
+      if (r > repeat) { repeat = r; lag = L; }
+    }
+    for (let k = 0; k < W; k++) x[k] *= 0.5 - 0.5 * Math.cos(2 * Math.PI * k / (W - 1));   // Hann window
+    let total = 0, band = 0;
+    const kLo = Math.ceil(W / BM.PB_MAX_PERIOD_S), kHi = Math.floor(W / BM.PB_MIN_PERIOD_S), kMax = Math.floor(W / 10);
+    for (let k = 1; k <= kMax; k++) {      // DFT bins from 300 s down to 10 s periods
+      let re = 0, im = 0;
+      for (let j = 0; j < W; j++) { const a = 2 * Math.PI * k * j / W; re += x[j] * Math.cos(a); im -= x[j] * Math.sin(a); }
+      const p = re * re + im * im;
+      total += p;
+      if (k >= kLo && k <= kHi) band += p;
+    }
+    const ratio = total > 0 ? band / total : 0;
+    const flag = ratio >= BM.PB_RATIO && depth >= BM.PB_DEPTH && repeat >= BM.PB_REPEAT;
+    this.pb.push({ t, valid: true, ratio, depth, repeat, cycle: lag, flag });
+    if (flag) {
+      if (!this.pbOpen) { this.pbOpen = { type: 'periodic', start: t - W / 2, dur: 0, cycle: lag, ratio, recovery: null }; this.events.push(this.pbOpen); }
+      this.pbOpen.dur = t - W / 2 + BM.PB_STEP_S - this.pbOpen.start;
+      this.pbOpen.ratio = Math.max(this.pbOpen.ratio, ratio);
+    } else this.closePeriodic(t);
+  }
+  closePeriodic() { this.pbOpen = null; }
+
+  // ---------------------------------------------------------------- read-outs
+  windowStats(i = this.n - 1, winS = BM.VAR_WIN_S) {
+    const t0 = i / this.fs - winS;
+    const w = [];
+    for (let k = this.breaths.length - 1; k >= 0 && this.breaths[k].t >= t0; k--) if (!this.breaths[k].pause) w.push(this.breaths[k]);
+    const ibis = w.map(b => b.ibi), rels = w.map(b => b.rel).filter(isFinite);
+    return { n: w.length, ibiCv: w.length >= BM.VAR_MIN_BREATHS ? cv(ibis) : NaN,
+             ampCv: rels.length >= BM.VAR_MIN_BREATHS ? cv(rels) : NaN, meanIbi: mean(ibis), recs: w };
+  }
+
+  timing(recs) {
+    const c = recs.filter(b => isFinite(b.rise));
+    if (c.length < 5) return { n: c.length };
+    const rise = median(c.map(b => b.rise)), fall = median(c.map(b => b.fall));
+    let riseIsInhale;
+    if (this.polarity === 'rise') riseIsInhale = true;
+    else if (this.polarity === 'fall') riseIsInhale = false;
+    else riseIsInhale = rise <= fall;          // auto: at rest, inhalation is the shorter phase
+    const ti = riseIsInhale ? rise : fall, te = riseIsInhale ? fall : rise;
+    return { n: c.length, ti, te, duty: ti / (ti + te), ratio: ti / te, riseIsInhale };
+  }
+
+  metrics() {
+    const i = this.n - 1, t = this.n / this.fs, validS = this.validSamples / this.fs;
+    const w = this.windowStats(i);
+    const last = this.breaths[this.breaths.length - 1];
+    const pauses = this.events.filter(e => e.type === 'pause');
+    const reduced = this.events.filter(e => e.type === 'reduced');
+    const pbEvals = this.pb.filter(p => p.valid);
+    const pbFrac = pbEvals.length ? pbEvals.filter(p => p.flag).length / pbEvals.length : NaN;
+    const hours = validS / 3600;
+    const eph = hours > 0 ? (pauses.length + reduced.length) / hours : NaN;
+    const reducedS = reduced.reduce((s, e) => s + e.dur, 0);
+    const rec = this.events.filter(e => e.recovery && !e.recovery.incomplete && e.type !== 'periodic');
+    const sessIbiCv = median(this.varHist.map(v => v.ibiCv).filter(isFinite));
+    const sessAmpCv = median(this.varHist.map(v => v.ampCv).filter(isFinite));
+    let stability = NaN, parts = null;
+    if (validS >= BM.STABILITY_MIN_S && isFinite(sessIbiCv) && isFinite(sessAmpCv)) {
+      parts = { rhythm: Math.min(1, sessIbiCv / 0.5), effort: Math.min(1, sessAmpCv / 0.5),
+                events: Math.min(1, eph / 30), periodic: isFinite(pbFrac) ? pbFrac : 0 };
+      stability = Math.round(100 * (1 - mean(Object.values(parts))));
+    }
+    const live = !this.inMotion && this.seg.length ? this.sinceLast(i) : NaN;
+    return {
+      t, validS, breaths: this.breaths.length,
+      lastIbi: last ? last.ibi : NaN, meanIbi: w.meanIbi, nWin: w.n,
+      currentPause: isFinite(live) ? Math.max(0, live - this.medIbi()) : NaN,
+      pauses: pauses.length, longestPause: pauses.length ? Math.max(...pauses.map(e => e.dur)) : NaN,
+      lastRel: last ? last.rel : NaN, meanRel: mean(w.recs.map(b => b.rel).filter(isFinite)),
+      ibiCv: w.ibiCv, ampCv: w.ampCv, sessIbiCv, sessAmpCv,
+      timing: this.timing(w.recs),
+      pb: this.pb.length ? this.pb[this.pb.length - 1] : null, pbFrac, pbEpisodes: this.events.filter(e => e.type === 'periodic').length,
+      reduced: reduced.length, eph, reducedPct: validS > 0 ? 100 * reducedS / validS : NaN,
+      lastRecovery: rec.length ? rec[rec.length - 1] : null,
+      meanRecovery: rec.length ? { peakAmp: mean(rec.map(e => e.recovery.peakAmp)), rate: mean(rec.map(e => e.recovery.rate)),
+                                   overshoot: mean(rec.map(e => e.recovery.overshoot)), n: rec.length } : null,
+      stability, stabilityParts: parts
+    };
+  }
+
+  // Firmware-style 1 Hz summary, used for demo and replayed recordings.
+  summary() {
+    const i = this.n - 1, ibis = this.ibiNormal.slice(-5);
+    const since = this.seg.length ? this.sinceLast(i) : (this.n - this.segStart) / this.fs;
+    const rate = !this.inMotion && this.seg.length >= 4 && ibis.length >= 3 && since < Math.max(10, 2.5 * median(ibis)) ? 60 / median(ibis) : 0;
+    const last = this.breaths[this.breaths.length - 1];
+    const apnoea = !this.inMotion && this.n / this.fs > 15 && since > 10;
+    return { rate, amp: last ? last.amp : 0, depth: last && isFinite(last.rel) ? 100 * last.rel : 0, batt: 0, since,
+             count: this.breaths.length, flags: (rate > 0 ? 1 : 0) | (this.inMotion ? 2 : 0) | (apnoea ? 4 : 0) };
+  }
+}
+
+// ---------------------------------------------------------------- scenario generator for demo and tests
+// A 12 minute script that exercises every biomarker, with a firmware-like breath detector on top.
+const DEMO_SCRIPT = [
+  { from: 0,   to: 120, kind: 'normal' },
+  { from: 120, to: 127, kind: 'move' },
+  { from: 127, to: 200, kind: 'normal' },
+  { from: 200, to: 214, kind: 'pause' },
+  { from: 214, to: 300, kind: 'normal', recovery: true },
+  { from: 300, to: 335, kind: 'reduced' },
+  { from: 335, to: 420, kind: 'irregular' },
+  { from: 420, to: 720, kind: 'periodic' }
+];
+const DEMO_CYCLE = 720;
+
+class DemoGenerator {
+  constructor(fs = FS_DEFAULT, seed = 1) {
+    this.fs = fs; this.n = 0; this.seed = seed;
+    this.v = 0; this.stage = 'idle'; this.stageT = 0; this.ti = 0; this.te = 0; this.peak = 0; this.troughEnd = 0; this.start = 0;
+    this.recoveryLeft = 0; this.recoveryDone = -1;
+    this.env = 0.4; this.phase = 0; this.lastMark = -99; this.wasMoving = false;
+  }
+  rand() { this.seed = (this.seed * 1664525 + 1013904223) >>> 0; return this.seed / 4294967296; }
+  segAt(t) { const c = t % DEMO_CYCLE; return DEMO_SCRIPT.find(s => c >= s.from && c < s.to); }
+  ampAt(t) {
+    const s = this.segAt(t), c = t % DEMO_CYCLE, A = 7;
+    if (s.kind === 'reduced') return A * 0.45;
+    if (s.kind === 'periodic') { const x = Math.sin(Math.PI * (c - 420) / 60); return A * Math.max(0.03, x * x) * 1.1; }
+    return A;
+  }
+  // Amplitude for the breath that starts at time t, including the recovery breaths after a pause.
+  planAmp(t) {
+    const s = this.segAt(t), cyc = Math.floor(t / DEMO_CYCLE);
+    let A = this.ampAt(t), fast = false;
+    if (s.recovery && this.recoveryDone !== cyc) { this.recoveryDone = cyc; this.recoveryLeft = 3; }
+    if (this.recoveryLeft > 0) { A *= [1.15, 1.4, 1.7][this.recoveryLeft - 1]; fast = true; this.recoveryLeft--; }
+    return { A, fast };
+  }
+  newBreath(t) {
+    const s = this.segAt(t);
+    const plan = this.nextPlan || this.planAmp(t);
+    this.nextPlan = null;
+    let Ttot = 60 / 14 * (1 + 0.05 * (this.rand() - 0.5));
+    if (s.kind === 'irregular') Ttot *= 1 + 1.0 * (this.rand() - 0.5);   // +/- 50 %, clearly irregular
+    if (s.kind === 'periodic') Ttot = 60 / 16;
+    if (plan.fast) Ttot *= 0.8;
+    this.ti = 0.38 * Ttot; this.te = Ttot - this.ti; this.peak = plan.A / 2; this.start = this.v;
+  }
+  next() {
+    const t = this.n / this.fs, s = this.segAt(t);
+    this.n++;
+    const moving = s.kind === 'move';
+    let v;
+    if (moving) { this.stage = 'idle'; v = 0; this.v = 0; }
+    else if (s.kind === 'pause') {
+      if (this.stage !== 'pause') { this.stage = 'pause'; this.start = this.v; this.stageT = t; }
+      v = this.start * Math.exp(-(t - this.stageT) / 3) + 0.15 * (this.rand() - 0.5);
+      this.v = v;
+    } else {
+      if (this.stage === 'idle' || this.stage === 'pause') { this.stage = 'in'; this.stageT = t; this.nextPlan = null; this.newBreath(t); }
+      let tau = t - this.stageT;
+      if (this.stage === 'in' && tau >= this.ti) { this.stage = 'out'; this.stageT += this.ti; tau -= this.ti; this.nextPlan = this.planAmp(t + this.te); this.troughEnd = -this.nextPlan.A / 2; }
+      if (this.stage === 'out' && tau >= this.te) { this.stage = 'in'; this.stageT += this.te; tau -= this.te; this.newBreath(t); }
+      if (this.stage === 'in') this.v = this.start + (this.peak - this.start) * (1 - Math.cos(Math.PI * tau / this.ti)) / 2;
+      else this.v = this.peak + (this.troughEnd - this.peak) * (1 - Math.cos(Math.PI * tau / this.te)) / 2;
+      v = this.v + 0.15 * (this.rand() - 0.5);
+    }
+    // firmware-like detector: hysteresis at 35 % of the envelope, 0.4 mg floor, 45 bpm ceiling
+    let breath = false;
+    if (moving) { this.phase = 0; this.wasMoving = true; }
+    else {
+      if (this.wasMoving) { this.wasMoving = false; this.phase = 0; }
+      this.env += (Math.abs(v) - this.env) * (1 - Math.exp(-1 / (8 * this.fs)));
+      const h = Math.max(0.35 * this.env, 0.4);
+      if (v < -h) this.phase = -1;
+      else if (v > h) { if (this.phase === -1 && t - this.lastMark >= 60 / 45) { breath = true; this.lastMark = t; } this.phase = 1; }
+    }
+    return { v: moving ? 0 : v, breath, motion: moving };
+  }
+}
+
+if (typeof module !== 'undefined') module.exports = { BreathAnalytics, DemoGenerator, BM, DEMO_SCRIPT, DEMO_CYCLE, median, mean, cv };
+
+// sleep.js : overnight sleep report and a 0 to 100 sleep score from BreathPatch data.
+// Works on the per-sample movement flag and the breath table kept by BreathAnalytics (biomarkers.js).
+// It estimates sleep from movement and breathing only. It does not measure sleep stages (that needs EEG)
+// and it is not a diagnosis. Wellness and research use.
+
+const SLX = (typeof BM === 'undefined') ? require('./biomarkers.js') : { BM, median, mean, cv };
+
+// Rules and thresholds, kept together so they are easy to find and tune.
+const SL = {
+  EPOCH_S: 30,
+  WEIGHTS: [0.04, 0.04, 0.2, 0.2, 1, 0.2, 0.2],  // movement score over epochs -4 .. +2 (actigraphy style)
+  WAKE_D: 0.5,              // movement score at or above this = wake
+  MIN_BREATHS: 6,           // breaths needed in the 2 min window to judge breathing
+  QUIET_IBI_CV: 0.17,       // still but awake: irregular rhythm, irregular depth and faster breathing.
+  QUIET_AMP_CV: 0.18,       // Each is scaled by its reference and the three are averaged;
+  QUIET_RATE: 1.08,         // an average above QUIET_SCORE counts as unsettled.
+  QUIET_SCORE: 1.05,
+  SETTLE_EP: 4,             // before the first sleep and after the last, wake lasts until 2 min of settled breathing
+  SPREAD_EP: 4,             // during the night, unsettled breathing extends a movement wake by at most 2 min
+  MIN_SLEEP_RUN_EP: 6,      // sleep runs shorter than 3 min between wake periods count as wake
+  ONSET_EP: 20,             // sleep onset = first 10 min of sleep ...
+  ONSET_TOL: 2,             // ... allowing up to 1 min of it to be brief movement
+  AWAKE_MIN_EP: 2,          // an awakening = 1 min or more of wake after sleep onset
+  STABLE_IBI_CV: 0.05,      // stable breathing: very regular rhythm and depth, no movement or events
+  STABLE_AMP_CV: 0.07,
+  VARIABLE_IBI_CV: 0.15,    // variable breathing: irregular rhythm or depth
+  VARIABLE_AMP_CV: 0.22,
+  MIN_SCORE_H: 3            // below 3 h in bed the score is shown as provisional
+};
+
+const clamp01 = x => Math.max(0, Math.min(1, x));
+function sleepGrade(score) {
+  if (!isFinite(score)) return '';
+  return score >= 85 ? 'Very good' : score >= 70 ? 'Good' : score >= 50 ? 'Fair' : 'Poor';
+}
+
+function sleepReport(an) {
+  const fs = an.fs, E = SL.EPOCH_S, epN = Math.floor(an.n / (E * fs));
+  if (epN < SL.ONSET_EP) return { ready: false, tib: an.n / fs, need: SL.ONSET_EP * E };
+  const { median, mean, cv } = SLX;
+
+  // ---- per-epoch features
+  const ep = [];
+  for (let e = 0; e < epN; e++) {
+    const acc = an.ep[e] || { n: 1, mot: 0, moves: 0 };
+    ep.push({ a: acc.mot / Math.max(1, acc.n), moves: acc.moves, ibiCv: NaN, ampCv: NaN, rate: NaN, nb: 0, ev: 0, wake: false, state: 'wake' });
+  }
+  const B = an.breaths.filter(b => !b.pause);
+  let lo = 0, hi = 0;
+  for (let e = 0; e < epN; e++) {               // 2 min window centred on the epoch
+    const t0 = e * E + E / 2 - 60, t1 = t0 + 120;
+    while (lo < B.length && B[lo].t < t0) lo++;
+    if (hi < lo) hi = lo;
+    while (hi < B.length && B[hi].t < t1) hi++;
+    const n = hi - lo;
+    ep[e].nb = n;
+    if (n >= SL.MIN_BREATHS) {
+      const w = B.slice(lo, hi), ibis = w.map(b => b.ibi);
+      ep[e].ibiCv = cv(ibis); ep[e].ampCv = cv(w.map(b => b.amp)); ep[e].rate = 60 / mean(ibis);
+    }
+  }
+  const breathEvents = an.events.filter(x => x.type === 'pause' || x.type === 'reduced');
+  for (const x of breathEvents) {
+    const a = Math.max(0, Math.floor(x.start / E)), b = Math.min(epN - 1, Math.floor((x.start + x.dur) / E));
+    for (let e = a; e <= b; e++) ep[e].ev++;
+  }
+
+  // ---- wake from movement (weighted over neighbouring epochs)
+  for (let e = 0; e < epN; e++) {
+    let d = 0;
+    for (let k = 0; k < SL.WEIGHTS.length; k++) { const j = e + k - 4; if (j >= 0 && j < epN) d += SL.WEIGHTS[k] * ep[j].a; }
+    ep[e].d = d;
+    ep[e].wake = d >= SL.WAKE_D;
+  }
+  // ---- wake from breathing: still but unsettled breathing is wake when it sits next to wake
+  const nightRate = median(ep.filter(x => x.a === 0 && isFinite(x.rate)).map(x => x.rate));
+  for (const x of ep) x.q = isFinite(x.ibiCv) ? (x.ibiCv / SL.QUIET_IBI_CV + x.ampCv / SL.QUIET_AMP_CV + x.rate / (SL.QUIET_RATE * nightRate)) / 3 : NaN;
+  const unsettled = x => x.a < 0.05 && (x.nb < SL.MIN_BREATHS || x.q > SL.QUIET_SCORE);
+  const settled = e => !ep[e].wake && ep[e].a < 0.05 && !unsettled(ep[e]);   // still, with settled breathing
+  const settledRun = (e, dir) => { for (let k = 0; k < SL.SETTLE_EP; k++) { const j = e + dir * k; if (j < 0 || j >= epN || !settled(j)) return false; } return true; };
+  let s0 = 0; while (s0 < epN && !settledRun(s0, 1)) { ep[s0].wake = true; s0++; }          // falling asleep
+  let s1 = epN - 1; while (s1 > s0 && !settledRun(s1, -1)) { ep[s1].wake = true; s1--; }  // waking up
+  const moveWake = ep.map(x => x.wake);
+  for (let e = s0; e <= s1; e++) {                     // limited spread around movement during the night
+    if (!moveWake[e]) continue;
+    for (let k = 1; k <= SL.SPREAD_EP && e + k <= s1 && !moveWake[e + k] && unsettled(ep[e + k]); k++) ep[e + k].wake = true;
+    for (let k = 1; k <= SL.SPREAD_EP && e - k >= s0 && !moveWake[e - k] && unsettled(ep[e - k]); k++) ep[e - k].wake = true;
+  }
+  // ---- short sleep runs between wake periods count as wake
+  for (let e = 0; e < epN;) {
+    if (ep[e].wake) { e++; continue; }
+    let j = e; while (j < epN && !ep[j].wake) j++;
+    if (j - e < SL.MIN_SLEEP_RUN_EP && (e === 0 || ep[e - 1].wake) && (j === epN || ep[j].wake)) for (let k = e; k < j; k++) ep[k].wake = true;
+    e = j;
+  }
+
+  // ---- sleep period
+  let onset = -1;
+  for (let e = 0; e + SL.ONSET_EP <= epN && onset < 0; e++) {
+    if (ep[e].wake) continue;
+    let w = 0;
+    for (let k = e; k < e + SL.ONSET_EP; k++) if (ep[k].wake) w++;
+    if (w <= SL.ONSET_TOL) onset = e;
+  }
+  const tib = an.n / fs;
+  const base = { ready: true, tib, epochs: ep, epochS: E, nightRate };
+  if (onset < 0) return Object.assign(base, { noSleep: true, score: NaN });
+  let last = epN - 1; while (last > onset && ep[last].wake) last--;
+
+  let sleepN = 0, wakeN = 0, stable = 0, variable = 0, regular = 0, restlessEp = 0, moves = 0, awakenings = 0;
+  for (let e = 0; e < epN; e++) {
+    const x = ep[e];
+    if (e < onset || e > last || x.wake) { x.state = 'wake'; if (e >= onset && e <= last) wakeN++; continue; }
+    sleepN++;
+    moves += x.moves;
+    if (x.a > 0) restlessEp++;
+    const isStable = x.a === 0 && !x.ev && isFinite(x.ibiCv) && x.ibiCv < SL.STABLE_IBI_CV && x.ampCv < SL.STABLE_AMP_CV;
+    const isVariable = isFinite(x.ibiCv) && (x.ibiCv > SL.VARIABLE_IBI_CV || x.ampCv > SL.VARIABLE_AMP_CV);
+    x.state = isStable ? 'stable' : isVariable ? 'variable' : 'regular';
+    if (isStable) stable++; else if (isVariable) variable++; else regular++;
+  }
+  for (let e = onset; e <= last;) {
+    if (!ep[e].wake) { e++; continue; }
+    let j = e; while (j <= last && ep[j].wake) j++;
+    if (j - e >= SL.AWAKE_MIN_EP) awakenings++;
+    e = j;
+  }
+  const inSleep = t => { const e = Math.floor(t / E); return e >= onset && e <= last && e < epN && !ep[e].wake; };
+  const sleepEvents = breathEvents.filter(x => inSleep(x.start));
+  const pbEvals = an.pb.filter(p => p.valid && inSleep(p.t - SLX.BM.PB_WIN_S / 2));
+  const pbFrac = pbEvals.length ? pbEvals.filter(p => p.flag).length / pbEvals.length : 0;
+
+  const tst = sleepN * E, h = tst / 3600;
+  const se = tst / tib;
+  const latency = onset * E, waso = wakeN * E, finalWake = Math.max(0, tib - (last + 1) * E);
+  const aph = h > 0 ? awakenings / h : NaN, mph = h > 0 ? moves / h : NaN, eph = h > 0 ? sleepEvents.length / h : NaN;
+  const stableFrac = sleepN ? stable / sleepN : 0;
+
+  // ---- score: five components, 100 points in total
+  const durPts = h < 4 ? 0 : h < 7 ? 25 * (h - 4) / 3 : h <= 9 ? 25 : h < 11 ? 25 - 7 * (h - 9) / 2 : 18;
+  const effPts = 20 * clamp01((se - 0.7) / 0.22);
+  const awPen = 10 * clamp01((awakenings - 2) / 6), mvPen = 10 * clamp01((mph - 2) / 6);
+  const conPts = 20 - awPen - mvPen;
+  const evPen = 14 * clamp01((eph - 5) / 25), pbPen = 6 * clamp01(pbFrac / 0.3);
+  const brPts = 20 - evPen - pbPen;
+  const restPts = 15 * clamp01(stableFrac / 0.2);
+  const components = [
+    { key: 'duration', name: 'Duration', pts: durPts, max: 25, detail: `${(h).toFixed(1)} h asleep (full points for 7 to 9 h)` },
+    { key: 'efficiency', name: 'Efficiency', pts: effPts, max: 20, detail: `${Math.round(100 * se)} % of time in bed asleep (full points at 92 %)` },
+    { key: 'continuity', name: 'Continuity', pts: conPts, max: 20, detail: `${awakenings} awakening${awakenings === 1 ? '' : 's'} (2 or fewer is fine), ${mph.toFixed(1)} movements/h while asleep (2 or fewer is fine)` },
+    { key: 'breathing', name: 'Breathing', pts: brPts, max: 20, detail: `${eph.toFixed(1)} breathing events/h asleep, periodic breathing ${Math.round(100 * pbFrac)} % of sleep` },
+    { key: 'restful', name: 'Restful breathing', pts: restPts, max: 15, detail: `${Math.round(100 * stableFrac)} % of sleep in stable breathing (full points at 20 %)` }
+  ];
+  const score = Math.round(components.reduce((s, c) => s + c.pts, 0));
+  return Object.assign(base, {
+    noSleep: false, onset, last, onsetT: latency, endT: (last + 1) * E,
+    tst, se, latency, waso, finalWake, awakenings, moves, restlessMin: restlessEp * E / 60,
+    events: sleepEvents.length, eph, pbFrac, stableFrac, variableFrac: sleepN ? variable / sleepN : 0, regularFrac: sleepN ? regular / sleepN : 0,
+    components, score, grade: sleepGrade(score), provisional: tib < SL.MIN_SCORE_H * 3600
+  });
+}
+
+// ---------------------------------------------------------------- simulated nights for demo and tests
+// Builds an 8 hour night from a profile, then produces samples like the firmware does:
+// filtered signal (mg), a breath marker from a firmware-like detector, and the movement flag with its 4 s hold-off.
+const NIGHT_PROFILES = {
+  good:      { label: 'Good night',          tib: 480, wakeA: 4,  wakeQ: 8,  deep: 1.0, awak: 1, awakMin: [1.5, 2.5], movesPerH: 1.5, events: false, endWake: 8 },
+  restless:  { label: 'Restless night',      tib: 480, wakeA: 10, wakeQ: 25, deep: 0.5, awak: 6, awakMin: [3, 8],     movesPerH: 6,   events: false, endWake: 25 },
+  breathing: { label: 'Disturbed breathing', tib: 480, wakeA: 4,  wakeQ: 10, deep: 0.8, awak: 1, awakMin: [1.5, 2.5], movesPerH: 2,   events: true,  endWake: 8 }
+};
+const CYCLES = [[20, 40, 15, 10], [20, 30, 20, 20], [25, 15, 25, 25], [35, 5, 25, 30], [40, 0, 20, 30], [40, 0, 20, 30], [40, 0, 20, 30]];
+const BREATH = {                 // rate br/min, interval CV, amplitude CV, amplitude mg, Ti/Ttot
+  wake:  [17.0, 0.30, 0.35, 8, 0.40],
+  light: [14.0, 0.10, 0.13, 7, 0.38],
+  deep:  [13.0, 0.03, 0.04, 8, 0.38],
+  rem:   [15.5, 0.20, 0.25, 6, 0.42]
+};
+
+class NightGenerator {
+  constructor(fs, profile = 'good', seed = 1) {
+    this.fs = fs; this.seed = seed >>> 0 || 1; this.n = 0; this.profile = profile;
+    this.P = NIGHT_PROFILES[profile];
+    this.tl = this.build();
+    this.duration = this.tl[this.tl.length - 1].to;
+    this.si = 0; this.stage = 'idle'; this.v = 0; this.lastMoveEnd = -99; this.recoveryLeft = 0;
+    this.env = 0.4; this.phase = 0; this.lastMark = -99; this.wasMoving = false; this.nextPlan = null; this.gs = null;
+  }
+  rand() { this.seed = (this.seed * 1664525 + 1013904223) >>> 0; return this.seed / 4294967296; }
+  R(a, b) { return a + (b - a) * this.rand(); }
+  gauss() {
+    if (this.gs !== null) { const g = this.gs; this.gs = null; return g; }
+    const u = Math.max(1e-9, this.rand()), w = this.rand(), r = Math.sqrt(-2 * Math.log(u));
+    this.gs = r * Math.sin(2 * Math.PI * w); return r * Math.cos(2 * Math.PI * w);
+  }
+
+  build() {
+    const P = this.P, tl = [];
+    const push = (kind, d, sleep, extra) => { if (d <= 0) return; const from = tl.length ? tl[tl.length - 1].to : 0; tl.push(Object.assign({ from, to: from + d, kind, sleep }, extra || {})); };
+    const wakeActive = min => {           // awake in bed: shifting about, irregular breathing between movements
+      let left = min * 60;
+      while (left > 0) { const q = Math.min(left, this.R(15, 50)); push('wake', q, false); left -= q; if (left <= 0) break; const m = Math.min(left, this.R(3, 15)); push('wmove', m, false); left -= m; }
+    };
+    // sleep blocks from the cycle table, deep sleep scaled by profile
+    const awakDur = []; for (let k = 0; k < P.awak; k++) awakDur.push(this.R(P.awakMin[0], P.awakMin[1]));
+    let budget = P.tib - P.wakeA - P.wakeQ - P.endWake - awakDur.reduce((a, b) => a + b, 0);
+    const blocks = [];
+    for (let c = 0; budget > 0 && c < CYCLES.length; c++) {
+      const [l1, d0, l2, r] = CYCLES[c], d = d0 * P.deep;
+      for (const [kind, m] of [['light', l1 + (d0 - d)], ['deep', d], ['light', l2], ['rem', r]]) {
+        const take = Math.min(m, budget); if (take > 0) { blocks.push({ kind, min: take, cycle: c }); budget -= take; }
+      }
+    }
+    if (budget > 0) blocks.push({ kind: 'light', min: budget, cycle: 9 });
+    if (P.events) {                       // a stretch of periodic breathing in the second cycle
+      const k = blocks.findIndex(b => b.cycle === 1 && b.kind === 'light');
+      if (k >= 0) { const b = blocks[k]; blocks.splice(k, 1, { kind: 'light', min: 2, cycle: 1 }, { kind: 'periodic', min: Math.min(20, b.min - 2), cycle: 1 }, { kind: 'light', min: Math.max(0, b.min - 22), cycle: 1 }); }
+    }
+    // awakenings go between blocks, never before the first two
+    const awakAt = new Set(); while (awakAt.size < Math.min(P.awak, blocks.length - 3)) awakAt.add(2 + Math.floor(this.rand() * (blocks.length - 3)));
+    let ai = 0;
+
+    wakeActive(P.wakeA);
+    push('wake', P.wakeQ * 60, false);   // lying still, awake
+    const movesGap = () => Math.max(120, -Math.log(1 - this.rand()) * 3600 / P.movesPerH);
+    blocks.forEach((b, bi) => {
+      if (awakAt.has(bi)) { wakeActive(awakDur[ai++] || 2); this.awakenings = (this.awakenings || 0) + 1; }
+      if (b.cycle > 0 && b.kind === 'light' && blocks[bi - 1] && blocks[bi - 1].cycle !== b.cycle) push('move', this.R(8, 20), true);  // turn over between cycles
+      let t = 0; const dur = b.min * 60;
+      let nextMove = movesGap(), nextEv = P.events && (b.kind === 'light' || b.kind === 'rem') ? this.R(80, 160) : Infinity;
+      while (t < dur) {
+        const nx = Math.min(nextMove, nextEv, dur);
+        if (nx > t) { push(b.kind, nx - t, true, b.kind === 'periodic' ? { pbFrom: tl.length ? tl[tl.length - 1].to : 0 } : null); t = nx; }
+        if (t >= dur) break;
+        if (nextMove <= nextEv) { const d = this.R(8, 20); push('move', d, true); t += d; nextMove = t + movesGap(); }
+        else {
+          const isPause = this.rand() < 0.5, d = isPause ? this.R(12, 20) : this.R(20, 40);
+          push(isPause ? 'pause' : 'reduced', d, true, { base: b.kind, truthEvent: true }); t += d;
+          if (this.rand() < 0.3) { const m = this.R(3, 6); push('move', m, true); t += m; }   // brief arousal
+          nextEv = t + this.R(80, 160);
+        }
+      }
+    });
+    wakeActive(P.endWake);
+    // periodic segments need their own start for the waxing and waning phase
+    let pbStart = null;
+    for (const s of tl) { if (s.kind === 'periodic') { if (pbStart === null) pbStart = s.from; s.pbFrom = pbStart; } else if (s.kind !== 'move') pbStart = null; }
+    return tl;
+  }
+
+  truth() {
+    const sleepS = this.tl.filter(s => s.sleep).reduce((a, s) => a + (s.to - s.from), 0);
+    const first = this.tl.find(s => s.sleep), lastS = [...this.tl].reverse().find(s => s.sleep);
+    return { tib: this.duration, tst: sleepS, latency: first ? first.from : NaN, sleepEnd: lastS ? lastS.to : NaN,
+             events: this.tl.filter(s => s.truthEvent).length, awakenings: this.awakenings || 0,
+             deep: this.tl.filter(s => s.kind === 'deep').reduce((a, s) => a + s.to - s.from, 0) };
+  }
+
+  params(s, t) {
+    const k = s.kind === 'reduced' || s.kind === 'pause' ? (s.base || 'light') : s.kind === 'periodic' ? 'light' : s.kind === 'wake' ? 'wake' : s.kind;
+    const p = BREATH[k] || BREATH.light;
+    let [rate, ibiCv, ampCv, A, ti] = p;
+    if (s.kind === 'reduced') A *= 0.45;
+    if (s.kind === 'periodic') { const x = Math.sin(Math.PI * (t - s.pbFrom) / 60); A = 7.7 * Math.max(0.03, x * x); rate = 16; ibiCv = 0.05; ampCv = 0.05; }
+    return { rate, ibiCv, ampCv, A, ti };
+  }
+  plan(t) {
+    const s = this.segAt(t), p = this.params(s, t);
+    let Ttot = 60 / p.rate * Math.max(0.5, Math.min(2, 1 + p.ibiCv * this.gauss()));
+    let A = p.A * Math.max(0.25, 1 + p.ampCv * this.gauss());
+    if (this.recoveryLeft > 0) { A *= [1.15, 1.4, 1.7][this.recoveryLeft - 1]; Ttot *= 0.8; this.recoveryLeft--; }
+    return { Ttot, A, ti: p.ti };
+  }
+  segAt(t) { let k = this.si; while (k < this.tl.length - 1 && t >= this.tl[k].to) k++; return this.tl[k]; }
+
+  next() {
+    const t = this.n / this.fs; this.n++;
+    while (this.si < this.tl.length - 1 && t >= this.tl[this.si].to) {
+      const prev = this.tl[this.si]; this.si++;
+      const cur = this.tl[this.si];
+      if ((prev.kind === 'pause' || prev.kind === 'reduced') && cur.kind !== 'pause' && cur.kind !== 'reduced') this.recoveryLeft = 3;
+    }
+    const s = this.tl[this.si];
+    const moving = s.kind === 'move' || s.kind === 'wmove';
+    if (moving) this.lastMoveEnd = s.to;
+    const motion = moving || t < this.lastMoveEnd + 4;   // firmware holds the movement flag for 4 s
+    let v;
+    if (moving) { this.stage = 'idle'; v = 0; this.v = 0; }
+    else if (s.kind === 'pause') {
+      if (this.stage !== 'pause') { this.stage = 'pause'; this.start = this.v; this.stageT = t; }
+      v = this.start * Math.exp(-(t - this.stageT) / 3) + 0.15 * (this.rand() - 0.5);
+      this.v = v;
+    } else {
+      if (this.stage === 'idle' || this.stage === 'pause') { this.stage = 'in'; this.stageT = t; this.cur = this.plan(t); this.startV = this.v; }
+      let tau = t - this.stageT;
+      const ti = this.cur.ti * this.cur.Ttot, te = this.cur.Ttot - ti;
+      if (this.stage === 'in' && tau >= ti) { this.stage = 'out'; this.stageT += ti; tau -= ti; this.nextPlan = this.plan(t + te); }
+      if (this.stage === 'out' && tau >= te) { this.stage = 'in'; this.stageT += te; tau -= te; this.cur = this.nextPlan || this.plan(t); this.nextPlan = null; this.startV = this.v; }
+      const peak = this.cur.A / 2;
+      if (this.stage === 'in') this.v = this.startV + (peak - this.startV) * (1 - Math.cos(Math.PI * tau / (this.cur.ti * this.cur.Ttot))) / 2;
+      else { const trough = -(this.nextPlan ? this.nextPlan.A : this.cur.A) / 2; this.v = peak + (trough - peak) * (1 - Math.cos(Math.PI * tau / (this.cur.Ttot - this.cur.ti * this.cur.Ttot))) / 2; }
+      v = this.v + 0.15 * (this.rand() - 0.5);
+    }
+    // firmware-like detector: hysteresis at 35 % of the envelope, 0.4 mg floor, 45 bpm ceiling, reset after movement
+    let breath = false;
+    if (motion) { this.phase = 0; this.wasMoving = true; }
+    else {
+      if (this.wasMoving) { this.wasMoving = false; this.phase = 0; }
+      this.env += (Math.abs(v) - this.env) * (1 - Math.exp(-1 / (8 * this.fs)));
+      const h = Math.max(0.35 * this.env, 0.4);
+      if (v < -h) this.phase = -1;
+      else if (v > h) { if (this.phase === -1 && t - this.lastMark >= 60 / 45) { breath = true; this.lastMark = t; } this.phase = 1; }
+    }
+    return { v: motion ? 0 : v, breath, motion };
+  }
+}
+
+if (typeof module !== 'undefined') module.exports = { sleepReport, sleepGrade, SL, NightGenerator, NIGHT_PROFILES };
+
+// walking.js : breathing rate while moving, from the raw BreathPatch accelerometer and gyroscope.
+// Experimental. Pure JavaScript, runs in the monitor page and in Node tests.
+//
+// Why a separate method: while walking, every footstep shakes the chest by 100 to 500 mg, while a breath
+// tilts it by only a few mg. Breath-by-breath detection fails, so this estimates the rate over a window:
+//   1. find the step rate (cadence) from the regularity of the acceleration magnitude
+//   2. average every axis over exactly one stride (two steps). That cancels the stride frequency and all
+//      its harmonics, including the step frequency, while slow breathing passes through
+//   3. band-pass 0.1 to 0.9 Hz, take the spectrum of all six axes over 30 s and pick the breathing peak
+//   4. score how clearly that peak stands out, and only report a rate when it is clear enough
+// At rest the same method runs without step cancelling, which gives a cross-check against the
+// breath-by-breath rate from the firmware.
+
+const MV = {
+  WIN_S: 30,            // analysis window for the breathing spectrum
+  MIN_S: 20,            // need at least this much data before the first estimate
+  UPDATE_S: 2,          // recompute this often
+  STEP_WIN_S: 10,       // window for the cadence estimate
+  STEP_RMS_G: 0.035,    // acceleration magnitude RMS above this (0.7 to 4 Hz) = rhythmic stepping candidate
+  STEP_REG: 0.35,       // autocorrelation at one step period needed to call it walking
+  MIN_SPM: 50, MAX_SPM: 220,
+  RR_LO_HZ: 0.1, RR_HI_HZ: 0.75,   // 6 to 45 breaths per minute
+  // A rate is shown only when the breathing peak clearly stands out. Tuned on simulated walking so that
+  // random trunk movement with no breathing in it is (almost) never reported as a rate.
+  FAIR_SHARE: 0.50, FAIR_PEAK: 8,  // share of band power in the peak, and peak height over the median of the band
+  GOOD_SHARE: 0.62, GOOD_PEAK: 11,
+  CONFIRM: 2,                      // consecutive qualifying windows before a rate is shown
+  SMOOTH: 3                        // median of the last N estimates
+};
+
+// ---------------------------------------------------------------- small DSP helpers
+class Biquad {
+  constructor(type, fc, fs) {
+    const w = 2 * Math.PI * fc / fs, c = Math.cos(w), s = Math.sin(w), al = s / Math.SQRT2, a0 = 1 + al;
+    if (type === 'lp') { this.b = [(1 - c) / 2 / a0, (1 - c) / a0, (1 - c) / 2 / a0]; }
+    else { this.b = [(1 + c) / 2 / a0, -(1 + c) / a0, (1 + c) / 2 / a0]; }
+    this.a = [-2 * c / a0, (1 - al) / a0];
+  }
+  run(x) {  // filters an array, starting from rest at the first value
+    const [b0, b1, b2] = this.b, [a1, a2] = this.a, y = new Float64Array(x.length);
+    let x1 = x[0], x2 = x[0], y1, y2;
+    const dc = (b0 + b1 + b2) / (1 + a1 + a2);
+    y1 = y2 = x[0] * dc;
+    for (let i = 0; i < x.length; i++) {
+      const v = b0 * x[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+      x2 = x1; x1 = x[i]; y2 = y1; y1 = v; y[i] = v;
+    }
+    return y;
+  }
+}
+
+// zero-phase filtering with mirrored padding, so window edges do not ring
+function filtfilt(filters, x, pad) {
+  const n = x.length; pad = Math.min(pad, n - 1);
+  const p = new Float64Array(n + 2 * pad);
+  for (let i = 0; i < pad; i++) { p[i] = 2 * x[0] - x[pad - i]; p[n + pad + i] = 2 * x[n - 1] - x[n - 2 - i]; }
+  p.set(x, pad);
+  let y = p;
+  for (const f of filters) y = f.run(y);
+  y.reverse();
+  for (const f of filters) y = f.run(y);
+  y.reverse();
+  return y.subarray(pad, pad + n);
+}
+
+// moving average over a fractional number of samples (centred), via the cumulative sum
+function strideAverage(x, P) {
+  const n = x.length, C = new Float64Array(n + 1);
+  for (let i = 0; i < n; i++) C[i + 1] = C[i] + x[i];
+  const at = (u) => {  // C at fractional index u, clamped
+    if (u <= 0) return C[0];
+    if (u >= n) return C[n];
+    const i = Math.floor(u), f = u - i;
+    return C[i] + f * (C[i + 1] - C[i]);
+  };
+  const h = P / 2, y = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const lo = Math.max(0, i + 0.5 - h), hi = Math.min(n, i + 0.5 + h);
+    y[i] = (at(hi) - at(lo)) / (hi - lo);
+  }
+  return y;
+}
+
+function rms(x) { let s = 0; for (const v of x) s += v * v; return Math.sqrt(s / x.length); }
+function medianOf(a) { const s = a.slice().sort((p, q) => p - q); return s.length ? s[s.length >> 1] : NaN; }
+
+// normalised autocorrelation for lags lo..hi
+function autocorr(x, lo, hi) {
+  const n = x.length; let m = 0;
+  for (const v of x) m += v; m /= n;
+  let e = 0; for (const v of x) e += (v - m) * (v - m);
+  const r = new Float64Array(hi + 2);
+  for (let L = lo; L <= hi + 1 && L < n; L++) {
+    let s = 0; for (let i = L; i < n; i++) s += (x[i] - m) * (x[i - L] - m);
+    r[L] = e > 0 ? s / e * n / (n - L) : 0;
+  }
+  return r;
+}
+
+// ---------------------------------------------------------------- estimator
+class MovingEstimator {
+  constructor(fs = 6667 / 256) {
+    this.fs = fs;
+    this.cap = Math.round((MV.WIN_S + 4) * fs);
+    this.ch = Array.from({ length: 6 }, () => new Float64Array(this.cap));
+    this.n = 0; this.head = 0;
+    this.sinceUpdate = 0;
+    this.hist = [];
+    this.out = { ready: false, activity: 'none', walking: false, cadence_spm: NaN, step_reg: 0, rr_bpm: NaN, quality: 0, peak: 0, grade: 'low' };
+    this.okRun = 0;
+  }
+  reset() { this.n = 0; this.head = 0; this.sinceUpdate = 0; this.hist = []; this.okRun = 0; this.out = { ...this.out, ready: false, rr_bpm: NaN, cadence_spm: NaN, walking: false, activity: 'none' }; }
+
+  // ax..az in g, gx..gz in dps. Returns true when a new estimate was computed.
+  push(ax, ay, az, gx, gy, gz) {
+    const v = [ax, ay, az, gx, gy, gz];
+    for (let c = 0; c < 6; c++) this.ch[c][this.head] = v[c];
+    this.head = (this.head + 1) % this.cap;
+    if (this.n < this.cap) this.n++;
+    if (++this.sinceUpdate >= MV.UPDATE_S * this.fs && this.n >= MV.MIN_S * this.fs) {
+      this.sinceUpdate = 0;
+      this.compute();
+      return true;
+    }
+    return false;
+  }
+
+  last(c, N) {  // the most recent N samples of channel c, oldest first
+    const out = new Float64Array(N), buf = this.ch[c];
+    for (let i = 0; i < N; i++) out[i] = buf[(this.head - N + i + this.cap) % this.cap];
+    return out;
+  }
+
+  cadence() {
+    const fs = this.fs, N = Math.min(this.n, Math.round(MV.STEP_WIN_S * fs));
+    const ax = this.last(0, N), ay = this.last(1, N), az = this.last(2, N);
+    const m = new Float64Array(N);
+    for (let i = 0; i < N; i++) m[i] = Math.hypot(ax[i], ay[i], az[i]);
+    const bp = filtfilt([new Biquad('hp', 0.7, fs), new Biquad('lp', 4.0, fs)], m, Math.round(2 * fs));
+    const level = rms(bp);
+    const lo = Math.max(2, Math.floor(fs * 60 / MV.MAX_SPM)), hi = Math.ceil(fs * 60 / MV.MIN_SPM);
+    const r = autocorr(bp, lo, hi);
+    // first clear local maximum = one step (later peaks are strides and multiples)
+    let best = -1, bestR = 0, globalR = 0;
+    for (let L = lo + 1; L < hi; L++) globalR = Math.max(globalR, r[L]);
+    for (let L = lo + 1; L < hi; L++) {
+      if (r[L] > r[L - 1] && r[L] >= r[L + 1] && r[L] > Math.max(MV.STEP_REG * 0.8, 0.6 * globalR)) { best = L; bestR = r[L]; break; }
+    }
+    if (best < 0) return { level, reg: globalR, period: NaN };
+    const y0 = r[best - 1], y1 = r[best], y2 = r[best + 1], den = y0 - 2 * y1 + y2;
+    const off = den !== 0 ? Math.max(-0.5, Math.min(0.5, 0.5 * (y0 - y2) / den)) : 0;
+    return { level, reg: bestR, period: best + off };
+  }
+
+  compute() {
+    const fs = this.fs, N = Math.min(this.n, Math.round(MV.WIN_S * fs));
+    const cad = this.cadence();
+    const walking = cad.level > MV.STEP_RMS_G && cad.reg > MV.STEP_REG && Number.isFinite(cad.period);
+    const stride = walking ? 2 * cad.period : 0;
+    const activity = walking ? 'walking' : (cad.level > MV.STEP_RMS_G ? 'moving' : 'still');
+
+    // per-axis breathing band, step-cancelled while walking
+    const bins = [], f0 = MV.RR_LO_HZ, f1 = MV.RR_HI_HZ, df = 0.005;
+    for (let f = f0; f <= f1 + 1e-9; f += df) bins.push(f);
+    const Sa = new Float64Array(bins.length), Sg = new Float64Array(bins.length);
+    const win = new Float64Array(N);
+    for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
+    for (let c = 0; c < 6; c++) {
+      let x = this.last(c, N);
+      if (stride > 0) x = strideAverage(x, stride);
+      x = filtfilt([new Biquad('hp', 0.1, fs), new Biquad('lp', 0.9, fs)], x, Math.round(4 * fs));
+      const S = c < 3 ? Sa : Sg;
+      for (let k = 0; k < bins.length; k++) {
+        const w = 2 * Math.PI * bins[k] / fs;
+        let re = 0, im = 0;
+        for (let i = 0; i < N; i++) { const v = x[i] * win[i]; re += v * Math.cos(w * i); im -= v * Math.sin(w * i); }
+        S[k] += re * re + im * im;
+      }
+    }
+    let ta = 0, tg = 0;
+    for (let k = 0; k < bins.length; k++) { ta += Sa[k]; tg += Sg[k]; }
+    const S = new Float64Array(bins.length);
+    for (let k = 0; k < bins.length; k++) S[k] = (ta > 0 ? Sa[k] / ta : 0) + (tg > 0 ? Sg[k] / tg : 0);
+
+    let kp = 0;
+    for (let k = 1; k < bins.length; k++) if (S[k] > S[kp]) kp = k;
+    // a strong sub-harmonic means the peak is the second harmonic of an uneven breath
+    const kh = Math.round((bins[kp] / 2 - f0) / df);
+    if (kh >= 0 && S[kh] > 0.5 * S[kp]) {
+      let kk = kh; for (let k = Math.max(0, kh - 4); k <= Math.min(bins.length - 1, kh + 4); k++) if (S[k] > S[kk]) kk = k;
+      kp = kk;
+    }
+    let fpk = bins[kp];
+    if (kp > 0 && kp < bins.length - 1) {
+      const y0 = S[kp - 1], y1 = S[kp], y2 = S[kp + 1], den = y0 - 2 * y1 + y2;
+      if (den !== 0) fpk += df * Math.max(-0.5, Math.min(0.5, 0.5 * (y0 - y2) / den));
+    }
+    // clarity: share of band power within the main lobe of the window (+/- 2 / T)
+    const half = 2 / (N / fs);
+    let inPk = 0, tot = 0;
+    for (let k = 0; k < bins.length; k++) { tot += S[k]; if (Math.abs(bins[k] - fpk) <= half) inPk += S[k]; }
+    const share = tot > 0 ? inPk / tot : 0;
+    const sorted = Array.from(S).sort((p, q) => p - q), medS = sorted[sorted.length >> 1];
+    const peak = medS > 0 ? S[kp] / medS : 0;
+
+    const rr = 60 * fpk;
+    const fair = share >= MV.FAIR_SHARE && peak >= MV.FAIR_PEAK;
+    const good = share >= MV.GOOD_SHARE && peak >= MV.GOOD_PEAK;
+    if (fair) {
+      // a new rate far from the running ones restarts the confirmation
+      if (this.hist.length && Math.abs(rr - medianOf(this.hist)) > 4) this.hist = [];
+      this.hist.push(rr); if (this.hist.length > MV.SMOOTH) this.hist.shift();
+      this.okRun = (this.okRun || 0) + 1;
+    } else { this.hist = []; this.okRun = 0; }
+    const show = fair && this.okRun >= MV.CONFIRM;
+    this.out = {
+      ready: true, activity, walking,
+      cadence_spm: walking ? 60 * fs / cad.period : NaN,
+      step_reg: cad.reg,
+      rr_bpm: show ? medianOf(this.hist) : NaN,
+      rr_raw: rr, quality: share, peak,
+      grade: show ? (good ? 'good' : 'fair') : 'low',
+      spectrum: { f: bins, S }
+    };
+  }
+}
+
+// ---------------------------------------------------------------- walking simulator (for tests and the demo)
+// Sensor flat on the sternum: x = across the chest, y = up the body, z = out of the chest.
+// Segment: { s: seconds, mode: 'stand' | 'walk', spm: steps per minute, rr: breaths per minute,
+//            tilt: breathing tilt in degrees, sway: scale of slow random trunk movement }
+class WalkSimulator {
+  constructor(fs = 6667 / 256, segments = [], seed = 1) {
+    this.fs = fs; this.segs = segments; this.seed = seed >>> 0 || 1;
+    this.t = 0; this.si = 0; this.st = 0;
+    this.bph = 0; this.sph = 0;
+    this.spmNow = segments.length ? segments[0].spm || 0 : 0;
+    this.rrNow = segments.length ? segments[0].rr || 15 : 15;
+    this.ampNow = 1; this.amp = 1;
+    this.lf = [0, 0, 0, 0, 0, 0];  // slow random trunk movement state
+    this.prevTilt = 0;
+  }
+  rand() { let x = this.seed; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; this.seed = x >>> 0; return this.seed / 4294967296; }
+  gauss() { const u = Math.max(1e-12, this.rand()), v = this.rand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  done() { return this.si >= this.segs.length; }
+  totalSeconds() { return this.segs.reduce((a, s) => a + s.s, 0); }
+
+  next() {
+    const fs = this.fs, dt = 1 / fs, D = Math.PI / 180;
+    if (this.si < this.segs.length && this.st >= this.segs[this.si].s) { this.si++; this.st = 0; }
+    const sg = this.segs[Math.min(this.si, this.segs.length - 1)];
+    const walk = sg.mode === 'walk';
+    // rates glide towards the segment targets with a little natural wander
+    this.rrNow += (sg.rr - this.rrNow) * (dt / 8) + 0.15 * this.gauss() * Math.sqrt(dt);
+    const spmT = walk ? sg.spm : 0;
+    this.spmNow += (spmT - this.spmNow) * (dt / 2) + (walk ? 0.6 * this.gauss() * Math.sqrt(dt) : 0);
+    // breathing: tilt about x, amplitude varies breath to breath
+    const prevB = this.bph;
+    this.bph += 2 * Math.PI * Math.max(3, this.rrNow) / 60 * dt;
+    if (Math.floor(this.bph / (2 * Math.PI)) !== Math.floor(prevB / (2 * Math.PI))) this.amp = 0.8 + 0.4 * this.rand();
+    this.ampNow += (this.amp - this.ampNow) * 0.05;
+    const tilt = (sg.tilt ?? 0.5) * this.ampNow * Math.sin(this.bph) * D;   // radians
+    const breathTruth = { rr: this.rrNow, tilt_mg: Math.sin(tilt) * 1000, breath: Math.floor(this.bph / (2 * Math.PI)) !== Math.floor(prevB / (2 * Math.PI)) };
+    // gait: step phase with timing jitter
+    const f = Math.max(0, this.spmNow) / 60;
+    this.sph += 2 * Math.PI * f * dt * (1 + (walk ? 0.03 * this.gauss() : 0));
+    const p = this.sph, q = p / 2;   // step phase, stride phase
+    const w = walk ? Math.min(1, this.spmNow / Math.max(1, sg.spm)) : 0;
+    // the 0.03 and 0.02 terms at the stride phase are left/right step asymmetry, which every gait has
+    const vert = w * (0.22 * Math.sin(p) + 0.10 * Math.sin(2 * p + 0.6) + 0.05 * Math.sin(3 * p + 1.1) + 0.03 * Math.sin(4 * p) + 0.03 * Math.sin(q + 0.7));
+    const fwd = w * (0.12 * Math.sin(p + 1.2) + 0.05 * Math.sin(2 * p + 0.3) + 0.02 * Math.sin(q + 1.9));
+    const lat = w * (0.08 * Math.sin(q) + 0.03 * Math.sin(3 * q + 0.5));
+    const pitchG = w * 1.5 * D * Math.sin(p + 0.4), rollG = w * 2.0 * D * Math.sin(q + 0.2), yawG = w * 4.0 * D * Math.sin(q);
+    // slow random trunk movement, low-passed below ~1 Hz
+    const k = 1 - Math.exp(-2 * Math.PI * 0.8 * dt), sway = (sg.sway ?? 1) * (walk ? 1 : 0.15);
+    const gainK = Math.sqrt((2 - k) / k);   // keeps the low-passed noise at the RMS asked for
+    for (let i = 0; i < 6; i++) this.lf[i] += k * (sway * (i < 3 ? 0.012 : 1.5) * gainK * this.gauss() - this.lf[i]);
+    // orientation: gravity along +y, tipped by breathing and gait pitch about x, roll about z
+    const pitch = tilt + pitchG + this.lf[3] * D * 0.2, roll = rollG;
+    const g = [Math.sin(roll), Math.cos(pitch) * Math.cos(roll), Math.sin(pitch) * Math.cos(roll)];
+    const n = () => this.gauss() * 70e-6 * Math.sqrt(fs / 2);
+    const ax = g[0] + lat + this.lf[0] + n(), ay = g[1] + vert + this.lf[1] + n(), az = g[2] + fwd + this.lf[2] + n();
+    const dTilt = (tilt - this.prevTilt) / dt / D; this.prevTilt = tilt;
+    const gn = () => this.gauss() * 3.8e-3 * Math.sqrt(fs / 2);
+    const gx = dTilt + w * 1.5 * 2 * Math.PI * f * Math.cos(p + 0.4) + this.lf[3] + gn();
+    const gz = w * 2.0 * Math.PI * f * Math.cos(q + 0.2) + this.lf[5] + gn();
+    const gy = w * 4.0 * Math.PI * f * Math.cos(q) + this.lf[4] + gn();
+    this.t += dt; this.st += dt;
+    return { ax, ay, az, gx, gy, gz, walking: walk && w > 0.5, truth: { rr: breathTruth.rr, spm: walk ? this.spmNow : 0 }, tilt_mg: breathTruth.tilt_mg, breath: breathTruth.breath };
+  }
+}
+
+const WALK_DEMO_SCRIPT = [
+  { s: 60, mode: 'stand', rr: 14, tilt: 0.5 },
+  { s: 120, mode: 'walk', spm: 105, rr: 20, tilt: 0.8 },
+  { s: 90, mode: 'walk', spm: 122, rr: 25, tilt: 1.0 },
+  { s: 90, mode: 'stand', rr: 16, tilt: 0.6 }
+];
+
+if (typeof module !== 'undefined') module.exports = { MovingEstimator, WalkSimulator, WALK_DEMO_SCRIPT, MV, strideAverage, filtfilt, Biquad };
+
+</script>
+<script>
+'use strict';
+const FS = 6667 / 256;                       // sensor rate, Hz
+const SVC = 'b5e0a001-3c6d-4f2a-9a51-7d2c0e8f1a10';
+const CH_SUM = 'b5e0a002-3c6d-4f2a-9a51-7d2c0e8f1a10';
+const CH_WAVE = 'b5e0a003-3c6d-4f2a-9a51-7d2c0e8f1a10';
+const CH_INFO = 'b5e0a004-3c6d-4f2a-9a51-7d2c0e8f1a10';
+const CH_RAW = 'b5e0a005-3c6d-4f2a-9a51-7d2c0e8f1a10';
+const MAX_SECONDS = 60, TREND_SECONDS = 600;
+
+const $ = id => document.getElementById(id);
+const log = msg => { $('log').textContent = msg; };
+const fin = x => typeof x === 'number' && isFinite(x);
+const f = (x, d = 1) => (fin(x) ? x.toFixed(d) : '--');
+const pct = (x, d = 0) => (fin(x) ? (100 * x).toFixed(d) : '--');
+function clock(s) {
+  if (!fin(s)) return '--';
+  s = Math.max(0, Math.round(s));
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = String(s % 60).padStart(2, '0');
+  return h ? h + ':' + String(m).padStart(2, '0') + ':' + ss : m + ':' + ss;
+}
+
+// ---------------------------------------------------------------- data model
+const N = Math.ceil(MAX_SECONDS * FS);
+const wave = new Float32Array(N), marks = new Uint8Array(N), still = new Uint8Array(N).fill(1);
+let head = 0;                 // next write index in the display ring
+const queue = [];             // samples waiting to be played out at FS
+let lastMotion = false;
+let lastDataAt = 0;
+const trend = [];             // {t (session seconds), rate, valid, motion, apnoea}
+const session = { rates: [], validS: 0, totalS: 0, apnoeaEvents: 0, prevApnoea: false };
+let recording = false, recStart = 0, recFrom = 0, recTo = 0;
+const rateRows = [];
+let sessionWall = Date.now();   // wall-clock time of the first sample, for the night timeline
+let lastSampleWall = 0;
+let bulk = false;               // true while a file or simulated night is being analysed
+let lost = 0, lastSeq = null;
+let source = null;            // {kind: 'ble'|'usb'|'demo'|'file', stop()}
+let playRate = 1;
+const analytics = new BreathAnalytics(FS);
+const SUMMARY_EVERY = Math.round(FS);
+
+function writeRing(v, b, m) { wave[head] = v; marks[head] = b ? 1 : 0; still[head] = m ? 0 : 1; head = (head + 1) % N; }
+
+function onSample(v, breath, motion, direct = false) {
+  if (direct) writeRing(v, breath, motion); else queue.push([v, breath, motion]);
+  lastMotion = motion;
+  lastDataAt = performance.now();
+  analytics.push(v, breath, motion);
+  if (!bulk) lastSampleWall = Date.now();
+  // Demo and recordings have no firmware summary, so build the same 1 Hz summary here.
+  if (source && (source.kind === 'demo' || source.kind === 'file') && analytics.n % SUMMARY_EVERY === 0) onSummary(analytics.summary());
+}
+
+function onSummary(s) {
+  lastDataAt = performance.now();
+  const valid = !!(s.flags & 1), motion = !!(s.flags & 2), apnoea = !!(s.flags & 4), battLow = !!(s.flags & 8);
+  if (!bulk) showSummary(s, valid, motion, apnoea, battLow);
+  const t = analytics.t;
+  trend.push({ t, rate: s.rate, valid, motion, apnoea });
+  while (trend.length && trend[0].t < t - TREND_SECONDS) trend.shift();
+  session.totalS++;
+  if (valid && s.rate > 0) { session.validS++; session.rates.push(s.rate); }
+  if (apnoea && !session.prevApnoea) session.apnoeaEvents++;
+  session.prevApnoea = apnoea;
+  if (apnoea && !bulk && source && source.kind !== 'file') beep();
+  const seg = curSeg();
+  if (seg && valid && s.rate > 0) { seg.rrSum += s.rate; seg.rrN++; }
+  if (valid && s.rate > 0 && !motion) lastStillRate = { rate: s.rate, at: t };
+  const mo = mover.out;
+  if (recording) rateRows.push([new Date().toISOString(), t.toFixed(1), s.rate.toFixed(1),
+    valid ? 1 : 0, motion ? 1 : 0, apnoea ? 1 : 0, s.amp.toFixed(2), Math.round(s.depth), s.batt, s.since.toFixed(1), s.count,
+    curLabel, rawCount && fin(mo.rr_bpm) ? mo.rr_bpm.toFixed(1) : '', rawCount && fin(mo.cadence_spm) ? Math.round(mo.cadence_spm) : '']);
+}
+
+function showSummary(s, valid, motion, apnoea, battLow) {
+  $('rr').textContent = valid && s.rate > 0 ? Math.round(s.rate) : '--';
+  const st = $('state');
+  if (apnoea) { st.textContent = 'Apnoea'; st.className = 'state alarm'; }
+  else if (motion) { st.textContent = 'Movement'; st.className = 'state motion'; }
+  else if (valid) { st.textContent = 'Tracking'; st.className = 'state ok'; }
+  else { st.textContent = 'Settling'; st.className = 'state'; }
+  $('mDepth').innerHTML = (s.depth > 0 ? Math.round(s.depth) : '--') + '<small>%</small>';
+  $('mAmp').innerHTML = (s.amp > 0 ? s.amp.toFixed(1) : '--') + '<small>mg</small>';
+  $('mSince').innerHTML = s.since.toFixed(0) + '<small>s ago</small>';
+  $('mCount').textContent = s.count;
+  $('mBatt').innerHTML = s.batt > 0 ? (s.batt / 1000).toFixed(2) + '<small>V' + (battLow ? ' low' : '') + '</small>' : '--<small>V</small>';
+}
+
+function updateSession() {
+  $('sDur').textContent = clock(analytics.t);
+  const r = session.rates;
+  if (r.length) {
+    $('sMean').textContent = (r.reduce((a, b) => a + b, 0) / r.length).toFixed(1) + ' br/min';
+    let lo = Infinity, hi = -Infinity; for (const x of r) { if (x < lo) lo = x; if (x > hi) hi = x; }
+    $('sRange').textContent = Math.round(lo) + '–' + Math.round(hi);
+  } else { $('sMean').textContent = '--'; $('sRange').textContent = '--'; }
+  $('sValid').textContent = session.totalS ? Math.round(100 * session.validS / session.totalS) + ' %' : '--';
+  $('sApn').textContent = session.apnoeaEvents;
+}
+
+function resetSession(wall = Date.now()) {
+  if (recording) toggleRec();
+  sessionWall = wall; lastSampleWall = 0; sleepCache = null; sourceLabel = '';
+  queue.length = 0; wave.fill(0); marks.fill(0); still.fill(1); trend.length = 0; head = 0; lastMotion = false;
+  Object.assign(session, { rates: [], validS: 0, totalS: 0, apnoeaEvents: 0, prevApnoea: false });
+  lost = 0; lastSeq = null; $('mLost').textContent = '0';
+  analytics.reset();
+  resetMovement();
+  lastEventsKey = '';
+  renderBio(true);
+  renderSleep(true);
+}
+
+// A live connection made while recording continues the same session instead of starting a new one.
+// The time without data is filled as movement so the night timeline keeps its length.
+function beginLive() {
+  if (recording && analytics.n > 0) { fillGap(); return true; }
+  resetSession();
+  return false;
+}
+
+// Time without data (a dropped link) is filled as movement, so timelines keep their real length.
+function fillGap() {
+  const gapS = lastSampleWall ? (Date.now() - lastSampleWall) / 1000 : 0;
+  const n = Math.min(Math.round(gapS * FS), Math.round(2 * 3600 * FS));
+  for (let k = 0; k < n; k++) onSample(0, false, true, true);
+  lost = 0; lastSeq = null;
+  if (n > FS) log('Reconnected. ' + clock(n / FS) + ' without data was counted as movement.');
+  return n;
+}
+
+// ---------------------------------------------------------------- decoders (match the firmware's byte layout)
+function parseSummary(dv) {
+  return { ver: dv.getUint8(0), flags: dv.getUint8(1), rate: dv.getUint16(2, true) / 10, amp: dv.getUint16(4, true) / 100,
+           depth: dv.getUint16(6, true), batt: dv.getUint16(8, true), since: dv.getUint16(10, true) / 10, count: dv.getUint32(12, true) };
+}
+function parseWave(dv) {
+  const b0 = dv.getUint8(0), seq = b0 & 0x7F, motion = b0 >> 7, mask = dv.getUint8(1), n = (dv.byteLength - 2) >> 1, out = [];
+  for (let i = 0; i < n; i++) out.push([dv.getInt16(2 + 2 * i, true) / 100, (mask >> i) & 1, motion]);
+  return { seq, samples: out };
+}
+function parseLine(line) {
+  const p = line.trim().split(',');
+  if (p[0] === 'S' && p.length >= 3) return { type: 'S', v: parseFloat(p[1]), breath: p[2] === '1', motion: p.length > 3 ? p[3] === '1' : lastMotion };
+  if (p[0] === 'R' && p.length >= 8) return { type: 'R', s: { rate: +p[1], amp: +p[2], depth: +p[3], flags: parseInt(p[4], 10),
+                                               batt: +p[5], since: +p[6], count: +p[7] } };
+  if (p[0] === 'A' && p.length >= 7) return { type: 'A', v: p.slice(1, 7).map(Number) };
+  if (line.startsWith('#')) return { type: 'msg', text: line.slice(1).trim() };
+  return null;
+}
+
+// ---------------------------------------------------------------- sources
+// ---- Bluetooth, with automatic reconnection
+// The link can drop (out of range, phone screen off, interference). The page keeps the session and
+// retries after 1, 2, 4, 8, 16 then every 30 s until the patch is back or Disconnect is pressed.
+let bleDevice = null, bleWanted = false, bleRetry = null, bleAttempt = 0, bleBusy = false;
+
+function parseInfo(text) {
+  const o = {};
+  for (const kv of String(text || '').split(';')) { const i = kv.indexOf('='); if (i > 0) o[kv.slice(0, i).trim()] = kv.slice(i + 1).trim(); }
+  return o;
+}
+
+function onWavePacket(e) {
+  const w = parseWave(e.target.value);
+  if (lastSeq !== null && w.seq !== ((lastSeq + 1) & 127)) {
+    const gap = ((w.seq - lastSeq - 1) & 127) * w.samples.length;
+    lost += gap; $('mLost').textContent = lost;
+    for (let k = 0; k < gap; k++) onSample(0, false, true);   // keep time aligned; lost samples count as invalid
+  }
+  lastSeq = w.seq;
+  for (const [v, b, m] of w.samples) onSample(v, b, !!m);
+}
+function onSummaryPacket(e) { onSummary(parseSummary(e.target.value)); }
+
+async function connectBle() {
+  if (!navigator.bluetooth) { log(bluetoothMissing()); return; }
+  let device;
+  try {
+    device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SVC] }, { namePrefix: 'BreathPatch' }], optionalServices: [SVC] });
+  } catch (err) {
+    log(err && err.name === 'NotFoundError' ? 'No device chosen. If BreathPatch did not appear, check it is powered and not connected to another phone or laptop.' : 'Bluetooth: ' + (err && err.message ? err.message : err));
+    return;
+  }
+  stopSource();
+  bleDevice = device; bleWanted = true; bleAttempt = 0;
+  if (!device.__bpWatched) { device.addEventListener('gattserverdisconnected', () => onBleDropped(device)); device.__bpWatched = true; }
+  if (!(await bleAttach(device, true))) scheduleReconnect();
+}
+
+async function bleAttach(device, first) {
+  if (bleBusy) return false;
+  bleBusy = true;
+  try { return await bleAttachInner(device, first); } finally { bleBusy = false; }
+}
+async function bleAttachInner(device, first) {
+  setConn((first ? 'Connecting to ' : 'Reconnecting to ') + (device.name || 'BreathPatch') + '…', false);
+  $('btnStop').disabled = false;
+  try {
+    const server = await device.gatt.connect();
+    const svc = await server.getPrimaryService(SVC);
+    const sum = await svc.getCharacteristic(CH_SUM);
+    const wav = await svc.getCharacteristic(CH_WAVE);
+    let info = {};
+    try { const c = await svc.getCharacteristic(CH_INFO); info = parseInfo(new TextDecoder().decode(await c.readValue())); } catch (_) {}  // older firmware has no info
+    let raw = null;
+    try { raw = await svc.getCharacteristic(CH_RAW); } catch (_) {}  // firmware before 1.6 has no raw stream
+    if (!bleWanted || bleDevice !== device) { try { device.gatt.disconnect(); } catch (_) {} return false; }
+    const resumed = first ? beginLive() : (fillGap(), true);
+    lastSeq = null; playRate = 1;
+    // Handler properties, not addEventListener: a reconnect must not attach a second listener.
+    wav.oncharacteristicvaluechanged = onWavePacket;
+    sum.oncharacteristicvaluechanged = onSummaryPacket;
+    await wav.startNotifications();
+    await sum.startNotifications();
+    rawChar = raw; rawSeq = null;
+    if (raw) { raw.oncharacteristicvaluechanged = onRawPacket; if ($('rawOn').checked) { try { await raw.startNotifications(); } catch (_) {} } }
+    source = { kind: 'ble', device, stop: () => { try { device.gatt.disconnect(); } catch (_) {} } };
+    bleAttempt = 0;
+    setConn('Bluetooth · ' + (device.name || 'BreathPatch'), true);
+    $('devText').textContent = info.chip ? info.chip + (info.fw ? ' · firmware ' + info.fw : '') + (info.gate === '0' ? ' · gate off' : '') : '';
+    if (!raw && first) setTimeout(() => log('Connected. This firmware has no raw stream, so the Movement panel stays empty. Flash firmware 1.6 for it.'), 1500);
+    if (!first) log('Bluetooth link restored. The session continues.');
+    else if (!resumed) log('Connected. Lie still for about 15 seconds while the signal settles.');
+    return true;
+  } catch (err) {
+    log('Bluetooth: ' + (err && err.message ? err.message : err));
+    return false;
+  }
+}
+
+function onBleDropped(device) {
+  if (!bleWanted || bleDevice !== device || bleBusy) return;   // Disconnect pressed, another device took over, or mid-connect
+  if (source && source.kind === 'ble') source = null;      // keep the session data; only the link is gone
+  scheduleReconnect();
+}
+
+function scheduleReconnect() {
+  if (!bleWanted || !bleDevice) return;
+  clearTimeout(bleRetry);
+  const delay = Math.min(30, 2 ** Math.min(bleAttempt, 5));
+  bleAttempt++;
+  setConn('Link lost · retrying in ' + delay + ' s', false);
+  $('dot').className = 'dot stale';
+  $('rr').textContent = '--'; $('state').textContent = 'No link'; $('state').className = 'state';
+  $('btnStop').disabled = false;
+  if (bleAttempt === 1) log('Bluetooth link lost. Reconnecting automatically. Keep the patch powered and within a few metres.');
+  const device = bleDevice;
+  bleRetry = setTimeout(async () => {
+    if (!bleWanted || bleDevice !== device) return;
+    if (!(await bleAttach(device, false))) scheduleReconnect();
+  }, delay * 1000);
+}
+
+function bluetoothMissing() {
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!window.isSecureContext) return 'Bluetooth needs this page to be opened from an https address, or as a file on a laptop.';
+  if (ios) return 'Safari and other iPhone browsers cannot use Bluetooth from a web page. Open this page in the free Bluefy browser from the App Store.';
+  return 'This browser has no Web Bluetooth. Use Chrome or Edge on Android, Windows, Mac or ChromeOS.';
+}
+
+async function connectUsb() {
+  if (!navigator.serial) { log('This browser has no Web Serial. Use Chrome or Edge on a laptop.'); return; }
+  let port;
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+  } catch (err) {
+    log(err && err.name === 'NotFoundError' ? 'No port chosen.' : 'Could not open the port. Close the Arduino Serial Monitor and try again. (' + (err.message || err) + ')');
+    return;
+  }
+  stopSource(); const resumed = beginLive(); playRate = 1;
+  let reading = true, reader;
+  source = { kind: 'usb', stop: async () => { reading = false; try { await reader.cancel(); } catch (_) {} try { await port.close(); } catch (_) {} } };
+  setConn('USB serial', true);
+  if (!resumed) log('Connected over USB. Lie still for about 15 seconds while the signal settles.');
+  const decoder = new TextDecoder();
+  let buf = '';
+  try {
+    reader = port.readable.getReader();
+    while (reading) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const r = parseLine(buf.slice(0, nl)); buf = buf.slice(nl + 1);
+        if (!r) continue;
+        if (r.type === 'S') onSample(r.v, r.breath, r.motion);
+        else if (r.type === 'R') onSummary(r.s);
+        else if (r.type === 'A') { if ($('rawOn').checked) { const v = r.v; onRaw(v[0] / 1000, v[1] / 1000, v[2] / 1000, v[3], v[4], v[5], lastMotion); } }
+        else log('Device: ' + r.text);
+      }
+    }
+  } catch (err) {
+    if (reading) log('USB connection lost: ' + (err.message || err));
+  } finally {
+    try { reader.releaseLock(); } catch (_) {}
+    if (source && source.kind === 'usb' && reading) { source = null; setConn('USB disconnected', false); }
+  }
+}
+
+function startDemo() {
+  stopSource(); resetSession();
+  const gen = new DemoGenerator(FS, (Math.random() * 1e9) >>> 0);
+  playRate = +$('speed').value;
+  let made = 0, t0 = performance.now(), rate = playRate;
+  // Deliver in ~1 s bursts like the real FIFO does.
+  const tick = () => {
+    if (rate !== playRate) { t0 = performance.now() - made / FS / playRate * 1000; rate = playRate; }
+    const due = Math.floor((performance.now() - t0) / 1000 * FS * playRate);
+    while (made < due) { const s = gen.next(); onSample(s.v, s.breath, s.motion); made++; }
+  };
+  const timer = setInterval(tick, 250);
+  for (let i = 0; i < Math.round(FS); i++) { const s = gen.next(); onSample(s.v, s.breath, s.motion); made++; }
+  t0 = performance.now() - made / FS / playRate * 1000;
+  source = { kind: 'demo', stop: () => clearInterval(timer) };
+  setConn('Demo · simulated data', true);
+  log('Demo running. Scripted events: movement 2:00, pause 3:20, reduced effort 5:00, irregular rhythm 5:35, periodic breathing 7:00 to 12:00, then it repeats.');
+}
+
+// Feeds a long recording or simulated night through the analysis in chunks so the page stays responsive.
+function ingest(total, nextSample, label, onDone) {
+  const token = {};
+  source = { kind: 'file', token, stop: () => { token.cancelled = true; bulk = false; } };
+  bulk = true; playRate = 1;
+  setConn(label, true); $('dot').className = 'dot';
+  let k = 0;
+  const step = () => {
+    if (token.cancelled) return;
+    const end = Math.min(total, k + 40000);
+    for (; k < end; k++) { const x = nextSample(k); if (x) onSample(x.v, x.breath, x.motion, true); }
+    log('Analysing ' + label + '… ' + Math.round(100 * k / total) + ' %');
+    if (k < total) { setTimeout(step, 0); return; }
+    bulk = false;
+    onSummary(analytics.summary());
+    renderBio(true); updateSession(); renderSleep(true);
+    onDone();
+  };
+  setTimeout(step, 0);
+}
+
+function wallFromName(name) {
+  const m = /(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})/.exec(name);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime() : null;
+}
+
+async function openRecording(file) {
+  let text;
+  try { text = await file.text(); } catch (err) { log('Could not read the file: ' + (err.message || err)); return; }
+  const lines = text.split(/\r?\n/);
+  const hdr = lines[0].split(',').map(x => x.trim());
+  const iv = hdr.indexOf('signal_mg'), ib = hdr.indexOf('breath'), im = hdr.indexOf('motion');
+  if (iv < 0 || ib < 0) { log('This is not a waveform recording. Choose a file saved with "Save waveform CSV" (columns t_s, signal_mg, breath).'); return; }
+  stopSource();
+  const wall = wallFromName(file.name);
+  resetSession(wall || Date.now());
+  sourceLabel = file.name; sourceKnownClock = !!wall;
+  ingest(lines.length - 1, k => {
+    const line = lines[k + 1];
+    if (!line) return null;
+    const p = line.split(',');
+    const v = parseFloat(p[iv]);
+    return fin(v) ? { v, breath: p[ib] === '1', motion: im >= 0 && p[im] === '1' } : null;
+  }, file.name, () => {
+    log('Analysed ' + file.name + ': ' + clock(analytics.t) + ' of waveform, ' + analytics.breaths.length + ' breaths.' +
+        (im < 0 ? ' This file has no movement column, so all of it was treated as still.' : '') + (wall ? '' : ' No start time in the file name, so the timeline shows elapsed time.'));
+  });
+}
+
+function simulateNight() {
+  const profile = $('nightProfile').value, P = NIGHT_PROFILES[profile];
+  stopSource();
+  const d = new Date(); d.setDate(d.getDate() - 1); d.setHours(22, 40, 0, 0);
+  resetSession(d.getTime());
+  sourceLabel = 'Simulated: ' + P.label; sourceKnownClock = true;
+  const gen = new NightGenerator(FS, profile, (Math.random() * 1e9) >>> 0);
+  const total = Math.round(gen.duration * FS);
+  ingest(total, () => gen.next(), 'simulated ' + P.label.toLowerCase(), () => {
+    const t = gen.truth();
+    log('Simulated ' + P.label.toLowerCase() + ' scored. Simulator truth: asleep ' + clock(t.tst) + ', fell asleep after ' + clock(t.latency) +
+        ', ' + t.awakenings + ' awakening' + (t.awakenings === 1 ? '' : 's') + ', ' + t.events + ' breathing events.');
+  });
+}
+
+function stopSource() {
+  bleWanted = false; clearTimeout(bleRetry);                 // any new source, or Disconnect, ends Bluetooth retries
+  rawChar = null;
+  if (source) { const s = source; source = null; s.stop(); }
+  setConn('Not connected', false);
+  $('devText').textContent = '';
+}
+
+function setConn(text, live) {
+  $('connText').textContent = text;
+  $('dot').className = 'dot' + (live ? ' live' : '');
+  $('btnStop').disabled = !live;
+}
+
+// ---------------------------------------------------------------- playout + drawing
+const waveCv = $('wave'), trendCv = $('trend'), breathCv = $('breathChart');
+function fit(cv) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return [ctx, w, h];
+}
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const C = {};
+function loadColors() { for (const k of ['bg', 'panel', 'line', 'fg', 'muted', 'resp', 'resp-dim', 'ok', 'warn', 'alarm', 'motion', 'mono', 'ui']) C[k] = css('--' + k); }
+
+let lastFrame = performance.now(), carry = 0, scale = 4, lastBio = 0, lastSleep = 0;
+function frame(now) {
+  const dt = Math.min(0.25, (now - lastFrame) / 1000); lastFrame = now;
+  // Play samples out at the sensor rate (times the demo speed) with ~1 s of buffering; catch up if the queue grows.
+  const backlog = queue.length / (FS * playRate);
+  carry += dt * FS * playRate * (backlog > 3 ? 3 : backlog > 1.6 ? 1.25 : 1);
+  while (carry >= 1 && queue.length) { const [v, b, m] = queue.shift(); writeRing(v, b, m); carry -= 1; }
+  if (!queue.length) carry = Math.min(carry, 1);
+  if (source && source.kind !== 'file') {
+    if (performance.now() - lastDataAt > 4000) { $('dot').className = 'dot stale'; $('connText').textContent = 'No data from ' + (source.kind === 'usb' ? 'USB' : source.kind === 'ble' ? 'patch' : 'demo'); }
+    else $('dot').className = 'dot live';
+  }
+  drawWave(); drawTrend();
+  if (now - lastBio > 500 && !bulk) { lastBio = now; renderBio(); updateSession(); }
+  if (now - lastSleep > 5000 && !bulk && source && source.kind !== 'file') { lastSleep = now; renderSleep(); }
+  requestAnimationFrame(frame);
+}
+
+function drawWave() {
+  const [ctx, w, h] = fit(waveCv);
+  ctx.clearRect(0, 0, w, h);
+  const secs = +$('win').value, n = Math.min(N, Math.round(secs * FS)), padL = 44, padR = 10, padT = 30, padB = 22;
+  const pw = w - padL - padR, ph = h - padT - padB, mid = padT + ph / 2;
+  let peak = 0;
+  for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(wave[(head - 1 - i + N) % N]));
+  const target = Math.max(1, peak * 1.25);
+  scale += (target - scale) * (target > scale ? 0.2 : 0.02);
+  const y = v => mid - (v / scale) * (ph / 2);
+  const x = i => padL + pw - (i / (n - 1)) * pw;           // i = samples ago
+  ctx.font = '11px ' + C.mono;
+  ctx.fillStyle = C.motion;
+  for (let i = 0; i < n;) {
+    if (still[(head - 1 - i + N) % N]) { i++; continue; }
+    let j = i; while (j < n && !still[(head - 1 - j + N) % N]) j++;
+    ctx.fillRect(x(j - 1), padT, x(i) - x(j - 1) + 1, ph);
+    i = j;
+  }
+  ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.fillStyle = C.muted;
+  for (const v of [-scale, 0, scale]) { ctx.beginPath(); ctx.moveTo(padL, y(v)); ctx.lineTo(w - padR, y(v)); ctx.stroke(); }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.fillText('+' + scale.toFixed(scale < 10 ? 1 : 0), padL - 6, y(scale)); ctx.fillText('0', padL - 6, mid); ctx.fillText('−' + scale.toFixed(scale < 10 ? 1 : 0), padL - 6, y(-scale));
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let s = 0, step = secs > 30 || (pw < 500 && secs > 15) ? 10 : 5; s <= secs; s += step) { const xx = x(Math.min(n - 1, s * FS)); ctx.beginPath(); ctx.moveTo(xx, h - padB); ctx.lineTo(xx, h - padB + 4); ctx.stroke(); ctx.fillText(s === 0 ? 'now' : '−' + s + ' s', Math.max(padL + 12, Math.min(w - padR - 14, xx)), h - padB + 6); }
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('mg', padL - 30, 4);
+  ctx.strokeStyle = C['resp-dim']; ctx.fillStyle = C.resp;
+  for (let i = 0; i < n; i++) if (marks[(head - 1 - i + N) % N]) {
+    const xx = x(i); ctx.beginPath(); ctx.moveTo(xx, padT + 8); ctx.lineTo(xx, padT + ph); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xx - 5, padT - 2); ctx.lineTo(xx + 5, padT - 2); ctx.lineTo(xx, padT + 6); ctx.closePath(); ctx.fill();
+  }
+  ctx.strokeStyle = C.resp; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.beginPath();
+  for (let i = 0; i < n; i++) { const v = wave[(head - 1 - i + N) % N]; const yy = y(Math.max(-scale, Math.min(scale, v))); i ? ctx.lineTo(x(i), yy) : ctx.moveTo(x(i), yy); }
+  ctx.stroke();
+  if (!analytics.n) { ctx.fillStyle = C.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '14px ' + C.ui; ctx.fillText('Connect the patch, press Demo, or open a recording', padL + pw / 2, mid - 24); }
+}
+
+function drawTrend() {
+  const [ctx, w, h] = fit(trendCv);
+  ctx.clearRect(0, 0, w, h);
+  const padL = 44, padR = 10, padT = 12, padB = 22, pw = w - padL - padR, ph = h - padT - padB, now = analytics.t;
+  let top = 40; for (const p of trend) if (p.valid) top = Math.max(top, Math.ceil((p.rate + 5) / 10) * 10);
+  const x = t => padL + pw - ((now - t) / TREND_SECONDS) * pw, y = r => padT + ph - (r / top) * ph, bw = pw / TREND_SECONDS + 1;
+  ctx.font = '11px ' + C.mono;
+  for (const p of trend) {
+    if (p.motion) { ctx.fillStyle = C.motion; ctx.fillRect(x(p.t) - bw, padT, bw, ph); }
+    if (p.apnoea) { ctx.fillStyle = C.alarm; ctx.fillRect(x(p.t) - bw, padT + ph - 6, bw, 6); }
+  }
+  ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let r = 0; r <= top; r += 10) { ctx.beginPath(); ctx.moveTo(padL, y(r)); ctx.lineTo(w - padR, y(r)); ctx.stroke(); ctx.fillText(r, padL - 6, y(r)); }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let m = 0, st = pw < 500 ? 5 : 2; m <= 10; m += st) ctx.fillText(m === 0 ? 'now' : '−' + m + ' min', Math.max(padL + 14, Math.min(w - padR - 16, padL + pw - (m / 10) * pw)), h - padB + 6);
+  ctx.strokeStyle = C.resp; ctx.lineWidth = 2; ctx.beginPath(); let pen = false, lastP = null;
+  for (const p of trend) {
+    if (p.valid && p.rate > 0) { pen ? ctx.lineTo(x(p.t), y(p.rate)) : ctx.moveTo(x(p.t), y(p.rate)); pen = true; lastP = p; } else pen = false;
+  }
+  ctx.stroke();
+  if (lastP) { ctx.fillStyle = C.resp; ctx.beginPath(); ctx.arc(x(lastP.t), y(lastP.rate), 3.5, 0, Math.PI * 2); ctx.fill(); }
+}
+
+function drawBreaths() {
+  const [ctx, w, h] = fit(breathCv);
+  ctx.clearRect(0, 0, w, h);
+  const B = analytics.breaths.slice(-60), padL = 44, padR = 10, gap = 22;
+  const rowH = (h - 10 - gap - 16) / 2, top1 = 6, top2 = top1 + rowH + gap, pw = w - padL - padR;
+  ctx.font = '11px ' + C.mono; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  const maxIbi = Math.max(8, ...B.map(b => b.ibi)), maxRel = Math.max(1.5, ...B.map(b => (fin(b.rel) ? b.rel : 0)));
+  const ibiTop = Math.ceil(maxIbi / 5) * 5, relTop = Math.ceil(maxRel * 2) / 2;
+  const yI = v => top1 + rowH - (v / ibiTop) * rowH, yR = v => top2 + rowH - (v / relTop) * rowH;
+  ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.fillStyle = C.muted;
+  for (const v of [0, ibiTop / 2, ibiTop]) { ctx.beginPath(); ctx.moveTo(padL, yI(v)); ctx.lineTo(w - padR, yI(v)); ctx.stroke(); ctx.fillText(v + ' s', padL - 6, yI(v)); }
+  for (const v of [0, 1, relTop]) { ctx.beginPath(); ctx.moveTo(padL, yR(v)); ctx.lineTo(w - padR, yR(v)); ctx.stroke(); ctx.fillText(Math.round(v * 100) + '%', padL - 6, yR(v)); }
+  ctx.setLineDash([4, 3]); ctx.strokeStyle = C.warn; ctx.beginPath(); ctx.moveTo(padL, yR(BM.REDUCE_FRAC)); ctx.lineTo(w - padR, yR(BM.REDUCE_FRAC)); ctx.stroke(); ctx.setLineDash([]);
+  if (!B.length) { ctx.textAlign = 'center'; ctx.fillText('Breaths appear here as they are counted', padL + pw / 2, h / 2); return; }
+  const slot = pw / 60, bw = Math.max(2, slot * 0.7);
+  B.forEach((b, k) => {
+    const xx = padL + pw - (B.length - k) * slot + (slot - bw) / 2;
+    ctx.fillStyle = b.pause ? C.alarm : C.resp;
+    ctx.fillRect(xx, yI(Math.min(b.ibi, ibiTop)), bw, top1 + rowH - yI(Math.min(b.ibi, ibiTop)));
+    if (fin(b.rel)) {
+      ctx.fillStyle = b.event && b.event.type === 'reduced' ? C.warn : C['resp-dim'];
+      if (!(b.event && b.event.type === 'reduced') && b.rel >= BM.REDUCE_FRAC) ctx.fillStyle = C.resp;
+      ctx.fillRect(xx, yR(Math.min(b.rel, relTop)), bw, top2 + rowH - yR(Math.min(b.rel, relTop)));
+    }
+  });
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = C.muted;
+  ctx.fillText('older', padL + 20, h - 12); ctx.fillText('latest', w - padR - 22, h - 12);
+}
+
+// ---------------------------------------------------------------- biomarker panel
+let lastEventsKey = '';
+function setTile(id, html, sub, cls = '') { $(id).innerHTML = html; $(id).className = 'big' + (cls ? ' ' + cls : ''); if (sub !== undefined) $(id + 'Sub').innerHTML = sub; }
+
+function renderBio(force) {
+  const m = analytics.metrics();
+  // Inter-breath interval
+  setTile('bIbi', fin(m.lastIbi) ? f(m.lastIbi) + '<small>s</small>' : '--',
+    fin(m.meanIbi) ? `Mean <b>${f(m.meanIbi)} s</b> over the last 2 min, <b>${m.nWin}</b> breaths` : 'Waiting for breaths');
+  // Pause
+  const cur = m.currentPause;
+  setTile('bPause', fin(cur) && cur >= 1 ? f(cur, 0) + '<small>s now</small>' : 'none',
+    `Pauses of 10 s or more: <b>${m.pauses}</b>` + (m.pauses ? `, longest <b>${f(m.longestPause)} s</b>` : ''),
+    fin(cur) && cur >= BM.PAUSE_S ? 'hot' : fin(cur) && cur >= 5 ? 'amber' : '');
+  // Relative amplitude
+  setTile('bRel', fin(m.lastRel) ? pct(m.lastRel) + '<small>%</small>' : '--',
+    fin(m.meanRel) ? `Mean <b>${pct(m.meanRel)} %</b> over 2 min. Baseline re-learnt after movement` : 'Baseline forms after 5 breaths',
+    fin(m.lastRel) && m.lastRel < BM.REDUCE_FRAC ? 'amber' : '');
+  // Variability
+  setTile('bVar', fin(m.ibiCv) ? pct(m.ibiCv, 1) + '<small>% IBI</small>' : '--',
+    fin(m.ibiCv) ? `Amplitude CV <b>${pct(m.ampCv, 1)} %</b>.` + (fin(m.sessIbiCv) ? ` Session: IBI <b>${pct(m.sessIbiCv, 1)} %</b>, amplitude <b>${pct(m.sessAmpCv, 1)} %</b>` : '')
+                 : 'Coefficient of variation, needs 10 breaths in 2 min');
+  // Timing
+  const tm = m.timing;
+  setTile('bTi', tm.ti ? f(tm.duty, 2) + '<small>Ti/Ttot</small>' : '--',
+    tm.ti ? `Ti <b>${f(tm.ti)} s</b>, Te <b>${f(tm.te)} s</b>, I:E <b>1:${f(tm.te / tm.ti)}</b>. Inhalation = ${tm.riseIsInhale ? 'upward' : 'downward'} stroke${analytics.polarity === 'auto' ? ' (auto)' : ''}`
+          : `Needs 5 clean cycles (${tm.n || 0} so far)`);
+  // Periodic breathing
+  const pb = m.pb;
+  if (!pb) setTile('bPb', '--', `Needs 5 min of data (${clock(Math.min(m.t, BM.PB_WIN_S))} so far)`);
+  else if (!pb.valid) setTile('bPb', '--', 'Too much movement in the last 5 min');
+  else setTile('bPb', pb.flag ? 'Present' : 'Not seen',
+    `Cycle <b>${f(pb.cycle, 0)} s</b>, repeat <b>${f(pb.repeat, 2)}</b>, modulation <b>${pct(pb.depth)} %</b>. ` +
+    `Present in <b>${pct(m.pbFrac)} %</b> of analysed time, <b>${m.pbEpisodes}</b> episode${m.pbEpisodes === 1 ? '' : 's'}`, pb.flag ? 'amber' : 'good');
+  // Effort reduction index
+  const enough = m.validS >= 600;
+  setTile('bEri', enough ? f(m.eph, 1) + '<small>/h</small>' : (m.pauses + m.reduced) + '<small>events</small>',
+    `<b>${m.pauses}</b> pauses + <b>${m.reduced}</b> reduced-effort events. Reduced effort <b>${f(m.reducedPct)} %</b> of the time.` + (enough ? '' : ' Hourly rate after 10 min'),
+    enough && m.eph >= 15 ? 'amber' : '');
+  // Recovery
+  const lr = m.lastRecovery;
+  setTile('bRec', lr ? '×' + f(lr.recovery.peakAmp, 2) + '<small>amplitude</small>' : '--',
+    lr ? `Last ${lr.type === 'pause' ? 'pause' : 'reduced effort'}: rate <b>×${f(lr.recovery.rate, 2)}</b>, <b>${lr.recovery.overshoot}</b> overshoot breath${lr.recovery.overshoot === 1 ? '' : 's'}.` +
+         (m.meanRecovery && m.meanRecovery.n > 1 ? ` Mean of ${m.meanRecovery.n}: amplitude <b>×${f(m.meanRecovery.peakAmp, 2)}</b>, rate <b>×${f(m.meanRecovery.rate, 2)}</b>` : '')
+       : 'First 3 breaths after a pause or reduced effort, vs the baseline before it');
+  // Stability
+  if (fin(m.stability)) {
+    const p = m.stabilityParts;
+    setTile('bStab', m.stability + '<small>/ 100</small>',
+      `Higher is steadier. Penalties: rhythm <b>${pct(p.rhythm)}</b>, effort <b>${pct(p.effort)}</b>, events <b>${pct(p.events)}</b>, periodic <b>${pct(p.periodic)}</b>`,
+      m.stability >= 75 ? 'good' : m.stability >= 50 ? '' : 'amber');
+  } else setTile('bStab', '--', `Needs 10 min without movement (${clock(m.validS)} so far)`);
+
+  drawBreaths();
+  renderEvents(force);
+}
+
+function recoveryText(e) {
+  const r = e.recovery;
+  if (e.type === 'periodic') return '';
+  if (!r) return 'collecting…';
+  if (r.incomplete) return 'interrupted';
+  return `amp ×${f(r.peakAmp, 2)}, rate ×${f(r.rate, 2)}, ${r.overshoot} overshoot`;
+}
+function renderEvents(force) {
+  const ev = analytics.events;
+  const key = ev.length + ':' + ev.map(e => (e.recovery ? 1 : 0) + Math.round(e.dur)).join(',').slice(-200);
+  if (!force && key === lastEventsKey) return;
+  lastEventsKey = key;
+  $('evCount').textContent = ev.length + ' event' + (ev.length === 1 ? '' : 's');
+  if (!ev.length) { $('evBody').innerHTML = '<tr><td class="empty" colspan="5">No events yet.</td></tr>'; return; }
+  const names = { pause: 'Pause', reduced: 'Reduced effort', periodic: 'Periodic breathing' };
+  $('evBody').innerHTML = ev.slice(-80).sort((a, b) => b.start - a.start).map(e => {
+    let detail = '';
+    if (e.type === 'pause') detail = 'No breath detected';
+    else if (e.type === 'reduced') detail = `Effort ${pct(e.meanRel)} % of baseline, lowest ${pct(e.minRel)} %`;
+    else detail = `Cycle ${f(e.cycle, 0)} s` + (e === analytics.pbOpen ? ', ongoing' : '');
+    return `<tr><td class="ev ${e.type}">${names[e.type]}</td><td>${clock(e.start)}</td><td>${f(e.dur, 1)} s</td><td>${detail}</td><td>${recoveryText(e)}</td></tr>`;
+  }).join('');
+}
+
+// ---------------------------------------------------------------- sleep panel
+let sleepCache = null, sourceLabel = '', sourceKnownClock = true;
+const STATE_ROWS = ['wake', 'variable', 'regular', 'stable'];
+const STATE_NAMES = { wake: 'Wake', variable: 'Variable', regular: 'Regular', stable: 'Stable' };
+const hm = s => { if (!fin(s)) return '--'; const m = Math.round(s / 60); return Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm'; };
+const timeOfDay = ms => { const d = new Date(ms); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+function scoreClass(x) { return !fin(x) ? '' : x >= 85 ? 's-good' : x >= 70 ? 's-ok' : x >= 50 ? 's-fair' : 's-poor'; }
+
+function renderSleep() {
+  const r = sleepReport(analytics);
+  sleepCache = r;
+  const scoreEl = $('slScore');
+  if (!r || !r.ready) {
+    scoreEl.textContent = '--'; scoreEl.className = 'score-num';
+    $('slGrade').textContent = analytics.n ? 'Collecting' : 'No night yet';
+    $('slNote').textContent = 'Needs at least 10 minutes of data' + (analytics.n ? ' (' + clock(analytics.t) + ' so far)' : '') + '. A full score needs 3 hours.';
+    $('slComps').innerHTML = ''; $('slStats').innerHTML = ''; drawSleep(null);
+    $('btnSaveNight').disabled = true;
+    return;
+  }
+  if (r.noSleep) {
+    scoreEl.textContent = '--'; scoreEl.className = 'score-num';
+    $('slGrade').textContent = 'No sleep detected';
+    $('slNote').textContent = 'Sleep starts after 10 minutes of still, settled breathing.';
+    $('slComps').innerHTML = '';
+    $('slStats').innerHTML = stat('Time in bed', hm(r.tib));
+    drawSleep(r);
+    $('btnSaveNight').disabled = true;
+    return;
+  }
+  scoreEl.innerHTML = r.score + '<small>/100</small>'; scoreEl.className = 'score-num ' + scoreClass(r.score);
+  $('slGrade').textContent = r.grade;
+  $('slNote').textContent = r.provisional ? 'Provisional: under 3 hours of data.' : (source && source.kind !== 'file' ? 'Updates as the night goes on.' : 'Whole recording.') + vsAverage(r.score);
+  $('slComps').innerHTML = r.components.map(c => `<div class="comp"><span class="cn">${c.name}</span><span class="bar"><i style="width:${(100 * c.pts / c.max).toFixed(1)}%"></i></span><span class="pts">${Math.round(c.pts)}/${c.max}</span><span class="cd">${c.detail}</span></div>`).join('');
+  $('slStats').innerHTML = [
+    stat('Time in bed', hm(r.tib)), stat('Asleep', hm(r.tst)), stat('Efficiency', Math.round(100 * r.se), '%'),
+    stat('Fell asleep after', Math.round(r.latency / 60), 'min'), stat('Awake after sleep', Math.round(r.waso / 60), 'min'),
+    stat('Awakenings', r.awakenings), stat('Movements asleep', f(r.moves / (r.tst / 3600)), '/h'),
+    stat('Breathing events', f(r.eph), '/h'), stat('Stable breathing', Math.round(100 * r.stableFrac), '%'),
+    stat('Variable breathing', Math.round(100 * r.variableFrac), '%')
+  ].join('');
+  $('btnSaveNight').disabled = false;
+  drawSleep(r);
+}
+function stat(k, v, unit) { return `<div class="sstat"><span class="k">${k}</span><span class="v">${v}${unit ? '<small>' + unit + '</small>' : ''}</span></div>`; }
+
+function drawSleep(r) {
+  const [ctx, w, h] = fit($('sleepChart'));
+  ctx.clearRect(0, 0, w, h);
+  const padL = 70, padR = 12, padT = 10, padB = 24, tickH = 34, pw = w - padL - padR;
+  const bandH = (h - padT - padB - tickH - 8) / 4;
+  ctx.font = '11px ' + C.mono; ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+  STATE_ROWS.forEach((st, k) => { ctx.fillStyle = C.muted; ctx.fillText(STATE_NAMES[st], padL - 8, padT + bandH * (k + 0.5)); ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(padL, padT + bandH * (k + 1)); ctx.lineTo(w - padR, padT + bandH * (k + 1)); ctx.stroke(); });
+  const tickTop = padT + 4 * bandH + 8;
+  ctx.fillStyle = C.muted; ctx.fillText('Move', padL - 8, tickTop + tickH * 0.28); ctx.fillText('Events', padL - 8, tickTop + tickH * 0.78);
+  if (!r || !r.ready) { ctx.textAlign = 'center'; ctx.fillText('The night timeline appears after 10 minutes of data', padL + pw / 2, padT + 2 * bandH); return; }
+  const tib = r.tib, x = t => padL + (t / tib) * pw, E = r.epochS;
+  const col = { wake: C.warn, variable: C['resp-dim'], regular: C.resp, stable: C.ok };
+  // state blocks, joined into a stepped line
+  r.epochs.forEach((ep, e) => {
+    const k = STATE_ROWS.indexOf(ep.state);
+    ctx.fillStyle = col[ep.state];
+    ctx.fillRect(x(e * E), padT + bandH * k + 2, Math.max(1, x((e + 1) * E) - x(e * E)), bandH - 4);
+  });
+  // movement and breathing events
+  r.epochs.forEach((ep, e) => { if (ep.a > 0) { ctx.fillStyle = C.muted; const hh = Math.max(2, ep.a * tickH * 0.45); ctx.fillRect(x(e * E), tickTop + tickH * 0.45 - hh, Math.max(1, pw / r.epochs.length), hh); } });
+  ctx.fillStyle = C.alarm;
+  for (const ev of analytics.events) if (ev.type !== 'periodic') ctx.fillRect(x(ev.start), tickTop + tickH * 0.6, Math.max(1.5, x(ev.start + ev.dur) - x(ev.start)), tickH * 0.38);
+  // sleep onset and wake-up markers
+  if (!r.noSleep) {
+    ctx.setLineDash([4, 3]); ctx.strokeStyle = C.fg; ctx.lineWidth = 1;
+    for (const t of [r.onsetT, r.endT]) { ctx.beginPath(); ctx.moveTo(x(t), padT); ctx.lineTo(x(t), tickTop + tickH); ctx.stroke(); }
+    ctx.setLineDash([]);
+  }
+  // time axis
+  ctx.fillStyle = C.muted; ctx.strokeStyle = C.line; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const hours = tib / 3600, every = hours > 10 ? 2 : 1;
+  if (sourceKnownClock) {
+    const first = new Date(sessionWall); first.setMinutes(0, 0, 0); first.setHours(first.getHours() + 1);
+    for (let ms = first.getTime(); ms <= sessionWall + tib * 1000; ms += every * 3600e3) {
+      const xx = x((ms - sessionWall) / 1000); if (xx > w - padR - 14) break;
+      if (xx - padL < 44) continue;   // leave room for the start time label
+      ctx.beginPath(); ctx.moveTo(xx, h - padB); ctx.lineTo(xx, h - padB + 4); ctx.stroke(); ctx.fillText(timeOfDay(ms), xx, h - padB + 6);
+    }
+    ctx.textAlign = 'left'; ctx.fillText(timeOfDay(sessionWall), padL, h - padB + 6);
+  } else {
+    for (let hh = every; hh < hours; hh += every) { const xx = x(hh * 3600); ctx.fillText('+' + hh + ' h', xx, h - padB + 6); }
+  }
+}
+
+function vsAverage(score) {
+  const real = loadNights().filter(n => !n.simulated && fin(n.score));
+  if (real.length < 3) return '';
+  const avg = real.reduce((a, n) => a + n.score, 0) / real.length, d = Math.round(score - avg);
+  return ` ${d >= 0 ? '+' : ''}${d} vs your average of ${real.length} nights.`;
+}
+
+// ---- night history, kept in this browser
+const NIGHTS_KEY = 'breathpatch.nights.v1';
+function loadNights() { try { return JSON.parse(localStorage.getItem(NIGHTS_KEY) || '[]'); } catch (_) { return []; } }
+function storeNights(list) { try { localStorage.setItem(NIGHTS_KEY, JSON.stringify(list)); return true; } catch (_) { log('This browser would not save the history (private window or storage blocked). Use Export history CSV instead.'); return false; } }
+function nightDate(ms) { const d = new Date(ms); if (d.getHours() < 12) d.setDate(d.getDate() - 1); return d; }
+function nightLabel(ms) { return nightDate(ms).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }); }
+
+function saveNight() {
+  const r = sleepCache;
+  if (!r || !r.ready || r.noSleep) { log('There is no scored night to save yet.'); return; }
+  const list = loadNights();
+  const rating = $('rating').value ? +$('rating').value : null;
+  list.push({ id: Date.now(), night: nightDate(sessionWall).toISOString().slice(0, 10), label: nightLabel(sessionWall),
+    source: sourceLabel || (source ? (source.kind === 'ble' ? 'Bluetooth' : source.kind === 'usb' ? 'USB' : source.kind) : 'session'),
+    simulated: /^Simulated/.test(sourceLabel), score: r.score, provisional: r.provisional,
+    parts: Object.fromEntries(r.components.map(c => [c.key, +c.pts.toFixed(1)])),
+    tib: Math.round(r.tib), tst: Math.round(r.tst), se: +r.se.toFixed(3), latency: Math.round(r.latency), waso: Math.round(r.waso),
+    awakenings: r.awakenings, eph: +r.eph.toFixed(1), stable: +r.stableFrac.toFixed(3), rating });
+  if (storeNights(list)) { log('Night saved' + (rating ? ' with a rating of ' + rating + '.' : '. You can rate it later by saving again with a rating.')); renderHistory(); renderSleep(); }
+}
+
+function pearson(xs, ys) {
+  const n = xs.length, mx = mean(xs), my = mean(ys);
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; syy += (ys[i] - my) ** 2; }
+  return sxx > 0 && syy > 0 ? sxy / Math.sqrt(sxx * syy) : NaN;
+}
+
+function renderHistory() {
+  const list = loadNights().sort((a, b) => b.id - a.id);
+  if (!list.length) { $('histBody').innerHTML = '<tr><td class="empty" colspan="8">No saved nights yet.</td></tr>'; $('histSummary').textContent = ''; return; }
+  $('histBody').innerHTML = list.map(n => `<tr><td>${n.label}</td><td>${n.source}${n.simulated ? '<span class="chip">sim</span>' : ''}${n.provisional ? '<span class="chip">short</span>' : ''}</td>` +
+    `<td><b class="${scoreClass(n.score)}" style="font-weight:500">${n.score}</b></td><td>${hm(n.tst)}</td><td>${Math.round(100 * n.se)} %</td><td>${f(n.eph)}</td>` +
+    `<td>${n.rating ? n.rating + ' / 5' : '--'}</td><td><button class="del" type="button" data-id="${n.id}" aria-label="Delete this night">Delete</button></td></tr>`).join('');
+  const real = list.filter(n => !n.simulated);
+  const rated = real.filter(n => n.rating);
+  let txt = real.length ? `${real.length} real night${real.length === 1 ? '' : 's'}, average ${Math.round(mean(real.map(n => n.score)))}` : 'Only simulated nights so far';
+  if (rated.length >= 5) { const rr = pearson(rated.map(n => n.score), rated.map(n => n.rating)); txt += `. Score vs feeling r = ${f(rr, 2)} over ${rated.length} rated nights`; }
+  else if (real.length) txt += `. Rate ${5 - rated.length} more night${5 - rated.length === 1 ? '' : 's'} to see how well the score tracks how you feel`;
+  $('histSummary').textContent = txt;
+  // colour classes on the inline score
+  document.querySelectorAll('#histBody b.s-good').forEach(e => { e.style.color = 'var(--ok)'; });
+  document.querySelectorAll('#histBody b.s-ok').forEach(e => { e.style.color = 'var(--resp)'; });
+  document.querySelectorAll('#histBody b.s-fair').forEach(e => { e.style.color = 'var(--warn)'; });
+  document.querySelectorAll('#histBody b.s-poor').forEach(e => { e.style.color = 'var(--alarm)'; });
+}
+
+let clearArmed = 0;
+function clearHistory() {
+  const b = $('btnClearHist');
+  if (Date.now() - clearArmed > 4000) { clearArmed = Date.now(); b.textContent = 'Click again to clear'; setTimeout(() => { b.textContent = 'Clear history'; }, 4000); return; }
+  clearArmed = 0; b.textContent = 'Clear history';
+  if (storeNights([])) { renderHistory(); log('History cleared.'); }
+}
+
+function exportHistory() {
+  const list = loadNights();
+  if (!list.length) { log('No saved nights to export.'); return; }
+  save('breathpatch-sleep-history-' + localStamp(Date.now()) + '.csv',
+    'night,source,simulated,score,duration_pts,efficiency_pts,continuity_pts,breathing_pts,restful_pts,time_in_bed_min,asleep_min,efficiency_pct,latency_min,waso_min,awakenings,events_per_h,stable_pct,rating',
+    list.map(n => [n.night, '"' + n.source.replace(/"/g, "'") + '"', n.simulated ? 1 : 0, n.score, n.parts.duration, n.parts.efficiency, n.parts.continuity, n.parts.breathing, n.parts.restful,
+      Math.round(n.tib / 60), Math.round(n.tst / 60), Math.round(100 * n.se), Math.round(n.latency / 60), Math.round(n.waso / 60), n.awakenings, n.eph, Math.round(100 * n.stable), n.rating || '']));
+}
+
+function saveSleepReport() {
+  const r = sleepCache;
+  if (!r || !r.ready) { log('No sleep report yet.'); return; }
+  const rows = [['start', sourceKnownClock ? new Date(sessionWall).toISOString() : ''], ['source', '"' + (sourceLabel || 'live') + '"'],
+    ['score', fin(r.score) ? r.score : ''], ['grade', r.grade || ''], ['provisional', r.provisional ? 1 : 0],
+    ['time_in_bed_min', (r.tib / 60).toFixed(1)], ['asleep_min', fin(r.tst) ? (r.tst / 60).toFixed(1) : ''], ['efficiency_pct', fin(r.se) ? (100 * r.se).toFixed(1) : ''],
+    ['latency_min', fin(r.latency) ? (r.latency / 60).toFixed(1) : ''], ['waso_min', fin(r.waso) ? (r.waso / 60).toFixed(1) : ''], ['final_wake_min', fin(r.finalWake) ? (r.finalWake / 60).toFixed(1) : ''],
+    ['awakenings', r.awakenings ?? ''], ['movements_asleep', r.moves ?? ''], ['breathing_events_asleep', r.events ?? ''], ['events_per_h', fin(r.eph) ? r.eph.toFixed(2) : ''],
+    ['periodic_breathing_pct', fin(r.pbFrac) ? (100 * r.pbFrac).toFixed(1) : ''], ['stable_breathing_pct', fin(r.stableFrac) ? (100 * r.stableFrac).toFixed(1) : ''],
+    ['variable_breathing_pct', fin(r.variableFrac) ? (100 * r.variableFrac).toFixed(1) : '']];
+  (r.components || []).forEach(c => rows.push([c.key + '_pts', c.pts.toFixed(2) + ' of ' + c.max]));
+  save('breathpatch-sleep-' + localStamp(sessionWall) + '.csv', 'metric,value', rows);
+}
+
+function saveEpochs() {
+  const r = sleepCache;
+  if (!r || !r.ready) { log('No sleep report yet.'); return; }
+  save('breathpatch-sleep-epochs-' + localStamp(sessionWall) + '.csv', 'epoch,t_s,clock,state,movement_frac,breaths,ibi_cv,amp_cv,rate_bpm,breathing_events',
+    r.epochs.map((ep, e) => [e, e * r.epochS, sourceKnownClock ? timeOfDay(sessionWall + e * r.epochS * 1000) : '', ep.state, ep.a.toFixed(3), ep.nb,
+      fin(ep.ibiCv) ? ep.ibiCv.toFixed(3) : '', fin(ep.ampCv) ? ep.ampCv.toFixed(3) : '', fin(ep.rate) ? ep.rate.toFixed(1) : '', ep.ev]));
+}
+
+// ---------------------------------------------------------------- alarm sound
+let audio = null, lastBeep = 0;
+function beep() {
+  if (!$('sound').checked || Date.now() - lastBeep < 900) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = 880; g.gain.setValueAtTime(0.0001, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.2, audio.currentTime + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.35);
+    o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.4); lastBeep = Date.now();
+  } catch (_) {}
+}
+
+// ---------------------------------------------------------------- movement experiments
+// Raw accelerometer and gyroscope samples (firmware 1.6 Raw characteristic, or "A" lines over USB) feed the
+// moving breathing-rate estimator in walking.js. Activity labels split the session into segments.
+const mover = new MovingEstimator(FS);
+let rawChar = null, rawSeq = null, rawLost = 0, rawCount = 0, rawRecFrom = 0, lastRaw = null;
+const rawRows = [];                 // recorded raw samples: [index, ax, ay, az (mg), gx, gy, gz (dps), motion, label]
+let curLabel = '', lastStillRate = null;
+const segs = [];                    // activity segments
+const labelMarks = [];              // [{i: waveform sample index, label}]
+let lastSegKey = '';
+
+function curSeg() { const g = segs[segs.length - 1]; return g && g.end === null ? g : null; }
+// Breath-by-breath rate for a segment, only when it covered a fair part of it (not just the first seconds before movement).
+function segRr(g) { const dur = (g.end === null ? analytics.t : g.end) - g.start; return g.rrN >= Math.max(5, 0.2 * dur) ? g.rrSum / g.rrN : NaN; }
+
+function resetMovement() {
+  mover.reset(); rawSeq = null; rawLost = 0; rawCount = 0; rawRecFrom = 0; lastRaw = null; rawRows.length = 0;
+  segs.length = 0; labelMarks.length = 0; lastStillRate = null; lastSegKey = '';
+  if (curLabel) startSeg(curLabel);   // keep the chosen activity running into the new session
+  renderMoving(); renderSegs(true);
+}
+
+function startSeg(label) {
+  segs.push({ label, start: analytics.t, end: null, rrSum: 0, rrN: 0, estSum: 0, estN: 0, cadSum: 0, cadN: 0, upd: 0 });
+  labelMarks.push({ i: analytics.n, label });
+}
+
+function setLabel(label) {
+  const g = curSeg();
+  if (g && analytics.t - g.start < 1) { segs.pop(); const m = labelMarks[labelMarks.length - 1]; if (m && m.label === g.label) labelMarks.pop(); }  // a mis-tap
+  else if (g) g.end = analytics.t;
+  if (label !== curLabel && !label) labelMarks.push({ i: analytics.n, label: '' });
+  curLabel = label;
+  if (label) startSeg(label);
+  for (const b of document.querySelectorAll('#labels button')) b.classList.toggle('on', !!label && b.dataset.l === label);
+  $('labNow').textContent = label ? 'now: ' + label.toLowerCase() + ' since ' + clock(analytics.t) : 'no activity set';
+  renderSegs(true);
+}
+
+function onRawPacket(e) {
+  const dv = e.target.value, seq = dv.getUint8(0), motion = !!(dv.getUint8(1) & 1);
+  if (rawSeq !== null) {
+    const gap = (seq - rawSeq - 1) & 255;
+    if (gap > 0 && gap < 128) { rawLost += gap; for (let k = 0; k < gap && lastRaw; k++) onRaw(...lastRaw, true); }
+  }
+  rawSeq = seq;
+  onRaw(dv.getInt16(2, true) / 1e4, dv.getInt16(4, true) / 1e4, dv.getInt16(6, true) / 1e4,
+        dv.getInt16(8, true) / 100, dv.getInt16(10, true) / 100, dv.getInt16(12, true) / 100, motion);
+}
+
+// ax..az in g, gx..gz in dps. filler = a repeat standing in for a lost packet, so time stays aligned.
+function onRaw(ax, ay, az, gx, gy, gz, motion, filler = false) {
+  if (!filler) lastRaw = [ax, ay, az, gx, gy, gz, motion];
+  rawCount++;
+  if (recording) {
+    rawRows.push(filler ? [rawCount - 1 - rawRecFrom, '', '', '', '', '', '', motion ? 1 : 0, curLabel]
+      : [rawCount - 1 - rawRecFrom, (ax * 1000).toFixed(2), (ay * 1000).toFixed(2), (az * 1000).toFixed(2), gx.toFixed(2), gy.toFixed(2), gz.toFixed(2), motion ? 1 : 0, curLabel]);
+  }
+  if (mover.push(ax, ay, az, gx, gy, gz)) {
+    const o = mover.out, g = curSeg();
+    if (g) { g.upd++; if (fin(o.rr_bpm)) { g.estSum += o.rr_bpm; g.estN++; } if (fin(o.cadence_spm)) { g.cadSum += o.cadence_spm; g.cadN++; } }
+    if (!bulk) { renderMoving(); renderSegs(); }
+  }
+}
+
+function renderMoving() {
+  const o = mover.out;
+  if (!rawCount) {
+    setTile('mvAct', '--', $('rawOn').checked ? 'Needs the raw sensor stream (firmware 1.6). Or press Walk demo.' : 'Raw sensor stream is switched off.');
+    setTile('mvCad', '--', 'Steps per minute while walking');
+    setTile('mvRr', '--', 'Over the last 30 s, works still or moving');
+    setTile('mvX', '--', 'Estimate vs breath-by-breath rate while still');
+    drawSpec(); return;
+  }
+  if (!o.ready) {
+    setTile('mvAct', '--', 'Collecting ' + Math.min(MV.MIN_S, Math.floor(rawCount / FS)) + ' of ' + MV.MIN_S + ' s of raw data' + (rawLost ? ' · ' + rawLost + ' raw samples lost' : ''));
+    drawSpec(); return;
+  }
+  const act = { walking: 'Walking', moving: 'Moving', still: 'Still' }[o.activity] || '--';
+  setTile('mvAct', act, 'Step regularity ' + Math.round(100 * Math.max(0, o.step_reg)) + ' %' + (rawLost ? ' · ' + rawLost + ' raw samples lost' : ''), o.activity === 'walking' ? 'good' : '');
+  setTile('mvCad', fin(o.cadence_spm) ? Math.round(o.cadence_spm) + '<small>steps/min</small>' : '--',
+    fin(o.cadence_spm) ? 'Stride rhythm ' + (o.cadence_spm / 2).toFixed(0) + ' per minute, cancelled before the estimate' : 'No regular stepping in the last 10 s');
+  const shown = fin(o.rr_bpm);
+  setTile('mvRr', shown ? o.rr_bpm.toFixed(0) + '<small>br/min</small>' : '--',
+    (shown ? (o.grade === 'good' ? 'Clear rhythm' : 'Fair rhythm') : 'Not clear enough to report') + ' · clarity ' + Math.round(100 * o.quality) + ' %, peak ' + o.peak.toFixed(0) + '×',
+    shown ? (o.grade === 'good' ? 'good' : 'amber') : '');
+  const ref = lastStillRate && analytics.t - lastStillRate.at < 5 ? lastStillRate.rate : NaN;
+  if (fin(ref) && shown && o.activity === 'still') {
+    const d = o.rr_bpm - ref;
+    setTile('mvX', (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1) + '<small>br/min</small>', 'Estimate ' + o.rr_bpm.toFixed(1) + ' vs breath by breath ' + ref.toFixed(1), Math.abs(d) <= 2 ? 'good' : 'amber');
+  } else setTile('mvX', '--', 'Shown while you are still and both rates are available');
+  drawSpec();
+}
+
+function renderSegs(force) {
+  const key = segs.length + ':' + segs.map(g => g.upd + '/' + g.rrN).join(',');
+  if (!force && key === lastSegKey) return;
+  lastSegKey = key;
+  if (!segs.length) { $('segBody').innerHTML = '<tr><td class="empty" colspan="7">No activities yet. Tap one of the buttons above.</td></tr>'; return; }
+  $('segBody').innerHTML = segs.slice().reverse().map(g => {
+    const dur = (g.end === null ? analytics.t : g.end) - g.start;
+    const rr = f(segRr(g)), est = g.estN ? (g.estSum / g.estN).toFixed(1) : '--', cad = g.cadN ? Math.round(g.cadSum / g.cadN) : '--';
+    const shown = g.upd ? Math.round(100 * g.estN / g.upd) + ' %' : '--';
+    return `<tr><td class="lb">${g.label}${g.end === null ? '<span class="chip">now</span>' : ''}</td><td>${clock(g.start)}</td><td>${clock(dur)}</td><td>${rr}</td><td>${est}</td><td>${cad}</td><td>${shown}</td></tr>`;
+  }).join('');
+}
+
+function drawSpec() {
+  const cv = $('specChart'); if (!cv) return;
+  const [ctx, w, h] = fit(cv);
+  ctx.clearRect(0, 0, w, h);
+  const padL = 44, padR = 10, padT = 22, padB = 22, pw = w - padL - padR, ph = h - padT - padB;
+  const lo = 60 * MV.RR_LO_HZ, hi = 60 * MV.RR_HI_HZ, x = r => padL + (r - lo) / (hi - lo) * pw;
+  ctx.font = '11px ' + C.mono; ctx.fillStyle = C.muted; ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let r = 10; r <= hi; r += 5) { const xx = x(r); ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, padT + ph); ctx.stroke(); ctx.fillText(r, xx, h - padB + 6); }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText('br/min', padL - 6, h - padB + 12);
+  const o = mover.out;
+  if (!o.ready || !o.spectrum) { ctx.textAlign = 'center'; ctx.font = '13px ' + C.ui; ctx.fillText('Waiting for 20 s of raw sensor data', padL + pw / 2, padT + ph / 2); return; }
+  const { f, S } = o.spectrum; let mx = 0; for (const v of S) mx = Math.max(mx, v);
+  if (fin(o.cadence_spm)) {
+    const sr = o.cadence_spm / 2;
+    if (sr >= lo && sr <= hi) { ctx.setLineDash([4, 4]); ctx.strokeStyle = C.warn; ctx.beginPath(); ctx.moveTo(x(sr), padT); ctx.lineTo(x(sr), padT + ph); ctx.stroke(); ctx.setLineDash([]); }
+  }
+  ctx.strokeStyle = fin(o.rr_bpm) ? C.ok : C.muted; ctx.lineWidth = 2; ctx.beginPath();
+  for (let k = 0; k < f.length; k++) { const xx = x(60 * f[k]), yy = padT + ph - (mx > 0 ? S[k] / mx : 0) * ph; k ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); }
+  ctx.stroke();
+  if (fin(o.rr_raw)) { ctx.fillStyle = fin(o.rr_bpm) ? C.ok : C.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = '12px ' + C.mono; ctx.fillText(o.rr_raw.toFixed(1), Math.min(w - padR - 16, Math.max(padL + 16, x(o.rr_raw))), 4); }
+}
+
+function setRawStream(on) {
+  try { localStorage.setItem('bp-raw', on ? '1' : '0'); } catch (_) {}
+  if (rawChar && source && source.kind === 'ble') {
+    (on ? rawChar.startNotifications() : rawChar.stopNotifications()).catch(err => log('Raw stream: ' + (err.message || err)));
+    rawSeq = null;
+  }
+  if (!on) { mover.reset(); rawCount = 0; }
+  renderMoving();
+}
+
+function saveSegs() {
+  if (!segs.length) { log('No activities yet. Tap an activity button while you test.'); return; }
+  save('breathpatch-activities-' + nowStamp() + '.csv', 'activity,start_s,duration_s,rr_breath_by_breath_bpm,rr_estimated_bpm,steps_per_min,estimate_shown_pct',
+    segs.map(g => [g.label, g.start.toFixed(1), ((g.end === null ? analytics.t : g.end) - g.start).toFixed(1), c(segRr(g), 2),
+      g.estN ? (g.estSum / g.estN).toFixed(2) : '', g.cadN ? (g.cadSum / g.cadN).toFixed(1) : '', g.upd ? Math.round(100 * g.estN / g.upd) : '']));
+}
+
+function saveRaw() {
+  if (!rawRows.length) { log('No raw data recorded. Press Record while the raw stream is on.'); return; }
+  const parts = ['t_s,ax_mg,ay_mg,az_mg,gx_dps,gy_dps,gz_dps,motion,activity\n'];
+  for (let i = 0; i < rawRows.length; i += 20000)
+    parts.push(rawRows.slice(i, i + 20000).map(r => [(r[0] / FS).toFixed(3), ...r.slice(1)].join(',')).join('\n') + '\n');
+  const url = URL.createObjectURL(new Blob(parts, { type: 'text/csv' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'breathpatch-raw-' + stamp() + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// Walk demo: simulated standing, walking, brisk walking and standing again, with raw data, so the panel can be tried without the patch.
+function startWalkDemo() {
+  stopSource(); curLabel = ''; resetSession();
+  const sim = new WalkSimulator(FS, WALK_DEMO_SCRIPT, (Math.random() * 1e9) >>> 0);
+  const total = Math.round(sim.totalSeconds() * FS);
+  playRate = +$('speed').value;
+  let made = 0, t0 = performance.now(), rate = playRate, seg = -1, holdUntil = -1;
+  const names = { stand: 'Standing', walk: 'Walking' };
+  const one = () => {
+    if (made >= total) { stopSource(); setLabel(''); log('Walk demo finished. The activity table compares the two rates for each part.'); return false; }
+    const s = sim.next();
+    if (sim.si !== seg && sim.si < WALK_DEMO_SCRIPT.length) { seg = sim.si; setLabel(names[WALK_DEMO_SCRIPT[seg].mode]); }
+    const t = made / FS; if (s.walking) holdUntil = t + 4;
+    const motion = s.walking || t < holdUntil;
+    // what the waveform shows with MOTION_GATE 0: the breathing tilt, swamped by steps while walking
+    onSample(s.tilt_mg + (motion ? 40 * (s.ay - 1) : 0), !motion && s.breath, motion);
+    onRaw(s.ax, s.ay, s.az, s.gx, s.gy, s.gz, motion);
+    made++; return true;
+  };
+  const tick = () => {
+    if (rate !== playRate) { t0 = performance.now() - made / FS / playRate * 1000; rate = playRate; }
+    const due = Math.floor((performance.now() - t0) / 1000 * FS * playRate);
+    while (made < due) if (!one()) return;
+  };
+  const timer = setInterval(tick, 250);
+  for (let i = 0; i < Math.round(FS); i++) one();
+  t0 = performance.now() - made / FS / playRate * 1000;
+  source = { kind: 'demo', stop: () => clearInterval(timer) };
+  setConn('Walk demo · simulated data', true);
+  log('Walk demo: standing 1 min, walking 2 min, brisk walking 1.5 min, standing 1.5 min. Use 5× or 20× to speed it up.');
+}
+
+// ---------------------------------------------------------------- recording + export
+let wakeLock = null;
+async function keepAwake(on) {
+  try {
+    if (on && navigator.wakeLock && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen');
+    else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (_) { wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => { if (recording && document.visibilityState === 'visible') keepAwake(true); });
+
+function toggleRec() {
+  recording = !recording;
+  const b = $('btnRec');
+  if (recording) {
+    rateRows.length = 0; recStart = Date.now(); recFrom = analytics.n; recTo = recFrom;
+    rawRows.length = 0; rawRecFrom = rawCount; $('btnSaveRaw').disabled = true;
+    b.textContent = 'Stop recording'; b.classList.add('on');
+    $('btnSaveRate').disabled = $('btnSaveWave').disabled = true;
+    keepAwake(true);
+    log('Recording. The screen is kept awake. Keep the laptop on charge and this page open.');
+  } else {
+    recTo = analytics.n;
+    b.textContent = 'Record'; b.classList.remove('on');
+    $('btnSaveRate').disabled = !rateRows.length; $('btnSaveWave').disabled = recTo <= recFrom;
+    $('btnSaveRaw').disabled = !rawRows.length;
+    keepAwake(false);
+    log('Recorded ' + clock((recTo - recFrom) / FS) + '. Save the waveform CSV to keep it; it can be re-analysed later with Open recording.');
+  }
+}
+function save(name, header, rows) {
+  const csv = header + '\n' + rows.map(r => r.join(',')).join('\n') + '\n';
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function localStamp(ms) { const d = new Date(ms), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`; }
+const stamp = () => localStamp(recStart || Date.now());
+function saveWaveform() {
+  if (recTo <= recFrom) { log('Nothing recorded yet.'); return; }
+  if (recTo > analytics.n) { log('The recording was cleared by a new session.'); return; }
+  const parts = ['t_s,signal_mg,breath,motion,activity\n'];
+  let buf = [], li = 0, lab = '';
+  while (li < labelMarks.length && labelMarks[li].i <= recFrom) lab = labelMarks[li++].label;
+  for (let i = recFrom; i < recTo; i++) {
+    while (li < labelMarks.length && labelMarks[li].i <= i) lab = labelMarks[li++].label;
+    const m = analytics.flags(i);
+    buf.push(((i - recFrom) / FS).toFixed(3) + ',' + analytics.val(i).toFixed(3) + ',' + ((m >> 1) & 1) + ',' + (m & 1) + ',' + lab);
+    if (buf.length === 20000) { parts.push(buf.join('\n') + '\n'); buf = []; }
+  }
+  if (buf.length) parts.push(buf.join('\n') + '\n');
+  const url = URL.createObjectURL(new Blob(parts, { type: 'text/csv' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'breathpatch-waveform-' + stamp() + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+const nowStamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+const c = (x, d) => (fin(x) ? x.toFixed(d) : '');
+
+function saveBreaths() {
+  if (!analytics.breaths.length) { log('No breaths to save yet.'); return; }
+  const riseIn = analytics.timing(analytics.breaths).riseIsInhale !== false;
+  save('breathpatch-breaths-' + nowStamp() + '.csv', 't_s,ibi_s,pause,amplitude_mg,rel_amplitude_pct,ti_s,te_s,ti_ttot,event',
+    analytics.breaths.map(b => {
+      const ti = riseIn ? b.rise : b.fall, te = riseIn ? b.fall : b.rise;
+      return [c(b.t, 2), c(b.ibi, 3), b.pause ? 1 : 0, c(b.amp, 3), fin(b.rel) ? c(100 * b.rel, 1) : '', c(ti, 3), c(te, 3), fin(ti) ? c(ti / (ti + te), 3) : '', b.event ? b.event.type : ''];
+    }));
+}
+function saveEvents() {
+  if (!analytics.events.length) { log('No events to save yet.'); return; }
+  save('breathpatch-events-' + nowStamp() + '.csv', 'type,start_s,duration_s,mean_effort_pct,lowest_effort_pct,cycle_s,recovery_amplitude_ratio,recovery_rate_ratio,overshoot_breaths',
+    analytics.events.map(e => [e.type, c(e.start, 1), c(e.dur, 1), fin(e.meanRel) ? c(100 * e.meanRel, 0) : '', e.type === 'reduced' ? c(100 * e.minRel, 0) : '',
+      c(e.cycle, 0), e.recovery && !e.recovery.incomplete ? c(e.recovery.peakAmp, 3) : '', e.recovery && !e.recovery.incomplete ? c(e.recovery.rate, 3) : '',
+      e.recovery && !e.recovery.incomplete ? e.recovery.overshoot : '']));
+}
+function saveSummary() {
+  const m = analytics.metrics(), tmAll = analytics.timing(analytics.breaths.filter(b => !b.pause));
+  const rows = [
+    ['session_s', c(m.t, 0)], ['movement_free_s', c(m.validS, 0)], ['breaths', m.breaths],
+    ['mean_rr_bpm', session.rates.length ? c(session.rates.reduce((a, b) => a + b, 0) / session.rates.length, 2) : ''],
+    ['mean_ibi_s', c(mean(analytics.breaths.filter(b => !b.pause).map(b => b.ibi)), 3)],
+    ['pauses', m.pauses], ['longest_pause_s', c(m.longestPause, 1)],
+    ['reduced_effort_events', m.reduced], ['reduced_effort_time_pct', c(m.reducedPct, 2)],
+    ['effort_reduction_index_per_h', m.validS >= 600 ? c(m.eph, 2) : ''],
+    ['ibi_cv_session', c(m.sessIbiCv, 4)], ['amplitude_cv_session', c(m.sessAmpCv, 4)],
+    ['ti_s', c(tmAll.ti, 3)], ['te_s', c(tmAll.te, 3)], ['ti_ttot', c(tmAll.duty, 3)], ['inhalation_stroke', tmAll.ti ? (tmAll.riseIsInhale ? 'upward' : 'downward') : ''],
+    ['periodic_breathing_time_pct', fin(m.pbFrac) ? c(100 * m.pbFrac, 1) : ''], ['periodic_breathing_episodes', m.pbEpisodes],
+    ['recovery_amplitude_ratio_mean', m.meanRecovery ? c(m.meanRecovery.peakAmp, 3) : ''], ['recovery_rate_ratio_mean', m.meanRecovery ? c(m.meanRecovery.rate, 3) : ''],
+    ['stability_index', fin(m.stability) ? m.stability : '']
+  ];
+  save('breathpatch-biomarkers-' + nowStamp() + '.csv', 'metric,value', rows);
+}
+
+$('btnBle').addEventListener('click', connectBle);
+$('btnUsb').addEventListener('click', connectUsb);
+$('btnDemo').addEventListener('click', startDemo);
+$('speed').addEventListener('change', () => { if (source && source.kind === 'demo') playRate = +$('speed').value; });
+$('fileIn').addEventListener('change', e => { const file = e.target.files[0]; if (file) openRecording(file); e.target.value = ''; });
+$('btnStop').addEventListener('click', () => { stopSource(); log('Disconnected.'); });
+$('btnRec').addEventListener('click', toggleRec);
+$('btnSaveRate').addEventListener('click', () => save('breathpatch-rate-' + stamp() + '.csv',
+  'time_iso,t_s,rate_bpm,valid,motion,apnoea,amplitude_mg,depth_pct,battery_mv,since_breath_s,breath_count,activity,est_rate_bpm,steps_per_min', rateRows));
+$('btnSaveWave').addEventListener('click', saveWaveform);
+$('btnSaveBreaths').addEventListener('click', saveBreaths);
+$('btnSaveEvents').addEventListener('click', saveEvents);
+$('btnSaveSummary').addEventListener('click', saveSummary);
+$('polarity').addEventListener('change', e => { analytics.polarity = e.target.value; renderBio(true); });
+if (!navigator.bluetooth) $('btnBle').title = 'Web Bluetooth is not available in this browser';
+if (!navigator.serial) $('btnUsb').hidden = true;            // phones and some browsers have no USB serial
+if (!navigator.bluetooth || !window.isSecureContext) { $('banner').innerHTML = '<b>Bluetooth unavailable.</b> ' + bluetoothMissing(); $('banner').hidden = false; }
+
+// Installable web app when served from a website (manifest, offline cache). Not used when opened as a file.
+if (/^https?:$/.test(location.protocol)) {
+  for (const [rel, href] of [['manifest', 'manifest.webmanifest'], ['apple-touch-icon', 'apple-touch-icon.png'], ['icon', 'icon-192.png']]) {
+    const l = document.createElement('link'); l.rel = rel; l.href = href; document.head.appendChild(l);
+  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; $('btnInstall').hidden = false; });
+$('btnInstall').addEventListener('click', async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  try { await installPrompt.userChoice; } catch (_) {}
+  installPrompt = null; $('btnInstall').hidden = true;
+});
+
+$('btnNight').addEventListener('click', simulateNight);
+$('btnWalkDemo').addEventListener('click', startWalkDemo);
+$('labels').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setLabel(b.dataset.l); });
+$('rawOn').addEventListener('change', e => setRawStream(e.target.checked));
+$('btnSaveSegs').addEventListener('click', saveSegs);
+$('btnSaveRaw').addEventListener('click', saveRaw);
+try { if (localStorage.getItem('bp-raw') === '0') $('rawOn').checked = false; } catch (_) {}
+$('btnSaveNight').addEventListener('click', saveNight);
+$('btnExportHist').addEventListener('click', exportHistory);
+$('btnClearHist').addEventListener('click', clearHistory);
+$('btnSaveSleep').addEventListener('click', saveSleepReport);
+$('btnSaveEpochs').addEventListener('click', saveEpochs);
+$('histBody').addEventListener('click', e => {
+  const b = e.target.closest('button.del'); if (!b) return;
+  if (storeNights(loadNights().filter(n => String(n.id) !== b.dataset.id))) renderHistory();
+});
+
+loadColors();
+renderBio(true);
+renderSleep();
+renderHistory();
+renderMoving(); renderSegs(true);
+requestAnimationFrame(frame);
+window.BreathPatch = { parseSummary, parseWave, parseLine, analytics, sleep: () => sleepCache, mover, segs: () => segs, rawRows: () => rawRows };   // exposed for testing
+</script>
+</body>
+</html>
