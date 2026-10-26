@@ -88,6 +88,7 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .core .unit { font-size: max(10px, 2.1cqmin); color: var(--muted); margin-top: .6cqmin; }
 .state { position: absolute; left: 50%; top: calc(50% + 19.5cqmin); transform: translateX(-50%); z-index: 3; pointer-events: none; font-size: max(11px, 2.4cqmin); font-weight: 600; color: var(--muted); white-space: nowrap; }
 .state.alarm { color: var(--pause); }
+.coreHit, .coreHit:hover:not(:disabled) { background: transparent; border: 0; }
 .coreHit { position: absolute; left: 50%; top: 50%; width: 36cqmin; height: 36cqmin; transform: translate(-50%, -50%); border-radius: 50%; z-index: 4; cursor: pointer; background: none; border: 0; padding: 0; }
 .tA .sub.q { left: 4cqmin; bottom: 3.2cqmin; font-size: max(11px, 2.3cqmin); }
 .tA .sub.hint { right: 4cqmin; bottom: 3.2cqmin; font-size: max(11px, 2.1cqmin); color: var(--faint); }
@@ -161,17 +162,78 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .foot { font-size: 12px; color: var(--faint); text-align: center; margin: 0; }
 
 /* ---------------------------------------------------------------- phones: golden splits instead of the full spiral */
+.mpill { display: none; }
+.rowsub { display: none; }
+.short { display: none; }
+.menu-note { font-size: 11.5px; color: var(--faint); padding: 6px 8px 2px; line-height: 1.45; }
+
+/* ---------------------------------------------------------------- phones: the whole screen, no scrolling
+   Height splits at the golden ratio: the bloom takes 61.8 %, the rest holds a slim amplitude strip (38.2 % of it)
+   and the timing ring beside three compact rows for pauses, pattern and review. Exact rows are set in fitGolden(). */
 @media (max-width: 760px), (max-aspect-ratio: 1/1) {
-  .golden { width: 100%; aspect-ratio: auto; grid-template-columns: .618fr .382fr; grid-template-rows: auto; }
-  .tA { grid-column: 1 / 3; grid-row: auto; aspect-ratio: 1; }
-  .tB { grid-column: 1 / 3; grid-row: auto; aspect-ratio: 2.618; }
-  .tC { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 1; }
-  .tD { grid-column: 2 / 3; grid-row: auto; }
-  .tE { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 1.618; }
-  .tF { grid-column: 2 / 3; grid-row: auto; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  .app { height: 100dvh; padding-top: max(10px, env(safe-area-inset-top, 0px)); padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); gap: 8px; }
+  header { flex-wrap: nowrap; gap: 8px; }
+  header > .pill, .banner, .foot { display: none !important; }
+  .brand { min-width: 0; }
+  .brand svg { width: 30px; height: 30px; }
+  .brand .name { font-size: 19px; }
+  .brand .by { font-size: 10.5px; white-space: nowrap; }
+  header button { padding: 8px 13px; }
+  .long { display: none; }
+  .short { display: inline; }
+  .golden { width: 100%; aspect-ratio: auto; grid-template-columns: 38% 1fr; grid-template-rows: 1.618fr .382fr .206fr .206fr .206fr; flex: 1 1 auto; min-height: 0; }
+  .tA { grid-column: 1 / 3; grid-row: 1 / 2; }
+  .tB { grid-column: 1 / 3; grid-row: 2 / 3; }
+  .tC { grid-column: 1 / 2; grid-row: 3 / 6; }
+  .tD { grid-column: 2 / 3; grid-row: 3 / 4; }
+  .tE { grid-column: 2 / 3; grid-row: 4 / 5; }
+  .tF { grid-column: 2 / 3; grid-row: 5 / 6; }
+  .tile { border-radius: 14px; }
   .spiral { display: none; }
-  .sheet { top: auto; left: 0; width: 100%; height: 90vh; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(105%); }
-  .brand .name { font-size: 20px; }
+  /* bloom: status pill inside the tile, shorter hint */
+  .mpill { display: inline-flex; position: absolute; right: 3cqmin; top: 3cqmin; z-index: 4; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; max-width: 58%; pointer-events: none; }
+  .mpill b { font-weight: 600; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mpill.live { background: var(--connected); border-color: var(--connected); }
+  .mpill.live .dot { background: #fff; }
+  .tA .lbl { font-size: 12.5px; }
+  .tA .sub.q, .tA .sub.hint { font-size: 11.5px; }
+  .tA .sub.hint { max-width: 48%; text-align: right; }
+  .core .rr { font-size: min(15cqw, 13.5cqh); }
+  .core { transform: translate(-50%, -50%); }
+  .core .unit { font-size: 11.5px; }
+  .state { font-size: 12.5px; top: calc(50% + min(19cqw, 17cqh)); }
+  /* amplitude strip */
+  .tB .lbl { font-size: 13px; left: 14px; top: 10px; }
+  .tB .sub { font-size: 11.5px; left: 14px; top: 29px; }
+  .tB .val { right: 14px; top: 50%; transform: translateY(-50%); font-size: max(26px, min(46cqh, 13cqw)); }
+  @container (max-height: 100px) { .tB .sub { display: none; } }
+  /* timing ring */
+  .tC .lbl { font-size: 13px; left: 12px; top: 10px; }
+  .tC .val { top: 55%; font-size: max(20px, 17cqmin); }
+  .tC .sub { display: none; }
+  /* compact rows: label on the left, value on the right, nothing wasted */
+  .tD, .tE, .tF { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 14px; }
+  .tD .lbl, .tE .lbl, .tF .lbl, .tD .val, .tE .val, .tF .val, .tD .sub { position: static; transform: none; }
+  .tD .lbl, .tE .lbl, .tF .lbl { font-size: 13px; display: flex; flex-direction: column; gap: 1px; }
+  .rowsub { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
+  .tD .sub { display: none; }
+  .tD .val, .tF .val { font-size: max(22px, min(62cqh, 30px)); }
+  .tE .val { font-size: max(17px, min(42cqh, 22px)); }
+  .tE .rowsub { display: none; }
+  /* messages appear briefly over the screen instead of taking a line */
+  .log { position: fixed; left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 35; background: rgba(24, 24, 24, .96); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; color: var(--fg); text-align: left; min-height: 0; opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; pointer-events: none; }
+  .log.show { opacity: 1; transform: none; }
+  .log:empty { display: none; }
+  /* detail sheets fit the phone: smaller charts, two facts per row */
+  .sheet { top: auto; left: 0; width: 100%; height: 88dvh; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(105%); }
+  .sheet header { padding: 14px 16px 6px; }
+  .sheet h2 { font-size: 21px; }
+  .sbody { padding: 2px 16px 20px; gap: 12px; }
+  .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .fact { padding: 8px 8px; } .fact .v { font-size: 18px; white-space: nowrap; } .fact .k { font-size: 11px; line-height: 1.3; }
+  .c-trend { height: 130px; } .c-bars { height: 92px; } .c-tl { height: 190px; } .c-snap { height: 160px; }
+  .list { max-height: 26dvh; }
 }
 </style>
 </head>
@@ -183,7 +245,7 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
       <div><div class="name">BreathPatch</div><div class="by">by Brainiac Healthcare</div></div>
     </div>
     <span class="pill" id="connPill" role="status"><span class="dot" id="dot"></span><b id="connText">Not connected</b><span id="devText"></span></span>
-    <button class="primary" id="btnBle" type="button">Connect patch</button>
+    <button class="primary" id="btnBle" type="button">Connect<span class="long"> patch</span></button>
     <div class="menu">
       <button id="btnMenu" type="button" aria-haspopup="true" aria-expanded="false">More</button>
       <div class="menu-panel" id="menuPanel" hidden>
@@ -200,6 +262,7 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         <hr>
         <button id="btnStop" type="button" disabled>Disconnect</button>
         <button id="btnInstall" type="button" hidden>Install as an app</button>
+        <div class="menu-note">Breathing effort from chest movement, for research and clinician review, not diagnosis.</div>
       </div>
     </div>
   </header>
@@ -209,11 +272,12 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     <section class="tile tA" aria-label="Respiratory rate and the breath bloom">
       <canvas id="bloom" aria-label="Every breath of the session as a seed, newest in the centre. Seed size is breath depth, colour is pause, irregular or uncertain signal."></canvas>
       <span class="lbl">Respiratory rate</span>
+      <span class="mpill" id="mPill"><span class="dot"></span><b id="mConn">Not connected</b></span>
       <div class="core"><div class="rr" id="rr">–</div><div class="unit">breaths / min</div></div>
       <div class="state" id="state">Waiting for the patch</div>
       <button class="coreHit" id="coreHit" type="button" aria-label="Open respiratory rate details"></button>
       <span class="sub q" id="liveQ">Signal quality appears after 10 s</span>
-      <span class="sub hint">Each seed is a breath. Tap one to see it.</span>
+      <span class="sub hint"><span class="long">Each seed is a breath. Tap one to see it.</span><span class="short">Tap a seed</span></span>
       <div class="tip" id="tip" hidden></div>
     </section>
     <section class="tile tB" tabindex="0" role="button" data-sheet="amp" aria-label="Amplitude and variability, open details">
@@ -229,7 +293,7 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
       <span class="sub" id="tSub">between breaths</span>
     </section>
     <section class="tile tD" tabindex="0" role="button" data-sheet="pauses" aria-label="Respiratory pauses, open details">
-      <span class="lbl">Pauses</span>
+      <span class="lbl">Pauses<span class="rowsub" id="pRow">none yet</span></span>
       <span class="val" id="pVal">0</span>
       <span class="sub" id="pSub">none yet</span>
     </section>
@@ -238,7 +302,7 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
       <span class="val" id="iVal">--</span>
     </section>
     <section class="tile tF" tabindex="0" role="button" data-sheet="session" aria-label="Session review, open details">
-      <span class="lbl">Review</span>
+      <span class="lbl">Review<span class="rowsub">to look at</span></span>
       <span class="val" id="fVal">0</span>
     </section>
     <svg class="spiral" id="spiral" aria-hidden="true"><path id="spiralPath" fill="none" stroke="rgba(63,224,143,.22)" stroke-width="1.2"/><circle id="spark" r="4" fill="#3fe08f" opacity="0"/></svg>
@@ -1364,7 +1428,8 @@ const CH_INFO = 'b5e0a004-3c6d-4f2a-9a51-7d2c0e8f1a10';
 const MAX_SECONDS = 60, TREND_SECONDS = 600, PHI = (1 + Math.sqrt(5)) / 2, GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
 const $ = id => document.getElementById(id);
-const log = msg => { $('log').textContent = msg; };
+let logTimer = null;
+const log = msg => { const el = $('log'); el.textContent = msg; el.classList.add('show'); clearTimeout(logTimer); logTimer = setTimeout(() => el.classList.remove('show'), 6500); };
 const fin = x => typeof x === 'number' && isFinite(x);
 function clock(s) {
   if (!fin(s)) return '--';
@@ -1612,7 +1677,11 @@ function simulateNight() {
   ingest(Math.round(gen.duration * FS), () => gen.next(), 'simulated night', () => log('Simulated night with ' + gen.truth().events + ' scripted breathing events. The bloom holds the last 610 breaths; Review has the whole night.'));
 }
 function stopSource() { bleWanted = false; clearTimeout(bleRetry); if (source) { const s = source; source = null; s.stop(); } setConn('Not connected', false); $('devText').textContent = ''; }
-function setConn(text, live) { $('connText').textContent = text; $('connPill').classList.toggle('live', !!live); $('dot').className = 'dot'; $('btnStop').disabled = !live; }
+function setConn(text, live) {
+  $('connText').textContent = text; $('mConn').textContent = text;
+  $('connPill').classList.toggle('live', !!live); $('mPill').classList.toggle('live', !!live);
+  $('dot').className = 'dot'; $('btnStop').disabled = !live;
+}
 
 // ---------------------------------------------------------------- helpers
 function fit(cv) {
@@ -1743,7 +1812,7 @@ function drawAmpWave() {
 }
 function drawCycle(L) {
   const [ctx, w, h] = fit($('cycle')); ctx.clearRect(0, 0, w, h);
-  const cx = w / 2, cy = h * 0.53, R = Math.min(w, h) * 0.33;
+  const small = h < 260, cx = w / 2, cy = h * (small ? 0.56 : 0.53), R = Math.min(w, h) * (small ? 0.31 : 0.33);
   ctx.lineCap = 'round';
   ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = Math.max(4, R * 0.09); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
   const ti = fin(L.ti) && fin(L.te) ? L.ti / (L.ti + L.te) : NaN;
@@ -1764,7 +1833,19 @@ function drawCycle(L) {
 // Quarter circles through the golden squares: A, then B, C, D, E, F, each 1.618 times smaller.
 function fitGolden() {
   const g = $('golden');
-  if (getComputedStyle($('spiral')).display === 'none') { g.style.width = ''; return; }
+  if (getComputedStyle($('spiral')).display === 'none') {
+    // phone: fill exactly the space left under the header, split at the golden ratio
+    g.style.width = '';
+    const gap = 6, W = g.clientWidth, H = g.clientHeight;
+    if (H < 200) return;
+    const A = Math.round(Math.min(H * 0.618, W * 1.08));          // the bloom never grows much taller than it is wide
+    const rest = H - A - gap, B = Math.round(rest * 0.382), R3 = rest - B - gap;
+    const row = (R3 - 2 * gap) / 3, col = Math.round(Math.min(R3, W * 0.5));
+    g.style.gridTemplateRows = `${A}px ${B}px ${row}px ${row}px ${row}px`;
+    g.style.gridTemplateColumns = `${col}px 1fr`;
+    return;
+  }
+  g.style.gridTemplateRows = ''; g.style.gridTemplateColumns = '';
   const avail = window.innerHeight - (g.getBoundingClientRect().top + window.scrollY) - 64;
   g.style.width = Math.max(560, Math.min(g.parentNode.clientWidth, avail * PHI)) + 'px';
 }
@@ -1810,6 +1891,7 @@ function renderTiles() {
   const livePause = fin(m.currentPause) && m.currentPause >= 5 && source && source.kind !== 'file';
   $('pVal').textContent = livePause ? Math.round(m.currentPause + analytics.medIbi()) + 's' : P.confirmed;
   $('pSub').textContent = livePause ? 'no breath now' : P.n ? (P.uncertain ? P.uncertain + ' uncertain' : 'all confirmed') : 'none yet';
+  $('pRow').textContent = $('pSub').textContent;
   document.querySelector('.tD').classList.toggle('alarm', !!livePause);
   const cur = L.quality;
   if (cur && cur.win) { $('iVal').textContent = cur.irregular ? 'Irregular' : 'Regular'; $('iVal').style.color = cur.irregular ? C.pause : C.breath; }
@@ -1838,7 +1920,12 @@ function openSheet(kind, extra) {
   if ($('tl')) $('tl').addEventListener('click', onTimelineClick);
   $('scrim').hidden = false; sheetEl.classList.add('open'); sheetEl.setAttribute('aria-hidden', 'false');
   $('sheetClose').focus();
+  if (['pauses', 'pattern', 'session'].includes(kind) && (!selected || (listFilter !== 'all' && selected.kind !== listFilter))) {
+    const first = items().find(i => listFilter === 'all' || i.kind === listFilter);
+    if (first) selected = first;
+  }
   renderSheet(true);
+  if (selected && $('snapTitle') && kind !== 'breath') select(selected);
 }
 function closeSheet() { sheetKind = null; sheetEl.classList.remove('open'); sheetEl.setAttribute('aria-hidden', 'true'); $('scrim').hidden = true; }
 function fact(v, k, id) { return `<div class="fact"><div class="v" ${id ? 'id="' + id + '"' : ''}>${v}</div><div class="k">${k}</div></div>`; }
@@ -2100,9 +2187,12 @@ for (const t of document.querySelectorAll('.tile[data-sheet]')) {
 $('sheetClose').addEventListener('click', closeSheet);
 $('scrim').addEventListener('click', closeSheet);
 window.addEventListener('resize', () => { fitGolden(); layoutSpiral(); renderSheet(true); });
-if ('ResizeObserver' in window) new ResizeObserver(layoutSpiral).observe($('golden'));
+if ('ResizeObserver' in window) new ResizeObserver(() => { fitGolden(); layoutSpiral(); }).observe($('golden'));
 if (!navigator.serial) $('btnUsb').hidden = true;
-if (!navigator.bluetooth || !window.isSecureContext) { $('banner').textContent = 'Bluetooth is not available here. ' + bluetoothMissing(); $('banner').hidden = false; }
+if (!navigator.bluetooth || !window.isSecureContext) {
+  $('banner').textContent = 'Bluetooth is not available here. ' + bluetoothMissing(); $('banner').hidden = false;
+  if (getComputedStyle($('spiral')).display === 'none') log('Bluetooth is not available here. ' + bluetoothMissing());
+}
 if (/^https?:$/.test(location.protocol)) {
   for (const [rel, href] of [['manifest', 'manifest.webmanifest'], ['apple-touch-icon', 'apple-touch-icon.png'], ['icon', 'icon-192.png']]) { const l = document.createElement('link'); l.rel = rel; l.href = href; document.head.appendChild(l); }
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
