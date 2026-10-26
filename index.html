@@ -10,169 +10,168 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600;700&display=swap">
 <style>
-/* BreathPatch by Brainiac Healthcare. Theme tokens first, so the product colours can be matched to RespiCOz in one place. */
+/* BreathPatch by Brainiac Healthcare.
+   Layout: the five parameters sit in golden-ratio squares, each 1.618 times smaller than the last, in order of
+   importance, with the golden spiral running through them. Palette from the RespiCOz app. */
 :root {
-  /* Palette from the RespiCOz app: black monitor field, grey boxes, neon green trace, cyan labels, red alarms */
   --bg: #000000;
-  --bg-2: #1c1c1c;
-  --panel: #2b2b2b;       /* the grey boxes */
-  --panel-hi: #363636;
-  --line: #3d3d3d;
-  --line-hi: #575757;
+  --tile: #262626;
+  --tile-hi: #303030;
+  --line: #3a3a3a;
   --fg: #f2f2f2;
-  --muted: #a6a6a6;
-  --faint: #6f6f6f;
-  --breath: #3fe08f;      /* neon green: the breathing trace and good signal */
-  --breath-dim: rgba(63, 224, 143, .2);
+  --muted: #a3a3a3;
+  --faint: #6b6b6b;
+  --breath: #3fe08f;      /* neon green */
   --label: #1fb5e6;       /* RespiCOz label cyan */
-  --connected: #1e8a50;   /* RespiCOz connected bar */
+  --connected: #1e8a50;
   --uncertain: #ffb547;
   --noisy: #7a7a7a;
   --move: #4a4a4a;
-  --pause: #ef4f56;       /* RespiCOz alarm red */
+  --pause: #ef4f56;
   --irregular: #1fb5e6;
-  --num: "Josefin Sans", "Century Gothic", "Avenir Next", system-ui, sans-serif;
-  --ui: "Josefin Sans", "Century Gothic", "Avenir Next", system-ui, sans-serif;
-  --r-lg: 14px; --r-md: 10px; --r-sm: 8px;
+  --font: "Josefin Sans", "Century Gothic", "Avenir Next", system-ui, sans-serif;
+  --gap: 6px;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--ui); }
-body { background: var(--bg); min-height: 100vh; }
-.app { max-width: 1320px; margin: 0 auto; padding: 18px max(18px, env(safe-area-inset-right, 0px)) 40px max(18px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 16px; }
-button, select, .filebtn { font: 500 14px var(--ui); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; cursor: pointer; }
-button:hover:not(:disabled), select:hover, .filebtn:hover { border-color: var(--line-hi); background: var(--panel-hi); }
-button:focus-visible, select:focus-visible, .filebtn:focus-within, [tabindex]:focus-visible { outline: 2px solid var(--breath); outline-offset: 2px; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 var(--font); }
+button, select, .filebtn { font: 600 14px var(--font); color: var(--fg); background: var(--tile); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; cursor: pointer; }
+button:hover:not(:disabled), select:hover, .filebtn:hover { background: var(--tile-hi); }
+button:focus-visible, select:focus-visible, .filebtn:focus-within, .tile:focus-visible { outline: 2px solid var(--breath); outline-offset: 2px; }
 button:disabled { opacity: .4; cursor: default; }
 button.primary { background: var(--breath); color: #00210f; border-color: var(--breath); font-weight: 700; }
-button.primary:hover:not(:disabled) { background: #6ff0ad; }
-button.rec.on { background: var(--pause); border-color: var(--pause); color: #2a0606; }
+button.rec.on { background: var(--pause); border-color: var(--pause); color: #fff; }
 .filebtn { position: relative; display: inline-flex; align-items: center; }
 .filebtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
-/* header */
-header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
-.brand svg { width: 38px; height: 38px; }
-.brand .name { font: 700 26px/1 var(--num); }
-.brand .by { font-size: 12px; color: var(--muted); }
-.pill { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; background: var(--bg-2); max-width: 100%; }
-.pill b { color: var(--fg); font-weight: 500; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; }
-.dot.live { background: #fff; box-shadow: none; }
+.app { max-width: 1500px; margin: 0 auto; padding: 14px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 12px; }
+header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.brand svg { width: 34px; height: 34px; }
+.brand .name { font-weight: 700; font-size: 23px; line-height: 1; }
+.brand .by { font-size: 11.5px; color: var(--muted); }
+.pill { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; }
+.pill b { color: var(--fg); font-weight: 600; }
 .pill.live { background: var(--connected); border-color: var(--connected); color: #e8fff1; }
-.pill.live b { color: #fff; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.pill.live .dot { background: #fff; }
 .dot.stale { background: var(--pause); }
 .menu { position: relative; }
-.menu-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; background: var(--panel); border: 1px solid var(--line-hi); border-radius: var(--r-md); padding: 8px; display: grid; gap: 4px; min-width: 250px; box-shadow: 0 18px 40px rgba(0, 0, 0, .45); }
+.menu-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; background: var(--tile); border: 1px solid var(--line); border-radius: 12px; padding: 8px; display: grid; gap: 2px; min-width: 260px; box-shadow: 0 18px 40px rgba(0, 0, 0, .6); }
 .menu-panel[hidden] { display: none; }
-.menu-panel button, .menu-panel .filebtn { border-radius: var(--r-sm); border-color: transparent; background: transparent; text-align: left; width: 100%; }
-.menu-panel button:hover, .menu-panel .filebtn:hover { background: var(--panel-hi); }
-.menu-panel .row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; color: var(--muted); font-size: 13px; }
-.menu-panel hr { border: 0; border-top: 1px solid var(--line); margin: 4px 2px; width: auto; }
-.banner { margin: 0; padding: 12px 16px; border: 1px solid #5a4322; border-radius: var(--r-md); background: rgba(255, 181, 71, .08); font-size: 14px; }
+.menu-panel button, .menu-panel .filebtn { border-radius: 8px; border-color: transparent; background: transparent; text-align: left; width: 100%; font-weight: 500; }
+.menu-panel button:hover, .menu-panel .filebtn:hover { background: var(--tile-hi); }
+.menu-panel .row { display: flex; align-items: center; gap: 8px; padding: 4px 8px; color: var(--muted); font-size: 13px; }
+.menu-panel hr { border: 0; border-top: 1px solid var(--line); margin: 4px 2px; }
+.banner { margin: 0; padding: 10px 14px; border: 1px solid #5a4322; border-radius: 10px; font-size: 13.5px; color: #ffd79b; }
 
-/* hero: live waveform + rate */
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; }
-.panel { background: var(--panel); border: 1px solid #333; border-radius: var(--r-lg); min-width: 0; }
-/* graphs sit on a black field inside the grey box, as on the RespiCOz monitor */
-#wave, #tl, #snap { background: #000; border-radius: var(--r-md); }
-.wavepanel { padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 8px; }
-.ph { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.ph h2 { margin: 0; font: 600 20px var(--num); color: var(--label); }
-.ph .aside { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.ph select { padding: 5px 10px; font-size: 13px; }
-#wave { width: 100%; height: 300px; display: block; }
-.ribbon-key { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
-.ribbon-key i { display: inline-block; width: 18px; height: 6px; border-radius: 3px; vertical-align: middle; margin-right: 6px; }
-.k-good { background: var(--breath); } .k-unc { background: var(--uncertain); } .k-noisy { background: var(--noisy); } .k-move { background: var(--move); }
+/* ---------------------------------------------------------------- the golden layout */
+.golden { position: relative; display: grid; gap: var(--gap); margin: 0 auto;
+  grid-template-columns: 1fr .146fr .09fr .382fr; grid-template-rows: .618fr .146fr .236fr;
+  width: 100%; aspect-ratio: 1.618; }
+.tile { position: relative; background: var(--tile); border-radius: 16px; overflow: hidden; cursor: pointer; container-type: size; min-width: 0; min-height: 0; border: 1px solid transparent; transition: border-color .3s; }
+.tile:hover { border-color: #444; }
+.tA { grid-column: 1 / 2; grid-row: 1 / 4; background: #050505; border-color: #1c1c1c; cursor: default; }
+.tB { grid-column: 2 / 5; grid-row: 1 / 2; }
+.tC { grid-column: 4 / 5; grid-row: 2 / 4; }
+.tD { grid-column: 2 / 4; grid-row: 3 / 4; }
+.tE { grid-column: 2 / 3; grid-row: 2 / 3; }
+.tF { grid-column: 3 / 4; grid-row: 2 / 3; }
+.tile canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.lbl { position: absolute; left: 7cqmin; top: 6cqmin; font-size: max(11px, 6.5cqmin); font-weight: 600; color: var(--label); z-index: 2; pointer-events: none; }
+.val { position: absolute; z-index: 2; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; pointer-events: none; }
+.val small { font-weight: 400; color: var(--muted); font-size: .34em; margin-left: .15em; }
+.sub { position: absolute; z-index: 2; color: var(--muted); font-size: max(11px, 5cqmin); pointer-events: none; }
+/* A: the bloom, with the rate in its core */
+.core { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -46%); text-align: center; z-index: 3; pointer-events: none; }
+.core .rr { font-weight: 700; font-size: 15cqmin; line-height: .9; color: var(--breath); font-variant-numeric: tabular-nums; }
+.core .unit { font-size: max(10px, 2.1cqmin); color: var(--muted); margin-top: .6cqmin; }
+.state { position: absolute; left: 50%; top: calc(50% + 19.5cqmin); transform: translateX(-50%); z-index: 3; pointer-events: none; font-size: max(11px, 2.4cqmin); font-weight: 600; color: var(--muted); white-space: nowrap; }
+.state.alarm { color: var(--pause); }
+.coreHit { position: absolute; left: 50%; top: 50%; width: 36cqmin; height: 36cqmin; transform: translate(-50%, -50%); border-radius: 50%; z-index: 4; cursor: pointer; background: none; border: 0; padding: 0; }
+.tA .sub.q { left: 4cqmin; bottom: 3.2cqmin; font-size: max(11px, 2.3cqmin); }
+.tA .sub.hint { right: 4cqmin; bottom: 3.2cqmin; font-size: max(11px, 2.1cqmin); color: var(--faint); }
+.tA .lbl { font-size: max(11px, 2.6cqmin); left: 4cqmin; top: 3.2cqmin; }
+.tip { position: absolute; z-index: 6; pointer-events: none; background: rgba(20, 20, 20, .94); border: 1px solid var(--line); border-radius: 10px; padding: 8px 11px; font-size: 13px; line-height: 1.45; white-space: nowrap; transform: translate(-50%, calc(-100% - 12px)); }
+.tip b { font-weight: 700; }
+.tip[hidden] { display: none; }
+/* B amplitude */
+.tB .val { right: 3cqw; top: 6cqh; font-size: min(21cqh, 13cqw); }
+.tB .lbl { font-size: max(12px, min(6.5cqh, 4.5cqw)); left: 3cqw; top: 7cqh; }
+.tB .sub { left: 3cqw; top: calc(7cqh + max(18px, min(9cqh, 6cqw))); font-size: max(11px, min(4.6cqh, 3.2cqw)); }
+/* C timing */
+.tC .val { left: 50%; top: 53%; transform: translate(-50%, -50%); font-size: 19cqmin; text-align: center; }
+.tC .sub { left: 0; right: 0; bottom: 6cqmin; text-align: center; }
+/* D pauses */
+.tD .val { left: 7cqmin; bottom: 7cqmin; font-size: 44cqmin; }
+.tD .sub { right: 7cqmin; bottom: 8cqmin; text-align: right; max-width: 50%; }
+.tD.alarm { border-color: var(--pause); }
+.tD.alarm .val { color: var(--pause); }
+@media (prefers-reduced-motion: no-preference) { .tD.alarm { animation: pulseB 1.2s ease-in-out infinite alternate; } }
+@keyframes pulseB { to { border-color: rgba(239, 79, 86, .25); } }
+/* E pattern, F review */
+.tE .val { left: 8cqmin; bottom: 10cqmin; font-size: max(13px, 19cqmin); }
+.tE .lbl, .tF .lbl { font-size: max(10px, 10cqmin); }
+.tF .val { left: 50%; top: 55%; transform: translate(-50%, -50%); font-size: max(16px, 34cqmin); text-align: center; }
+.tF .lbl { left: 50%; transform: translateX(-50%); }
+.spiral { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; }
 
-.rate { padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
-.ring { position: relative; width: 230px; height: 230px; display: grid; place-items: center; }
-.ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.ring .val { font: 700 104px/0.9 var(--num); color: var(--breath); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.ring .unit { font-size: 14px; color: var(--muted); margin-top: 4px; }
-.ring .glow { position: absolute; inset: 22px; border-radius: 50%; border: 2px solid var(--breath); opacity: 0; pointer-events: none; }
-@media (prefers-reduced-motion: no-preference) { .ring .glow.go { animation: breathe 1.6s ease-out; } }
-@keyframes breathe { 0% { opacity: .75; transform: scale(.94); } 100% { opacity: 0; transform: scale(1.12); } }
-.state { font: 500 15px var(--num); letter-spacing: .04em; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
-.state.ok { color: var(--breath); border-color: rgba(63, 224, 143, .5); }
-.state.move { color: var(--fg); background: var(--move); border-color: var(--move); }
-.state.alarm { color: #2a0606; background: var(--pause); border-color: var(--pause); }
-.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; }
-.fact { background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 8px 6px; }
-.fact .v { font: 700 22px/1.1 var(--num); font-variant-numeric: tabular-nums; }
-.fact .v small { font-size: 12px; color: var(--muted); margin-left: 2px; }
-.fact .k { font-size: 11.5px; color: var(--muted); }
-#rateSpark { width: 100%; height: 54px; display: block; }
-
-/* the four other parameters */
-.params { display: grid; grid-template-columns: 1.15fr 1fr 1fr 1.15fr; gap: 16px; }
-.param { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
-.param::before { content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent, var(--breath)); }
-.param h3 { margin: 0; font: 600 19px var(--num); color: var(--label); }
-.param .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.conf { font-size: 12px; border-radius: 999px; padding: 2px 10px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
-.conf.good { color: var(--breath); border-color: rgba(63, 224, 143, .45); }
-.conf.uncertain { color: var(--uncertain); border-color: rgba(255, 181, 71, .45); }
-.conf.noisy, .conf.movement { color: var(--muted); }
-.big { font: 700 50px/1 var(--num); font-variant-numeric: tabular-nums; }
-.big small { font-size: 17px; color: var(--muted); margin-left: 4px; font-weight: 400; }
-.big.dim { color: var(--faint); }
-.cap { font-size: 13px; color: var(--muted); margin-top: -6px; }
-.rows { display: grid; gap: 6px; font-size: 14px; }
-.rows div { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 6px; }
-.rows span:first-child { color: var(--muted); }
-.rows b { font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+/* ---------------------------------------------------------------- detail sheet */
+.scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); z-index: 40; }
+.scrim[hidden] { display: none; }
+.sheet { position: fixed; z-index: 41; top: 0; right: 0; bottom: 0; width: min(620px, 100vw); background: #161616; border-left: 1px solid var(--line); display: flex; flex-direction: column; transform: translateX(105%); transition: transform .32s cubic-bezier(.2, .8, .2, 1); }
+.sheet { visibility: hidden; transition: transform .32s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .32s; }
+.sheet.open { transform: none; visibility: visible; transition: transform .32s cubic-bezier(.2, .8, .2, 1), visibility 0s; }
+@media (prefers-reduced-motion: reduce) { .sheet { transition: none; } }
+.sheet header { padding: 18px 20px 10px; display: flex; align-items: center; gap: 12px; }
+.sheet h2 { margin: 0; font-size: 24px; font-weight: 700; color: var(--label); margin-right: auto; }
+.sheet .close { width: 40px; height: 40px; padding: 0; font-size: 20px; line-height: 1; }
+.sbody { overflow: auto; padding: 4px 20px 28px; display: flex; flex-direction: column; gap: 16px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.fact { background: var(--tile); border-radius: 12px; padding: 10px 12px; }
+.fact .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fact .v small { font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 2px; }
+.fact .k { font-size: 12.5px; color: var(--muted); }
+.note { font-size: 13.5px; color: var(--muted); margin: 0; }
+.sbody canvas { width: 100%; display: block; background: #000; border-radius: 12px; }
+.c-trend { height: 170px; } .c-bars { height: 120px; } .c-tl { height: 240px; cursor: crosshair; } .c-snap { height: 210px; }
 .split { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; display: flex; }
-.split i { display: block; height: 100%; }
-.split .ti { background: var(--breath); } .split .te { background: rgba(63, 224, 143, .35); }
+.split i { display: block; height: 100%; } .split .ti { background: var(--breath); } .split .te { background: rgba(63, 224, 143, .35); }
 .meter { position: relative; height: 10px; border-radius: 5px; background: linear-gradient(90deg, rgba(63, 224, 143, .55), rgba(255, 181, 71, .6) 50%, var(--pause)); }
-.meter .mark[hidden] { display: none; }
 .meter .mark { position: absolute; top: -4px; width: 4px; height: 18px; border-radius: 2px; background: var(--fg); transform: translateX(-2px); }
 .meter .th { position: absolute; left: 50%; top: -3px; bottom: -3px; border-left: 1px dashed var(--fg); opacity: .5; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 0; }
-.chip { font-size: 12.5px; border-radius: 999px; padding: 3px 10px; background: rgba(31, 181, 230, .14); color: #b8ecff; }
-canvas.mini { width: 100%; height: 56px; display: block; }
-.param select { padding: 4px 10px; font-size: 12.5px; }
-.live-pause { font: 500 15px var(--num); color: var(--pause); min-height: 1.4em; }
-
-/* session timeline and review */
-.timeline { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
-#tl { width: 100%; height: 250px; display: block; cursor: crosshair; }
-.reviewwrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px; }
-.review { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; min-height: 340px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; border-radius: 999px; padding: 4px 11px; background: rgba(31, 181, 230, .16); color: #b8ecff; }
 .filters { display: flex; gap: 6px; flex-wrap: wrap; }
-.filters button { padding: 5px 12px; font-size: 13px; }
-.filters button.on { background: var(--panel-hi); border-color: var(--breath); color: var(--breath); }
-.list { overflow: auto; max-height: 380px; border-top: 1px solid var(--line); }
-.item { display: grid; grid-template-columns: 12px 64px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 6px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: var(--r-sm); }
-.item:hover, .item.sel { background: var(--panel-hi); }
-.item .sw { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; }
-.item .when { font: 500 16px var(--num); font-variant-numeric: tabular-nums; }
-.item .what { font-size: 14px; min-width: 0; }
+.filters button { padding: 6px 13px; font-size: 13px; }
+.filters button.on { border-color: var(--breath); color: var(--breath); }
+.list { border-top: 1px solid var(--line); max-height: 300px; overflow: auto; }
+.item { display: grid; grid-template-columns: 12px 64px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 6px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 8px; }
+.item:hover, .item.sel { background: var(--tile); }
+.item .sw { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; }
+.item .when { font-weight: 700; font-variant-numeric: tabular-nums; }
 .item .what small { display: block; color: var(--muted); font-size: 12.5px; }
-.item .dur { font: 400 15px var(--num); color: var(--muted); font-variant-numeric: tabular-nums; }
-.empty { color: var(--muted); padding: 18px 6px; font-size: 14px; }
-#snap { width: 100%; height: 260px; display: block; }
-.snaptitle { font-size: 14px; color: var(--muted); min-height: 1.5em; }
-.exports { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.exports .lbl { color: var(--muted); font-size: 13px; margin-right: 4px; }
-.log { font-size: 13px; color: var(--muted); min-height: 1.5em; overflow-wrap: anywhere; }
-.foot { font-size: 12.5px; color: var(--faint); max-width: 95ch; line-height: 1.6; }
+.item .dur { color: var(--muted); font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); padding: 14px 6px; font-size: 14px; }
+.snaptitle { font-size: 14px; color: var(--muted); }
+.row-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row-btns .k { color: var(--muted); font-size: 13px; }
+.sheet select { padding: 6px 12px; font-size: 13px; }
+.log { font-size: 13px; color: var(--muted); min-height: 1.4em; text-align: center; }
+.foot { font-size: 12px; color: var(--faint); text-align: center; margin: 0; }
 
-@media (max-width: 1100px) { .params { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 900px) {
-  .hero { grid-template-columns: minmax(0, 1fr); }
-  .reviewwrap { grid-template-columns: minmax(0, 1fr); }
-  #wave { height: 230px; }
-}
-@media (max-width: 620px) {
-  .params { grid-template-columns: minmax(0, 1fr); }
-  .ring { width: 200px; height: 200px; } .ring .val { font-size: 88px; }
-  .brand .name { font-size: 22px; }
-  #tl { height: 220px; }
-  .pill { order: 5; width: 100%; }
+/* ---------------------------------------------------------------- phones: golden splits instead of the full spiral */
+@media (max-width: 760px), (max-aspect-ratio: 1/1) {
+  .golden { width: 100%; aspect-ratio: auto; grid-template-columns: .618fr .382fr; grid-template-rows: auto; }
+  .tA { grid-column: 1 / 3; grid-row: auto; aspect-ratio: 1; }
+  .tB { grid-column: 1 / 3; grid-row: auto; aspect-ratio: 2.618; }
+  .tC { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 1; }
+  .tD { grid-column: 2 / 3; grid-row: auto; }
+  .tE { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 1.618; }
+  .tF { grid-column: 2 / 3; grid-row: auto; }
+  .spiral { display: none; }
+  .sheet { top: auto; left: 0; width: 100%; height: 90vh; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(105%); }
+  .brand .name { font-size: 20px; }
 }
 </style>
 </head>
@@ -185,10 +184,13 @@ canvas.mini { width: 100%; height: 56px; display: block; }
     </div>
     <span class="pill" id="connPill" role="status"><span class="dot" id="dot"></span><b id="connText">Not connected</b><span id="devText"></span></span>
     <button class="primary" id="btnBle" type="button">Connect patch</button>
-    <button class="rec" id="btnRec" type="button">Record</button>
     <div class="menu">
       <button id="btnMenu" type="button" aria-haspopup="true" aria-expanded="false">More</button>
       <div class="menu-panel" id="menuPanel" hidden>
+        <button class="rec" id="btnRec" type="button">Record</button>
+        <button id="btnSaveWave" type="button" disabled>Save recorded waveform</button>
+        <button id="btnSession" type="button">Session timeline and review</button>
+        <hr>
         <button id="btnUsb" type="button">Connect over USB</button>
         <label class="filebtn">Open a recording<input type="file" id="fileIn" accept=".csv,text/csv"></label>
         <hr>
@@ -196,7 +198,6 @@ canvas.mini { width: 100%; height: 56px; display: block; }
         <button id="btnNight" type="button">Simulate a night with breathing events</button>
         <div class="row"><label for="speed">Demo speed</label><select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="20">20×</option></select></div>
         <hr>
-        <button id="btnSaveWave" type="button" disabled>Save recorded waveform</button>
         <button id="btnStop" type="button" disabled>Disconnect</button>
         <button id="btnInstall" type="button" hidden>Install as an app</button>
       </div>
@@ -204,118 +205,54 @@ canvas.mini { width: 100%; height: 56px; display: block; }
   </header>
   <p class="banner" id="banner" hidden></p>
 
-  <section class="hero">
-    <div class="panel wavepanel" aria-label="Live breathing waveform">
-      <div class="ph"><h2>Breathing</h2>
-        <span class="aside"><span id="liveQ">Signal quality appears after 30 s</span>
-          <select id="win" aria-label="Waveform window"><option value="15">15 s</option><option value="30" selected>30 s</option><option value="60">60 s</option></select></span>
-      </div>
-      <canvas id="wave" aria-label="Live breathing waveform with breath markers and a signal quality ribbon"></canvas>
-      <div class="ribbon-key"><span><i class="k-good"></i>Good signal</span><span><i class="k-unc"></i>Uncertain</span><span><i class="k-noisy"></i>Noisy</span><span><i class="k-move"></i>Movement</span></div>
-    </div>
-
-    <div class="panel rate" aria-label="Respiratory rate">
-      <div class="ring">
-        <svg viewBox="0 0 230 230" aria-hidden="true"><circle cx="115" cy="115" r="104" fill="none" stroke="#3d3d3d" stroke-width="2"/><circle id="ringArc" cx="115" cy="115" r="104" fill="none" stroke="#3fe08f" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 654" transform="rotate(-90 115 115)"/></svg>
-        <span class="glow" id="glow"></span>
-        <div><div class="val" id="rr">--</div><div class="unit">breaths per minute</div></div>
-      </div>
+  <main class="golden" id="golden">
+    <section class="tile tA" aria-label="Respiratory rate and the breath bloom">
+      <canvas id="bloom" aria-label="Every breath of the session as a seed, newest in the centre. Seed size is breath depth, colour is pause, irregular or uncertain signal."></canvas>
+      <span class="lbl">Respiratory rate</span>
+      <div class="core"><div class="rr" id="rr">–</div><div class="unit">breaths / min</div></div>
       <div class="state" id="state">Waiting for the patch</div>
-      <canvas id="rateSpark" aria-label="Respiratory rate over the last 10 minutes"></canvas>
-      <div class="facts">
-        <div class="fact"><div class="v" id="rMean">--</div><div class="k">session mean</div></div>
-        <div class="fact"><div class="v" id="rRange">--</div><div class="k">range</div></div>
-        <div class="fact"><div class="v" id="rUse">--</div><div class="k">measurable</div></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="params">
-    <article class="panel param" style="--accent: var(--breath)" aria-label="Amplitude and variability">
-      <div class="head"><h3>Amplitude and variability</h3><span class="conf" id="aConf">--</span></div>
-      <div class="big dim" id="aRel">--</div>
-      <div class="cap">Last breath, compared with this person's usual breath</div>
-      <canvas class="mini" id="ampBars" aria-label="Relative amplitude of the last 40 breaths"></canvas>
-      <div class="rows">
-        <div><span>Amplitude variability, 2 min</span><b id="aCv">--</b></div>
-        <div><span>Session median</span><b id="aMed">--</b></div>
-        <div><span>Weakest 10 % of breaths</span><b id="aLow">--</b></div>
-      </div>
-    </article>
-
-    <article class="panel param" style="--accent: var(--label)" aria-label="Respiratory timing">
-      <div class="head"><h3>Timing</h3><span class="conf" id="tConf">--</span></div>
-      <div class="big dim" id="tIbi">--</div>
-      <div class="cap">Interval since the previous breath</div>
-      <div class="rows">
-        <div><span>Interval variability, 2 min</span><b id="tCv">--</b></div>
-        <div><span>Successive difference (RMSSD)</span><b id="tRmssd">--</b></div>
-        <div><span>Breath in / breath out</span><b id="tTiTe">--</b></div>
-      </div>
-      <div class="split" aria-hidden="true"><i class="ti" id="tiBar" style="width:0"></i><i class="te" id="teBar" style="width:0"></i></div>
-      <div class="cap" id="tNote">In and out times come only from clean breaths</div>
-      <label class="cap" style="margin-top:0">Breathing in shows as <select id="polarity" aria-label="Which direction of the waveform is breathing in"><option value="auto">auto</option><option value="rise">upward stroke</option><option value="fall">downward stroke</option></select></label>
-    </article>
-
-    <article class="panel param" style="--accent: var(--pause)" aria-label="Respiratory pauses">
-      <div class="head"><h3>Pauses</h3><span class="conf" id="pConf">--</span></div>
-      <div class="big dim" id="pCount">0</div>
-      <div class="cap">Confirmed pauses of 10 s or more</div>
-      <div class="live-pause" id="pLive"></div>
-      <div class="rows">
-        <div><span>Per hour of usable signal</span><b id="pRate">--</b></div>
-        <div><span>Longest</span><b id="pLong">--</b></div>
-        <div><span>Uncertain, to review</span><b id="pUnc">0</b></div>
-      </div>
-    </article>
-
-    <article class="panel param" style="--accent: var(--irregular)" aria-label="Breathing pattern irregularity">
-      <div class="head"><h3>Pattern</h3><span class="conf" id="iConf">--</span></div>
-      <div class="big dim" id="iState">--</div>
-      <div class="cap">Timing, amplitude and waveform shape against this person's own baseline</div>
-      <div class="meter" aria-hidden="true"><span class="th"></span><span class="mark" id="iMark" style="left:0"></span></div>
-      <div class="chips" id="iWhy"></div>
-      <div class="rows">
-        <div><span>Irregular share of usable time</span><b id="iShare">--</b></div>
-        <div><span>Periods flagged for review</span><b id="iSegs">0</b></div>
-        <div><span>Interval sample entropy</span><b id="iEnt">--</b></div>
-      </div>
-    </article>
-  </section>
-
-  <section class="panel timeline" aria-label="Session timeline">
-    <div class="ph"><h2>Session timeline</h2><span class="aside">Tap anywhere to see the waveform at that moment</span></div>
-    <canvas id="tl" aria-label="Session timeline of signal quality, rate, amplitude, irregular periods and pauses"></canvas>
-  </section>
-
-  <section class="reviewwrap">
-    <div class="panel review" aria-label="Review list">
-      <div class="ph"><h2>For review</h2><span class="aside" id="revCount">Nothing yet</span></div>
-      <div class="filters" id="filters">
-        <button type="button" class="on" data-f="all">All</button>
-        <button type="button" data-f="pause">Pauses</button>
-        <button type="button" data-f="irregular">Irregular pattern</button>
-        <button type="button" data-f="signal">Unclear signal</button>
-      </div>
-      <div class="list" id="revList"><div class="empty">Pauses, irregular periods and stretches of unclear signal will be listed here as they happen.</div></div>
-    </div>
-    <div class="panel review" aria-label="Waveform at the selected moment">
-      <div class="ph"><h2>Waveform</h2><span class="aside">select an item or tap the timeline</span></div>
-      <div class="snaptitle" id="snapTitle">Nothing selected</div>
-      <canvas id="snap" aria-label="Waveform around the selected moment"></canvas>
-      <div class="exports"><span class="lbl">Save as CSV</span>
-        <button type="button" id="xRate">Rate per minute</button>
-        <button type="button" id="xBreaths">Breath table</button>
-        <button type="button" id="xPauses">Pauses</button>
-        <button type="button" id="xReview">Review list</button>
-        <button type="button" id="xEpochs">Signal quality</button>
-      </div>
-    </div>
-  </section>
+      <button class="coreHit" id="coreHit" type="button" aria-label="Open respiratory rate details"></button>
+      <span class="sub q" id="liveQ">Signal quality appears after 10 s</span>
+      <span class="sub hint">Each seed is a breath. Tap one to see it.</span>
+      <div class="tip" id="tip" hidden></div>
+    </section>
+    <section class="tile tB" tabindex="0" role="button" data-sheet="amp" aria-label="Amplitude and variability, open details">
+      <canvas id="ampWave"></canvas>
+      <span class="lbl">Amplitude</span>
+      <span class="sub" id="aSub">variability --</span>
+      <span class="val" id="aVal">--</span>
+    </section>
+    <section class="tile tC" tabindex="0" role="button" data-sheet="timing" aria-label="Respiratory timing, open details">
+      <canvas id="cycle"></canvas>
+      <span class="lbl">Timing</span>
+      <span class="val" id="tVal">--</span>
+      <span class="sub" id="tSub">between breaths</span>
+    </section>
+    <section class="tile tD" tabindex="0" role="button" data-sheet="pauses" aria-label="Respiratory pauses, open details">
+      <span class="lbl">Pauses</span>
+      <span class="val" id="pVal">0</span>
+      <span class="sub" id="pSub">none yet</span>
+    </section>
+    <section class="tile tE" tabindex="0" role="button" data-sheet="pattern" aria-label="Breathing pattern, open details">
+      <span class="lbl">Pattern</span>
+      <span class="val" id="iVal">--</span>
+    </section>
+    <section class="tile tF" tabindex="0" role="button" data-sheet="session" aria-label="Session review, open details">
+      <span class="lbl">Review</span>
+      <span class="val" id="fVal">0</span>
+    </section>
+    <svg class="spiral" id="spiral" aria-hidden="true"><path id="spiralPath" fill="none" stroke="rgba(63,224,143,.22)" stroke-width="1.2"/><circle id="spark" r="4" fill="#3fe08f" opacity="0"/></svg>
+  </main>
 
   <div class="log" id="log" role="status"></div>
-  <p class="foot">BreathPatch measures breathing effort from chest movement. Rate, amplitude, timing, pauses and pattern are for research and clinician review, not diagnosis. Values come only from stretches with usable signal, and every pause and flagged period says how sure it is. Bluetooth works in Chrome on Android and laptops, and in Bluefy on iPhone.</p>
+  <p class="foot">Breathing effort from chest movement, for research and clinician review, not diagnosis. Values come only from usable signal.</p>
 </div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="sheet" id="sheet" aria-hidden="true" aria-labelledby="sheetTitle" role="dialog">
+  <header><h2 id="sheetTitle">Details</h2><button class="close" id="sheetClose" type="button" aria-label="Close">×</button></header>
+  <div class="sbody" id="sbody"></div>
+</aside>
 
 <script>
 // biomarkers.js : breath-by-breath respiratory biomarkers from the BreathPatch waveform.
@@ -1424,7 +1361,7 @@ const SVC = 'b5e0a001-3c6d-4f2a-9a51-7d2c0e8f1a10';
 const CH_SUM = 'b5e0a002-3c6d-4f2a-9a51-7d2c0e8f1a10';
 const CH_WAVE = 'b5e0a003-3c6d-4f2a-9a51-7d2c0e8f1a10';
 const CH_INFO = 'b5e0a004-3c6d-4f2a-9a51-7d2c0e8f1a10';
-const MAX_SECONDS = 60, TREND_SECONDS = 600;
+const MAX_SECONDS = 60, TREND_SECONDS = 600, PHI = (1 + Math.sqrt(5)) / 2, GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
 const $ = id => document.getElementById(id);
 const log = msg => { $('log').textContent = msg; };
@@ -1437,15 +1374,17 @@ function clock(s) {
 }
 const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const C = {};
-function loadColors() { for (const k of ['bg', 'panel', 'line', 'line-hi', 'fg', 'muted', 'faint', 'breath', 'label', 'uncertain', 'noisy', 'move', 'pause', 'irregular', 'num', 'ui']) C[k] = css('--' + k); }
+function loadColors() { for (const k of ['bg', 'tile', 'line', 'fg', 'muted', 'faint', 'breath', 'label', 'uncertain', 'noisy', 'move', 'pause', 'irregular', 'font']) C[k] = css('--' + k); }
 const QCOL = { good: () => C.breath, uncertain: () => C.uncertain, noisy: () => C.noisy, movement: () => C.move };
+const QTEXT = { good: 'Good signal', uncertain: 'Uncertain signal', noisy: 'Noisy signal', movement: 'Movement' };
+const pct = x => (fin(x) ? Math.round(100 * x) + ' %' : '--');
 
 // ---------------------------------------------------------------- data model
 const N = Math.ceil(MAX_SECONDS * FS);
 const wave = new Float32Array(N), marks = new Uint8Array(N), still = new Uint8Array(N).fill(1);
 let head = 0;
 const queue = [];
-let lastMotion = false, lastDataAt = 0;
+let lastMotion = false, lastDataAt = 0, lastMarkAt = 0;
 const trend = [];
 const session = { rates: [], validS: 0, totalS: 0 };
 let recording = false, recStart = 0, recFrom = 0, recTo = 0;
@@ -1453,23 +1392,16 @@ let sessionWall = Date.now(), lastSampleWall = 0, bulk = false, lost = 0, lastSe
 const analytics = new BreathAnalytics(FS);
 const review = new ReviewEngine(analytics);
 const SUMMARY_EVERY = Math.round(FS);
-let selected = null, filter = 'all', lastListKey = '';
+let selected = null, sheetKind = null, listFilter = 'all', lastListKey = '';
 
-function writeRing(v, b, m) {
-  wave[head] = v; marks[head] = b ? 1 : 0; still[head] = m ? 0 : 1; head = (head + 1) % N;
-  if (b) pulse();
-}
-function pulse() { const g = $('glow'); g.classList.remove('go'); void g.offsetWidth; g.classList.add('go'); }
-
+function writeRing(v, b, m) { wave[head] = v; marks[head] = b ? 1 : 0; still[head] = m ? 0 : 1; head = (head + 1) % N; if (b) lastMarkAt = performance.now(); }
 function onSample(v, breath, motion, direct = false) {
-  if (direct) { wave[head] = v; marks[head] = breath ? 1 : 0; still[head] = motion ? 0 : 1; head = (head + 1) % N; } else queue.push([v, breath, motion]);
-  lastMotion = motion;
-  lastDataAt = performance.now();
+  if (direct) writeRing(v, breath, motion); else queue.push([v, breath, motion]);
+  lastMotion = motion; lastDataAt = performance.now();
   analytics.push(v, breath, motion);
   if (!bulk) lastSampleWall = Date.now();
   if (source && (source.kind === 'demo' || source.kind === 'file') && analytics.n % SUMMARY_EVERY === 0) onSummary(analytics.summary());
 }
-
 function onSummary(s) {
   lastDataAt = performance.now();
   const valid = !!(s.flags & 1), motion = !!(s.flags & 2), apnoea = !!(s.flags & 4);
@@ -1480,19 +1412,15 @@ function onSummary(s) {
   if (valid && s.rate > 0) { session.validS++; session.rates.push(s.rate); }
   if (!bulk) showRate(s, valid, motion, apnoea);
 }
-
 function showRate(s, valid, motion, apnoea) {
   const show = valid && s.rate > 0;
-  $('rr').textContent = show ? Math.round(s.rate) : '--';
-  $('ringArc').setAttribute('stroke-dasharray', (show ? Math.min(1, s.rate / 40) * 654 : 0).toFixed(1) + ' 654');
-  $('ringArc').style.opacity = show ? 1 : 0;
+  $('rr').textContent = show ? Math.round(s.rate) : '–';
   const st = $('state');
   if (apnoea) { st.textContent = 'No breath for ' + Math.round(s.since) + ' s'; st.className = 'state alarm'; }
-  else if (motion) { st.textContent = 'Movement, paused'; st.className = 'state move'; }
-  else if (show) { st.textContent = 'Tracking'; st.className = 'state ok'; }
+  else if (motion) { st.textContent = 'Movement, paused'; st.className = 'state'; }
+  else if (show) { st.textContent = 'Tracking'; st.className = 'state'; }
   else { st.textContent = 'Settling'; st.className = 'state'; }
 }
-
 function resetSession(wall = Date.now()) {
   if (recording) toggleRec();
   sessionWall = wall; lastSampleWall = 0;
@@ -1500,11 +1428,9 @@ function resetSession(wall = Date.now()) {
   Object.assign(session, { rates: [], validS: 0, totalS: 0 });
   lost = 0; lastSeq = null;
   analytics.reset(); review.reset();
-  selected = null; lastListKey = '';
-  $('snapTitle').textContent = 'Nothing selected';
+  selected = null; lastListKey = ''; seedsCache.n = -1; bloomShift = 1; bloomFill = 144;
   renderAll(true);
 }
-
 function beginLive() { if (recording && analytics.n > 0) { fillGap(); return true; } resetSession(); return false; }
 function fillGap() {
   const gapS = lastSampleWall ? (Date.now() - lastSampleWall) / 1000 : 0;
@@ -1532,35 +1458,22 @@ function parseLine(line) {
   if (line.startsWith('#')) return { type: 'msg', text: line.slice(1).trim() };
   return null;
 }
-function parseInfo(text) {
-  const o = {};
-  for (const kv of String(text || '').split(';')) { const i = kv.indexOf('='); if (i > 0) o[kv.slice(0, i).trim()] = kv.slice(i + 1).trim(); }
-  return o;
-}
+function parseInfo(text) { const o = {}; for (const kv of String(text || '').split(';')) { const i = kv.indexOf('='); if (i > 0) o[kv.slice(0, i).trim()] = kv.slice(i + 1).trim(); } return o; }
 
 // ---------------------------------------------------------------- Bluetooth, with automatic reconnection
 let bleDevice = null, bleWanted = false, bleRetry = null, bleAttempt = 0, bleBusy = false;
 function onWavePacket(e) {
   const w = parseWave(e.target.value);
-  if (lastSeq !== null && w.seq !== ((lastSeq + 1) & 127)) {
-    const gap = ((w.seq - lastSeq - 1) & 127) * w.samples.length;
-    lost += gap;
-    for (let k = 0; k < gap; k++) onSample(0, false, true);
-  }
+  if (lastSeq !== null && w.seq !== ((lastSeq + 1) & 127)) { const gap = ((w.seq - lastSeq - 1) & 127) * w.samples.length; lost += gap; for (let k = 0; k < gap; k++) onSample(0, false, true); }
   lastSeq = w.seq;
   for (const [v, b, m] of w.samples) onSample(v, b, !!m);
 }
 function onSummaryPacket(e) { onSummary(parseSummary(e.target.value)); }
-
 async function connectBle() {
   if (!navigator.bluetooth) { log(bluetoothMissing()); return; }
   let device;
-  try {
-    device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SVC] }, { namePrefix: 'BreathPatch' }], optionalServices: [SVC] });
-  } catch (err) {
-    log(err && err.name === 'NotFoundError' ? 'No patch chosen. If BreathPatch did not appear, check it is switched on and not connected to another phone or laptop.' : 'Bluetooth: ' + (err && err.message ? err.message : err));
-    return;
-  }
+  try { device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SVC] }, { namePrefix: 'BreathPatch' }], optionalServices: [SVC] }); }
+  catch (err) { log(err && err.name === 'NotFoundError' ? 'No patch chosen. If BreathPatch did not appear, check it is switched on and not connected to another phone or laptop.' : 'Bluetooth: ' + (err && err.message ? err.message : err)); return; }
   stopSource();
   bleDevice = device; bleWanted = true; bleAttempt = 0;
   if (!device.__bpWatched) { device.addEventListener('gattserverdisconnected', () => onBleDropped(device)); device.__bpWatched = true; }
@@ -1573,8 +1486,7 @@ async function bleAttachInner(device, first) {
   try {
     const server = await device.gatt.connect();
     const svc = await server.getPrimaryService(SVC);
-    const sum = await svc.getCharacteristic(CH_SUM);
-    const wav = await svc.getCharacteristic(CH_WAVE);
+    const sum = await svc.getCharacteristic(CH_SUM), wav = await svc.getCharacteristic(CH_WAVE);
     let info = {};
     try { const c = await svc.getCharacteristic(CH_INFO); info = parseInfo(new TextDecoder().decode(await c.readValue())); } catch (_) {}
     if (!bleWanted || bleDevice !== device) { try { device.gatt.disconnect(); } catch (_) {} return false; }
@@ -1582,8 +1494,7 @@ async function bleAttachInner(device, first) {
     lastSeq = null; playRate = 1;
     wav.oncharacteristicvaluechanged = onWavePacket;
     sum.oncharacteristicvaluechanged = onSummaryPacket;
-    await wav.startNotifications();
-    await sum.startNotifications();
+    await wav.startNotifications(); await sum.startNotifications();
     source = { kind: 'ble', device, stop: () => { try { device.gatt.disconnect(); } catch (_) {} } };
     bleAttempt = 0;
     setConn(device.name || 'BreathPatch', true);
@@ -1593,11 +1504,7 @@ async function bleAttachInner(device, first) {
     return true;
   } catch (err) { log('Bluetooth: ' + (err && err.message ? err.message : err)); return false; }
 }
-function onBleDropped(device) {
-  if (!bleWanted || bleDevice !== device || bleBusy) return;
-  if (source && source.kind === 'ble') source = null;
-  scheduleReconnect();
-}
+function onBleDropped(device) { if (!bleWanted || bleDevice !== device || bleBusy) return; if (source && source.kind === 'ble') source = null; scheduleReconnect(); }
 function scheduleReconnect() {
   if (!bleWanted || !bleDevice) return;
   clearTimeout(bleRetry);
@@ -1605,7 +1512,7 @@ function scheduleReconnect() {
   bleAttempt++;
   setConn('Link lost, retrying in ' + delay + ' s', false);
   $('dot').className = 'dot stale';
-  $('rr').textContent = '--'; $('state').textContent = 'No link'; $('state').className = 'state';
+  $('rr').textContent = '–'; $('state').textContent = 'No link'; $('state').className = 'state';
   $('btnStop').disabled = false;
   if (bleAttempt === 1) log('Bluetooth link lost. Reconnecting automatically. Keep the patch switched on and within a few metres.');
   const device = bleDevice;
@@ -1639,9 +1546,7 @@ async function connectUsb() {
       while ((nl = buf.indexOf('\n')) >= 0) {
         const r = parseLine(buf.slice(0, nl)); buf = buf.slice(nl + 1);
         if (!r) continue;
-        if (r.type === 'S') onSample(r.v, r.breath, r.motion);
-        else if (r.type === 'R') onSummary(r.s);
-        else if (r.type === 'msg') log('Patch: ' + r.text);
+        if (r.type === 'S') onSample(r.v, r.breath, r.motion); else if (r.type === 'R') onSummary(r.s); else if (r.type === 'msg') log('Patch: ' + r.text);
       }
     }
   } catch (err) { if (reading) log('USB connection lost: ' + (err.message || err)); }
@@ -1664,7 +1569,7 @@ function startDemo() {
   t0 = performance.now() - made / FS / playRate * 1000;
   source = { kind: 'demo', stop: () => clearInterval(timer) };
   setConn('Demo, simulated data', true);
-  log('Demo: movement at 2:00, a pause at 3:20, weaker breathing at 5:00, irregular rhythm at 5:35, waxing and waning breathing from 7:00. Choose 20× under More to watch it in under a minute.');
+  log('Demo: movement at 2:00, a pause at 3:20, weaker breathing at 5:00, irregular rhythm at 5:35, waxing and waning from 7:00.');
 }
 function ingest(total, nextSample, label, onDone) {
   const token = {};
@@ -1686,10 +1591,7 @@ function ingest(total, nextSample, label, onDone) {
   };
   setTimeout(step, 0);
 }
-function wallFromName(name) {
-  const m = /(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})/.exec(name);
-  return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime() : null;
-}
+function wallFromName(name) { const m = /(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})/.exec(name); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime() : null; }
 async function openRecording(file) {
   let text;
   try { text = await file.text(); } catch (err) { log('Could not read the file: ' + (err.message || err)); return; }
@@ -1699,31 +1601,20 @@ async function openRecording(file) {
   stopSource();
   const wall = wallFromName(file.name);
   resetSession(wall || Date.now());
-  ingest(lines.length - 1, k => {
-    const line = lines[k + 1]; if (!line) return null;
-    const p = line.split(','), v = parseFloat(p[iv]);
-    return fin(v) ? { v, breath: p[ib] === '1', motion: im >= 0 && p[im] === '1' } : null;
-  }, file.name, () => log('Analysed ' + file.name + ': ' + clock(analytics.t) + ', ' + analytics.breaths.length + ' breaths.'));
+  ingest(lines.length - 1, k => { const line = lines[k + 1]; if (!line) return null; const p = line.split(','), v = parseFloat(p[iv]); return fin(v) ? { v, breath: p[ib] === '1', motion: im >= 0 && p[im] === '1' } : null; },
+    file.name, () => log('Analysed ' + file.name + ': ' + clock(analytics.t) + ', ' + analytics.breaths.length + ' breaths.'));
 }
 function simulateNight() {
   stopSource();
   const d = new Date(); d.setDate(d.getDate() - 1); d.setHours(22, 40, 0, 0);
   resetSession(d.getTime());
   const gen = new NightGenerator(FS, 'breathing', (Math.random() * 1e9) >>> 0);
-  ingest(Math.round(gen.duration * FS), () => gen.next(), 'simulated night', () => {
-    const t = gen.truth();
-    log('Simulated night with ' + t.events + ' scripted breathing events. Browse the timeline and the review list.');
-  });
+  ingest(Math.round(gen.duration * FS), () => gen.next(), 'simulated night', () => log('Simulated night with ' + gen.truth().events + ' scripted breathing events. The bloom holds the last 610 breaths; Review has the whole night.'));
 }
-function stopSource() {
-  bleWanted = false; clearTimeout(bleRetry);
-  if (source) { const s = source; source = null; s.stop(); }
-  setConn('Not connected', false);
-  $('devText').textContent = '';
-}
-function setConn(text, live) { $('connText').textContent = text; $('dot').className = 'dot' + (live ? ' live' : ''); $('connText').parentNode.classList.toggle('live', !!live); $('btnStop').disabled = !live; }
+function stopSource() { bleWanted = false; clearTimeout(bleRetry); if (source) { const s = source; source = null; s.stop(); } setConn('Not connected', false); $('devText').textContent = ''; }
+function setConn(text, live) { $('connText').textContent = text; $('connPill').classList.toggle('live', !!live); $('dot').className = 'dot'; $('btnStop').disabled = !live; }
 
-// ---------------------------------------------------------------- drawing helpers
+// ---------------------------------------------------------------- helpers
 function fit(cv) {
   const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
@@ -1732,277 +1623,412 @@ function fit(cv) {
 function epochLabelAt(t) { const e = review.epochAt(t); return e ? e.label : null; }
 function wallClock(t) { const d = new Date(sessionWall + t * 1000), p = n => String(n).padStart(2, '0'); return p(d.getHours()) + ':' + p(d.getMinutes()); }
 const tlTime = t => (analytics.t > 1200 ? wallClock(t) : clock(t));
-
-// live waveform with the quality ribbon underneath
+const nowSignal = () => wave[(head - 1 + N) % N];
 let scale = 4;
-function drawWave() {
-  const [ctx, w, h] = fit($('wave'));
+function updateScale() {
+  let peak = 0; const n = Math.round(30 * FS);
+  for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(wave[(head - 1 - i + N) % N]));
+  const target = Math.max(1, peak * 1.15); scale += (target - scale) * (target > scale ? 0.2 : 0.02);
+}
+
+// ---------------------------------------------------------------- A: the breath bloom
+// Vogel's model of a sunflower head: seed k sits at radius c * sqrt(k) and angle k * 137.5 degrees.
+// k = 0 is the newest breath, so the head grows from the centre outwards, one seed per breath.
+const SEEDS = 610;   // a Fibonacci number: about 45 minutes of breathing
+const seedsCache = { n: -1, list: [] };
+let bloomShift = 1, bloomGeom = null, hoverSeed = null, bloomFill = 144;
+function seedList() {
+  const B = analytics.breaths;
+  if (seedsCache.n === B.length && seedsCache.e === review.epochs.length) return seedsCache.list;
+  if (B.length !== seedsCache.n && seedsCache.n >= 0) bloomShift = 0;      // a new breath: glide every seed one place outwards
+  const pauses = new Map(); for (const [ev, info] of review.pauseInfo) pauses.set(ev, info);
+  const list = [];
+  for (let k = B.length - 1; k >= 0 && list.length < SEEDS; k--) {
+    const b = B[k], ep = review.epochAt(b.t);
+    let kind = 'good';
+    if (b.pause) kind = b.event && pauses.has(b.event) && pauses.get(b.event).confidence === 'uncertain' ? 'pauseU' : 'pause';
+    else if (ep && ep.irregular) kind = 'irregular';
+    else if (ep && ep.label !== 'good') kind = ep.label === 'uncertain' ? 'uncertain' : 'noisy';
+    list.push({ b, kind, size: b.pause ? 1.6 : Math.max(0.3, Math.min(1.7, fin(b.rel) ? b.rel : 1)) });
+  }
+  seedsCache.n = B.length; seedsCache.e = review.epochs.length; seedsCache.list = list;
+  return list;
+}
+function drawBloom(dt) {
+  const cv = $('bloom'), [ctx, w, h] = fit(cv);
   ctx.clearRect(0, 0, w, h);
-  const secs = +$('win').value, n = Math.min(N, Math.round(secs * FS)), padL = 12, padR = 12, padT = 22, ribbon = 8, padB = 26;
-  const pw = w - padL - padR, ph = h - padT - padB - ribbon - 8, mid = padT + ph / 2;
-  let peak = 0; for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(wave[(head - 1 - i + N) % N]));
-  const target = Math.max(1, peak * 1.2); scale += (target - scale) * (target > scale ? 0.2 : 0.02);
-  const y = v => mid - (v / scale) * (ph / 2), x = i => padL + pw - (i / (n - 1)) * pw;
-  ctx.strokeStyle = 'rgba(255, 255, 255, .28)'; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
-  for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(padL, mid + k * ph / 4); ctx.lineTo(w - padR, mid + k * ph / 4); ctx.stroke(); }
-  ctx.setLineDash([]);
-  ctx.fillStyle = 'rgba(90, 90, 90, .35)';
-  for (let i = 0; i < n;) { if (still[(head - 1 - i + N) % N]) { i++; continue; } let j = i; while (j < n && !still[(head - 1 - j + N) % N]) j++; ctx.fillRect(x(j - 1), padT, x(i) - x(j - 1) + 1, ph); i = j; }
-  ctx.strokeStyle = 'rgba(63, 224, 143, .28)';
-  for (let i = 0; i < n; i++) if (marks[(head - 1 - i + N) % N]) { const xx = x(i); ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, padT + ph); ctx.stroke(); }
-  const g = ctx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, 'rgba(63, 224, 143, .15)'); g.addColorStop(0.35, C.breath); g.addColorStop(1, '#c8ffe0');
+  const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 * 0.93;
+  updateScale();
+  const live = source && analytics.n ? Math.max(-1, Math.min(1, nowSignal() / scale)) : 0;
+  const rc = R * 0.33, r0 = rc * 1.14;
+  // the head fills the field as it grows: spacing eases from a 144-seed head to the full 610
+  const list = seedList(), want = Math.max(144, Math.min(SEEDS, list.length * 1.15));
+  bloomFill += (want - bloomFill) * Math.min(1, dt * 1.5);
+  const c = (R - r0) / Math.sqrt(bloomFill);
+  bloomGeom = { cx, cy, r0, c, rc };
+  bloomShift = Math.min(1, bloomShift + dt / 0.7);
+  const e = 1 - Math.pow(1 - bloomShift, 3);
+  // faint growth rings at Fibonacci counts
+  ctx.strokeStyle = 'rgba(255, 255, 255, .05)'; ctx.lineWidth = 1;
+  for (const k of [21, 89, 233, 610]) { if (k > bloomFill * 1.05) continue; ctx.beginPath(); ctx.arc(cx, cy, r0 + c * Math.sqrt(k), 0, 2 * Math.PI); ctx.stroke(); }
+  // seeds
+  const col = { good: C.breath, irregular: C.irregular, uncertain: C.uncertain, noisy: C.noisy, pause: C.pause, pauseU: C.uncertain };
+  for (let k = list.length - 1; k >= 0; k--) {
+    const s = list[k], p = k - (1 - e);
+    const pp = Math.max(p, 0), rad = r0 + c * Math.sqrt(pp + 0.5), ang = pp * GOLDEN_ANGLE - Math.PI / 2;
+    const x = cx + rad * Math.cos(ang), y = cy + rad * Math.sin(ang);
+    const grow = p < 0 ? e : 1, age = 1 - Math.min(1, k / SEEDS) * 0.55;
+    const sr = c * 0.46 * Math.pow(s.size, 0.75) * grow;
+    s.x = x; s.y = y; s.r = Math.max(sr, 3);
+    ctx.globalAlpha = (s.kind === 'good' ? 0.85 : 1) * age;
+    ctx.fillStyle = col[s.kind];
+    if (s.kind === 'pause' || s.kind === 'pauseU') { ctx.lineWidth = Math.max(1.5, c * 0.12); ctx.strokeStyle = col[s.kind]; ctx.beginPath(); ctx.arc(x, y, sr, 0, 2 * Math.PI); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, sr * 0.35, 0, 2 * Math.PI); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(x, y, sr, 0, 2 * Math.PI); ctx.fill(); }
+    if (hoverSeed === s) { ctx.globalAlpha = 1; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, sr + 4, 0, 2 * Math.PI); ctx.stroke(); }
+  }
+  ctx.globalAlpha = 1;
+  // the living core: swells with the breath, ringed by the signal quality
+  const q = review.provisional() || (review.epochs.length ? review.epochs[review.epochs.length - 1] : null);
+  const qc = q ? QCOL[q.label]() : C.line;
+  const rLive = rc * (0.92 + 0.08 * live);
+  const g = ctx.createRadialGradient(cx, cy, rLive * 0.2, cx, cy, rLive * 1.25);
+  g.addColorStop(0, 'rgba(63, 224, 143, ' + (0.10 + 0.08 * Math.max(0, live)) + ')'); g.addColorStop(1, 'rgba(63, 224, 143, 0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, rLive * 1.25, 0, 2 * Math.PI); ctx.fill();
+  ctx.fillStyle = '#060606'; ctx.beginPath(); ctx.arc(cx, cy, rLive, 0, 2 * Math.PI); ctx.fill();
+  ctx.strokeStyle = qc; ctx.lineWidth = 3; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.arc(cx, cy, rLive, 0, 2 * Math.PI); ctx.stroke(); ctx.globalAlpha = 1;
+  // the last breath marker: a ripple from the core
+  const since = (performance.now() - lastMarkAt) / 1000;
+  if (since < 1.6 && !matchMedia('(prefers-reduced-motion: reduce)').matches) { ctx.strokeStyle = 'rgba(63, 224, 143, ' + (0.5 * (1 - since / 1.6)) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, rLive + since * rc * 0.35, 0, 2 * Math.PI); ctx.stroke(); }
+  if (!analytics.n) { ctx.fillStyle = C.faint; ctx.font = '15px ' + C.font; ctx.textAlign = 'center'; ctx.fillText('Connect the patch, or play the demo from More', cx, cy + rc + 40); }
+}
+function seedAt(px, py) {
+  let best = null, bd = Infinity;
+  for (const s of seedsCache.list) { if (s.x === undefined) continue; const d = Math.hypot(s.x - px, s.y - py); if (d < Math.max(10, s.r + 4) && d < bd) { bd = d; best = s; } }
+  return best;
+}
+function seedText(s) {
+  const b = s.b, what = { good: 'Breath', irregular: 'Breath, irregular stretch', uncertain: 'Breath, uncertain signal', noisy: 'Breath, noisy signal', pause: 'Pause, confirmed', pauseU: 'Pause, uncertain' }[s.kind];
+  return '<b>' + what + '</b> at ' + tlTime(b.t) + '<br>' + (b.pause ? 'No breath for ' + b.ibi.toFixed(0) + ' s' : 'Interval ' + b.ibi.toFixed(1) + ' s, depth ' + (fin(b.rel) ? Math.round(100 * b.rel) + ' %' : '--'));
+}
+$('bloom').addEventListener('pointermove', e => {
+  const r = $('bloom').getBoundingClientRect(), s = seedAt(e.clientX - r.left, e.clientY - r.top);
+  hoverSeed = s;
+  const tip = $('tip');
+  if (!s) { tip.hidden = true; $('bloom').style.cursor = 'default'; return; }
+  $('bloom').style.cursor = 'pointer';
+  tip.innerHTML = seedText(s); tip.style.left = s.x + 'px'; tip.style.top = (s.y - s.r) + 'px'; tip.hidden = false;
+});
+$('bloom').addEventListener('pointerleave', () => { hoverSeed = null; $('tip').hidden = true; });
+$('bloom').addEventListener('click', e => {
+  const r = $('bloom').getBoundingClientRect(), s = seedAt(e.clientX - r.left, e.clientY - r.top);
+  if (!s) return;
+  const b = s.b;
+  selected = b.pause && b.event ? { kind: 'pause', t0: b.event.start, t1: b.event.start + b.event.dur, title: s.kind === 'pauseU' ? 'Pause, uncertain' : 'Pause, confirmed', sub: '' }
+                               : { kind: 'breath', t0: Math.max(0, b.t - b.ibi), t1: b.t, title: { irregular: 'Breath in an irregular stretch', uncertain: 'Breath, uncertain signal', noisy: 'Breath, noisy signal' }[s.kind] || 'Breath',
+                                   sub: 'interval ' + b.ibi.toFixed(1) + ' s, depth ' + (fin(b.rel) ? Math.round(100 * b.rel) + ' %' : '--') + ' of the usual breath' };
+  openSheet('breath', s);
+});
+
+// ---------------------------------------------------------------- B, C: live amplitude wave and the breath cycle ring
+function drawAmpWave() {
+  const [ctx, w, h] = fit($('ampWave')); ctx.clearRect(0, 0, w, h);
+  const n = Math.round(20 * FS), top = h * 0.42, bot = h - 8, mid = (top + bot) / 2, amp = (bot - top) / 2;
+  const x = i => w - (i / (n - 1)) * w, y = v => mid - Math.max(-1, Math.min(1, v / scale)) * amp;
   const path = new Path2D();
-  for (let i = 0; i < n; i++) { const v = wave[(head - 1 - i + N) % N], yy = y(Math.max(-scale, Math.min(scale, v))); i ? path.lineTo(x(i), yy) : path.moveTo(x(i), yy); }
-  const fill = new Path2D(path); fill.lineTo(x(n - 1), padT + ph); fill.lineTo(x(0), padT + ph); fill.closePath();
-  const fg = ctx.createLinearGradient(0, padT, 0, padT + ph); fg.addColorStop(0, 'rgba(63, 224, 143, .45)'); fg.addColorStop(1, 'rgba(63, 224, 143, .02)');
-  ctx.fillStyle = fg; ctx.fill(fill);
-  ctx.save(); ctx.shadowColor = 'rgba(63, 224, 143, .6)'; ctx.shadowBlur = 10;
-  ctx.strokeStyle = g; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.stroke(path); ctx.restore();
-  const ry = padT + ph + 8, tNow = analytics.t - queue.length / FS;   // the screen runs behind the data by the playout queue
-  const prov = liveProv ? liveProv.label : null, open0 = review.epochs.length * RV.EPOCH_S;
-  for (let i = 0; i < n; i += 4) {
-    const t = tNow - i / FS, lab = t >= open0 ? prov : epochLabelAt(t);   // the open epoch uses the provisional grade
-    ctx.fillStyle = lab ? QCOL[lab]() : C.line;
-    ctx.fillRect(x(Math.min(n - 1, i + 4)), ry, x(i) - x(Math.min(n - 1, i + 4)) + 0.6, ribbon);
+  for (let i = 0; i < n; i++) { const v = wave[(head - 1 - i + N) % N]; i ? path.lineTo(x(i), y(v)) : path.moveTo(x(i), y(v)); }
+  const fillP = new Path2D(path); fillP.lineTo(0, bot); fillP.lineTo(w, bot); fillP.closePath();
+  const g = ctx.createLinearGradient(0, top, 0, bot); g.addColorStop(0, 'rgba(63, 224, 143, .42)'); g.addColorStop(1, 'rgba(63, 224, 143, .02)');
+  ctx.fillStyle = g; ctx.fill(fillP);
+  ctx.save(); ctx.shadowColor = 'rgba(63, 224, 143, .6)'; ctx.shadowBlur = 8; ctx.strokeStyle = C.breath; ctx.lineWidth = 2; ctx.stroke(path); ctx.restore();
+}
+function drawCycle(L) {
+  const [ctx, w, h] = fit($('cycle')); ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, cy = h * 0.53, R = Math.min(w, h) * 0.33;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = Math.max(4, R * 0.09); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+  const ti = fin(L.ti) && fin(L.te) ? L.ti / (L.ti + L.te) : NaN;
+  if (fin(ti)) {
+    ctx.strokeStyle = C.breath; ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + ti * 2 * Math.PI); ctx.stroke();
+    ctx.strokeStyle = 'rgba(63, 224, 143, .35)'; ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2 + ti * 2 * Math.PI + 0.08, 1.5 * Math.PI - 0.08); ctx.stroke();
   }
-  ctx.fillStyle = C.faint; ctx.font = '12px ' + C.ui; ctx.textBaseline = 'top';
-  ctx.textAlign = 'right'; ctx.fillText('now', w - padR, ry + ribbon + 6);
-  ctx.textAlign = 'left'; ctx.fillText(secs + ' s ago', padL, ry + ribbon + 6);
-  ctx.textAlign = 'right'; ctx.fillText('±' + scale.toFixed(scale < 10 ? 1 : 0) + ' mg', w - padR, 5);
-  if (!analytics.n) { ctx.fillStyle = C.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '15px ' + C.ui; ctx.fillText('Connect the patch, or play the demo from More', padL + pw / 2, mid); }
+  // a dot runs round the ring once per typical breath, restarting at every detected breath
+  const ibi = analytics.medIbi(), ph = ((performance.now() - lastMarkAt) / 1000 * playRate) / Math.max(1, ibi);
+  if (source && lastMarkAt && ph < 1.6) {
+    const a = -Math.PI / 2 + Math.min(ph, 1) * 2 * Math.PI;
+    ctx.fillStyle = ph > 1.15 ? C.uncertain : '#fff';
+    ctx.beginPath(); ctx.arc(cx + R * Math.cos(a), cy + R * Math.sin(a), Math.max(4, R * 0.075), 0, 2 * Math.PI); ctx.fill();
+  }
 }
 
-function drawSpark(cv, pts, color, lo, hi, opts = {}) {
+// ---------------------------------------------------------------- the golden spiral overlay
+// Quarter circles through the golden squares: A, then B, C, D, E, F, each 1.618 times smaller.
+function fitGolden() {
+  const g = $('golden');
+  if (getComputedStyle($('spiral')).display === 'none') { g.style.width = ''; return; }
+  const avail = window.innerHeight - (g.getBoundingClientRect().top + window.scrollY) - 64;
+  g.style.width = Math.max(560, Math.min(g.parentNode.clientWidth, avail * PHI)) + 'px';
+}
+function layoutSpiral() {
+  const g = $('golden'), svg = $('spiral');
+  if (getComputedStyle(svg).display === 'none') return;
+  const W = g.clientWidth, H = g.clientHeight, u = H;   // one unit = the height of square A
+  const P = (x, y) => (x * u).toFixed(1) + ' ' + (y * u).toFixed(1);
+  const a = 1 / PHI, b = a * a, c3 = b * a, d = c3 * a, e5 = d * a;
+  const arcs = [
+    [1, P(0, 1), P(1, 0)],                       // A: from bottom left to top right, centre bottom right
+    [a, P(1, 0), P(PHI, a)],                     // B
+    [b, P(PHI, a), P(PHI - b, 1)],               // C
+    [c3, P(PHI - b, 1), P(1, 1 - c3)],           // D
+    [d, P(1, 1 - c3), P(1 + d, a)],              // E
+    [e5, P(1 + d, a), P(1 + d + e5, a + e5)]     // F
+  ];
+  let path = 'M ' + arcs[0][1];
+  for (const [r, , to] of arcs) path += ` A ${(r * u).toFixed(1)} ${(r * u).toFixed(1)} 0 0 1 ${to}`;
+  $('spiralPath').setAttribute('d', path);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  spiralLen = $('spiralPath').getTotalLength();
+}
+let spiralLen = 0;
+function moveSpark() {
+  if (!spiralLen || !source || !analytics.n) { $('spark').setAttribute('opacity', 0); return; }
+  // breathing in carries the spark outwards along the spiral, breathing out brings it back
+  const v = Math.max(-1, Math.min(1, nowSignal() / scale)), s = 0.10 + 0.08 * v;
+  const p = $('spiralPath').getPointAtLength((1 - s) * spiralLen);
+  const sp = $('spark'); sp.setAttribute('cx', p.x); sp.setAttribute('cy', p.y); sp.setAttribute('opacity', 0.9);
+}
+
+// ---------------------------------------------------------------- tiles
+function renderTiles() {
+  const L = review.live(), S = review.summary(), q = L.now || L.quality;
+  $('liveQ').textContent = q ? QTEXT[q.label] + (q.why && q.label !== 'good' ? ', ' + q.why : '') : 'Signal quality appears after 10 s';
+  $('liveQ').style.color = q ? QCOL[q.label]() : '';
+  $('aVal').innerHTML = fin(L.rel) ? Math.round(100 * L.rel) + '<small>%</small>' : '--';
+  $('aSub').textContent = 'variability ' + (L.win ? pct(L.win.ampCv) : '--');
+  $('tVal').innerHTML = fin(L.ibi) ? L.ibi.toFixed(1) + '<small>s</small>' : '--';
+  $('tSub').textContent = fin(L.ti) ? 'in ' + L.ti.toFixed(1) + ' s, out ' + L.te.toFixed(1) + ' s' : 'between breaths';
+  const P = S.pauses, m = analytics.metrics();
+  const livePause = fin(m.currentPause) && m.currentPause >= 5 && source && source.kind !== 'file';
+  $('pVal').textContent = livePause ? Math.round(m.currentPause + analytics.medIbi()) + 's' : P.confirmed;
+  $('pSub').textContent = livePause ? 'no breath now' : P.n ? (P.uncertain ? P.uncertain + ' uncertain' : 'all confirmed') : 'none yet';
+  document.querySelector('.tD').classList.toggle('alarm', !!livePause);
+  const cur = L.quality;
+  if (cur && cur.win) { $('iVal').textContent = cur.irregular ? 'Irregular' : 'Regular'; $('iVal').style.color = cur.irregular ? C.pause : C.breath; }
+  else { $('iVal').textContent = '--'; $('iVal').style.color = ''; }
+  const nItems = items().length;
+  $('fVal').textContent = nItems;
+  $('fVal').style.color = nItems ? C.fg : C.faint;
+  return L;
+}
+
+// ---------------------------------------------------------------- detail sheets
+const sheetEl = $('sheet');
+function openSheet(kind, extra) {
+  sheetKind = kind; listFilter = { pauses: 'pause', pattern: 'irregular' }[kind] || 'all'; lastListKey = '';
+  if (kind !== 'breath' && kind !== 'session' && kind !== 'pauses' && kind !== 'pattern') selected = null;
+  const titles = { rate: 'Respiratory rate', amp: 'Amplitude and variability', timing: 'Timing', pauses: 'Pauses', pattern: 'Breathing pattern', session: 'Session review', breath: 'Breath' };
+  $('sheetTitle').textContent = titles[kind];
+  $('sbody').innerHTML = sheetHtml(kind);
+  if ($('polarity')) { $('polarity').value = analytics.polarity; $('polarity').addEventListener('change', e => { analytics.polarity = e.target.value; renderSheet(true); }); }
+  for (const [id, fn] of Object.entries(EXPORTS)) if ($(id)) $(id).addEventListener('click', fn);
+  if ($('filters')) $('filters').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; listFilter = b.dataset.f; for (const x of $('filters').children) x.classList.toggle('on', x === b); renderList(true); });
+  if ($('revList')) {
+    $('revList').addEventListener('click', e => { const el = e.target.closest('.item'); if (el) select($('revList').__items[+el.dataset.k]); });
+    $('revList').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('item')) { e.preventDefault(); select($('revList').__items[+e.target.dataset.k]); } });
+  }
+  if ($('tl')) $('tl').addEventListener('click', onTimelineClick);
+  $('scrim').hidden = false; sheetEl.classList.add('open'); sheetEl.setAttribute('aria-hidden', 'false');
+  $('sheetClose').focus();
+  renderSheet(true);
+}
+function closeSheet() { sheetKind = null; sheetEl.classList.remove('open'); sheetEl.setAttribute('aria-hidden', 'true'); $('scrim').hidden = true; }
+function fact(v, k, id) { return `<div class="fact"><div class="v" ${id ? 'id="' + id + '"' : ''}>${v}</div><div class="k">${k}</div></div>`; }
+const LISTBLOCK = (filters) => (filters ? `<div class="filters" id="filters"><button type="button" class="on" data-f="all">All</button><button type="button" data-f="pause">Pauses</button><button type="button" data-f="irregular">Irregular</button><button type="button" data-f="signal">Unclear signal</button></div>` : '') +
+  `<div class="list" id="revList"></div><div class="snaptitle" id="snapTitle">Select an item to see its waveform</div><canvas class="c-snap" id="snap"></canvas>`;
+function sheetHtml(kind) {
+  switch (kind) {
+    case 'rate': return `<div class="facts" id="sFacts"></div><p class="note">Rate over the session, from usable signal only. The strip under the line is the signal quality.</p><canvas class="c-trend" id="sTrend"></canvas><div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xRate">Rate per minute</button></div>`;
+    case 'amp': return `<div class="facts" id="sFacts"></div><p class="note">The last 60 breaths, compared with this person's usual breath (dashed line at 100 %).</p><canvas class="c-bars" id="sBars"></canvas><p class="note">Relative amplitude across the session, every 5 minutes.</p><canvas class="c-trend" id="sTrend"></canvas>`;
+    case 'timing': return `<div class="facts" id="sFacts"></div><div class="split" aria-hidden="true"><i class="ti" id="tiBar" style="width:0"></i><i class="te" id="teBar" style="width:0"></i></div><p class="note" id="tNote"></p><label class="note">Breathing in shows as <select id="polarity"><option value="auto">auto</option><option value="rise">upward stroke</option><option value="fall">downward stroke</option></select></label><p class="note">Interval between the last 60 breaths.</p><canvas class="c-bars" id="sBars"></canvas><div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xBreaths">Breath table</button></div>`;
+    case 'pauses': return `<div class="facts" id="sFacts"></div>${LISTBLOCK(false)}<div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xPauses">Pauses</button></div>`;
+    case 'pattern': return `<div class="facts" id="sFacts"></div><div class="meter" aria-hidden="true"><span class="th"></span><span class="mark" id="iMark"></span></div><div class="chips" id="iWhy"></div><p class="note">Timing, amplitude and waveform shape against this person's own calm breathing. Only assessed on good signal.</p>${LISTBLOCK(false)}<div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xEpochs">Signal quality</button></div>`;
+    case 'session': return `<canvas class="c-tl" id="tl"></canvas>${LISTBLOCK(true)}<div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xRate">Rate per minute</button><button type="button" id="xBreaths">Breath table</button><button type="button" id="xPauses">Pauses</button><button type="button" id="xReview">Review list</button><button type="button" id="xEpochs">Signal quality</button></div>`;
+    case 'breath': return `<div class="snaptitle" id="snapTitle"></div><canvas class="c-snap" id="snap"></canvas><p class="note">The highlighted stretch is the breath or pause you tapped. Breath markers are the faint vertical lines.</p>`;
+  }
+  return '';
+}
+function renderSheet(force) {
+  if (!sheetKind) return;
+  const L = review.live(), S = review.summary();
+  const set = html => { if ($('sFacts')) $('sFacts').innerHTML = html; };
+  if (sheetKind === 'rate') {
+    const r = session.rates; let lo = Infinity, hi = -Infinity; for (const v of r) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+    set(fact($('rr').textContent, 'now') + fact(r.length ? (r.reduce((a, b) => a + b, 0) / r.length).toFixed(1) : '--', 'session mean') + fact(r.length ? Math.round(lo) + '–' + Math.round(hi) : '--', 'range') + fact(S.epochs ? Math.round(100 * (S.share.good + S.share.uncertain)) + '<small>%</small>' : '--', 'measurable'));
+    drawSeries($('sTrend'), review.epochs.map(e => ({ t: (e.t0 + e.t1) / 2, v: e.rr })), 0, 40, C.breath, true);
+  } else if (sheetKind === 'amp') {
+    set(fact(fin(L.rel) ? Math.round(100 * L.rel) + '<small>%</small>' : '--', 'last breath') + fact(L.win ? pct(L.win.ampCv) : '--', 'variability, 2 min') + fact(pct(S.amp.relMedian), 'session median') + fact(pct(S.amp.relP10), 'weakest 10 %'));
+    drawBars($('sBars'), analytics.breaths.filter(b => !b.pause && fin(b.rel)).slice(-60), b => b.rel, 1.6, 1);
+    drawSeries($('sTrend'), review.trend().map(p => ({ t: (p.t0 + p.t1) / 2, v: p.amp })), 0, 1.6, C.label, false);
+  } else if (sheetKind === 'timing') {
+    set(fact(fin(L.ibi) ? L.ibi.toFixed(1) + '<small>s</small>' : '--', 'last interval') + fact(L.win ? pct(L.win.ibiCv) : '--', 'variability, 2 min') + fact(L.win && fin(L.win.rmssd) ? L.win.rmssd.toFixed(2) + '<small>s</small>' : '--', 'RMSSD') + fact(fin(L.ti) ? L.ti.toFixed(1) + ' / ' + L.te.toFixed(1) + '<small>s</small>' : '--', 'in / out'));
+    if (fin(L.ti) && fin(L.te)) { const tot = L.ti + L.te; $('tiBar').style.width = (100 * L.ti / tot) + '%'; $('teBar').style.width = (100 * L.te / tot) + '%'; $('tNote').textContent = 'Breathing in takes ' + Math.round(100 * L.ti / tot) + ' % of each breath. From clean breaths only: ' + (fin(L.timingShare) ? Math.round(100 * L.timingShare) + ' %' : '--') + ' of recent breaths qualified.'; }
+    else { $('tiBar').style.width = '0'; $('teBar').style.width = '0'; $('tNote').textContent = 'In and out times need 3 clean breaths in the last 2 minutes.'; }
+    const B = analytics.breaths.filter(b => !b.pause).slice(-60), med = analytics.medIbi();
+    drawBars($('sBars'), B, b => b.ibi / med, 2, 1);
+  } else if (sheetKind === 'pauses') {
+    const P = S.pauses;
+    set(fact(P.confirmed, 'confirmed') + fact(P.uncertain, 'uncertain') + fact(S.usableHours >= 0.25 && fin(P.perHour) ? P.perHour.toFixed(1) : '--', 'per hour') + fact(fin(P.longest) ? P.longest.toFixed(0) + '<small>s</small>' : '--', 'longest'));
+    renderList(force); drawSnap();
+  } else if (sheetKind === 'pattern') {
+    const q = L.quality, I = S.irregular;
+    set(fact(q && q.win ? (q.irregular ? 'Irregular' : 'Regular') : '--', 'now') + fact(pct(I.share), 'irregular time') + fact(I.segments.length, 'periods flagged') + fact(fin(I.sampEn) ? I.sampEn.toFixed(2) : '--', 'sample entropy'));
+    $('iMark').style.left = q && fin(q.irr) ? Math.min(100, Math.max(0, q.irr)) + '%' : '0%'; $('iMark').hidden = !(q && q.win);
+    $('iWhy').innerHTML = q && q.reasons.length ? q.reasons.map(x => '<span class="chip">' + x + '</span>').join('') : '';
+    renderList(force); drawSnap();
+  } else if (sheetKind === 'session') { drawTimeline(); renderList(force); drawSnap(); }
+  else if (sheetKind === 'breath') { $('snapTitle').textContent = selected ? selected.title + ' at ' + tlTime(selected.t1) + (selected.sub ? ', ' + selected.sub + '.' : '.') : ''; drawSnap(); }
+}
+function drawSeries(cv, pts, lo, hi, color, ribbon) {
+  if (!cv) return;
   const [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
-  if (pts.length < 2) return;
-  const t0 = opts.t0 ?? pts[0].x, t1 = opts.t1 ?? pts[pts.length - 1].x;
-  const x = t => (t - t0) / Math.max(1e-9, t1 - t0) * (w - 4) + 2, y = v => h - 4 - (v - lo) / Math.max(1e-9, hi - lo) * (h - 8);
-  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.beginPath();
-  let on = false;
-  for (const p of pts) { if (!fin(p.y)) { on = false; continue; } on ? ctx.lineTo(x(p.x), y(p.y)) : ctx.moveTo(x(p.x), y(p.y)); on = true; }
+  const T = Math.max(analytics.t, 60), pl = 34, pr = 12, top = 12, bot = h - (ribbon ? 34 : 24);
+  const x = t => pl + t / T * (w - pl - pr), y = v => bot - (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo) * (bot - top);
+  ctx.strokeStyle = 'rgba(255, 255, 255, .22)'; ctx.setLineDash([2, 4]); ctx.lineWidth = 1;
+  for (const v of [lo, (lo + hi) / 2, hi]) { ctx.beginPath(); ctx.moveTo(pl, y(v)); ctx.lineTo(w - pr, y(v)); ctx.stroke(); }
+  ctx.setLineDash([]); ctx.fillStyle = C.faint; ctx.font = '11px ' + C.font; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const v of [lo, hi]) ctx.fillText(hi <= 2 ? Math.round(100 * v) + '%' : v, pl - 6, y(v));
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.beginPath(); let on = false;
+  for (const p of pts) { if (!fin(p.v)) { on = false; continue; } on ? ctx.lineTo(x(p.t), y(p.v)) : ctx.moveTo(x(p.t), y(p.v)); on = true; }
   ctx.stroke();
+  if (ribbon) for (const e of review.epochs) { ctx.fillStyle = QCOL[e.label](); ctx.fillRect(x(e.t0), bot + 8, Math.max(1, x(e.t1) - x(e.t0) - 0.5), 6); }
+  ctx.fillStyle = C.faint; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(tlTime(0), pl, h - 3); ctx.textAlign = 'right'; ctx.fillText(tlTime(analytics.t), w - pr, h - 3);
+  if (!pts.some(p => fin(p.v))) { ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '13px ' + C.font; ctx.fillText('Appears after the first 30 seconds of usable signal', w / 2, h / 2); }
+}
+function drawBars(cv, B, val, max, ref) {
+  if (!cv) return;
+  const [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
+  const y = v => h - 6 - Math.min(max, v) / max * (h - 16), bw = (w - 16) / 60;
+  ctx.strokeStyle = 'rgba(255, 255, 255, .3)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(8, y(ref)); ctx.lineTo(w - 8, y(ref)); ctx.stroke(); ctx.setLineDash([]);
+  B.forEach((b, k) => { const lab = epochLabelAt(b.t), ep = review.epochAt(b.t); ctx.fillStyle = ep && ep.irregular ? C.irregular : lab === 'uncertain' ? C.uncertain : lab && lab !== 'good' ? C.noisy : C.breath; const xx = w - 8 - (B.length - k) * bw; ctx.fillRect(xx + 1, y(val(b)), Math.max(1, bw - 2), h - 6 - y(val(b))); });
+  if (!B.length) { ctx.fillStyle = C.faint; ctx.font = '13px ' + C.font; ctx.textAlign = 'center'; ctx.fillText('Waiting for breaths', w / 2, h / 2); }
 }
 
-// ---------------------------------------------------------------- the five parameters
-function conf(id, label, text) { const el = $(id); el.className = 'conf' + (label ? ' ' + label : ''); el.textContent = text; }
-function setBig(id, html, live) { const el = $(id); el.innerHTML = html; el.classList.toggle('dim', !live); }
-const pct = x => (fin(x) ? Math.round(100 * x) + ' %' : '--');
-const QTEXT = { good: 'Good signal', uncertain: 'Uncertain signal', noisy: 'Noisy signal', movement: 'Movement' };
-
-let liveProv = null;
-function renderParams() {
-  const L = review.live(), S = review.summary(), q = L.quality, qlab = q ? q.label : '';
-  liveProv = L.now;
-  const lq = L.now || q;
-  $('liveQ').textContent = lq ? QTEXT[lq.label] + (lq.why && lq.label !== 'good' ? ', ' + lq.why : '') + ' in the last 30 s' : 'Signal quality appears after 10 s';
-
-  // 1. rate extras in the hero
-  const r = session.rates;
-  $('rMean').textContent = r.length ? (r.reduce((a, b) => a + b, 0) / r.length).toFixed(1) : '--';
-  if (r.length) { let lo = Infinity, hi = -Infinity; for (const v of r) { lo = Math.min(lo, v); hi = Math.max(hi, v); } $('rRange').textContent = Math.round(lo) + '–' + Math.round(hi); } else $('rRange').textContent = '--';
-  $('rUse').innerHTML = S.epochs ? Math.round(100 * (S.share.good + S.share.uncertain)) + '<small>%</small>' : '--';
-  drawSpark($('rateSpark'), trend.map(p => ({ x: p.t, y: p.valid && p.rate > 0 ? p.rate : NaN })), C.breath, 0, 40, { t0: analytics.t - TREND_SECONDS, t1: analytics.t });
-
-  // 2. amplitude and variability
-  conf('aConf', qlab, q ? QTEXT[qlab] : 'Waiting');
-  setBig('aRel', fin(L.rel) ? Math.round(100 * L.rel) + '<small>%</small>' : '--', fin(L.rel));
-  $('aCv').textContent = L.win ? pct(L.win.ampCv) : '--';
-  $('aMed').textContent = pct(S.amp.relMedian);
-  $('aLow').textContent = pct(S.amp.relP10);
-  drawAmpBars();
-
-  // 3. timing
-  conf('tConf', fin(L.timingShare) ? (L.timingShare >= 0.6 ? 'good' : 'uncertain') : '', fin(L.timingShare) ? Math.round(100 * L.timingShare) + ' % clean breaths' : 'Waiting');
-  setBig('tIbi', fin(L.ibi) ? L.ibi.toFixed(1) + '<small>s</small>' : '--', fin(L.ibi));
-  $('tCv').textContent = L.win ? pct(L.win.ibiCv) : '--';
-  $('tRmssd').textContent = L.win && fin(L.win.rmssd) ? L.win.rmssd.toFixed(2) + ' s' : '--';
-  if (fin(L.ti) && fin(L.te)) {
-    $('tTiTe').textContent = L.ti.toFixed(1) + ' s / ' + L.te.toFixed(1) + ' s';
-    const tot = L.ti + L.te; $('tiBar').style.width = (100 * L.ti / tot).toFixed(1) + '%'; $('teBar').style.width = (100 * L.te / tot).toFixed(1) + '%';
-    $('tNote').textContent = 'Breathing in takes ' + Math.round(100 * L.ti / tot) + ' % of each breath, from clean breaths only';
-  } else {
-    $('tTiTe').textContent = 'not reliable yet'; $('tiBar').style.width = '0'; $('teBar').style.width = '0';
-    $('tNote').textContent = 'In and out times need 3 clean breaths in the last 2 minutes';
-  }
-
-  // 4. pauses
-  const P = S.pauses;
-  conf('pConf', P.uncertain ? 'uncertain' : P.n ? 'good' : '', P.n ? P.confirmed + ' confirmed, ' + P.uncertain + ' uncertain' : 'None yet');
-  setBig('pCount', String(P.confirmed), P.confirmed > 0);
-  $('pRate').textContent = S.usableHours >= 0.25 && fin(P.perHour) ? P.perHour.toFixed(1) : '--';
-  $('pLong').textContent = fin(P.longest) ? P.longest.toFixed(0) + ' s' : '--';
-  $('pUnc').textContent = P.uncertain;
-  const m = analytics.metrics();
-  $('pLive').textContent = fin(m.currentPause) && m.currentPause >= 5 && source && source.kind !== 'file' ? 'No breath for ' + Math.round(m.currentPause + analytics.medIbi()) + ' s' : '';
-
-  // 5. pattern irregularity
-  const I = S.irregular;
-  conf('iConf', qlab === 'good' ? 'good' : qlab ? 'uncertain' : '', q ? (qlab === 'good' ? 'Assessed' : 'Paused, ' + QTEXT[qlab].toLowerCase()) : 'Waiting');
-  if (q && q.win) {
-    setBig('iState', q.irregular ? 'Irregular' : 'Regular', true);
-    $('iState').style.color = q.irregular ? C.pause : C.breath;
-    $('iMark').style.left = Math.min(100, Math.max(0, q.irr)) + '%'; $('iMark').hidden = false;
-  } else { setBig('iState', '--', false); $('iState').style.color = ''; $('iMark').hidden = true; }
-  $('iWhy').innerHTML = q && q.reasons.length ? q.reasons.map(x => '<span class="chip">' + x + '</span>').join('') : '';
-  $('iShare').textContent = pct(I.share);
-  $('iSegs').textContent = I.segments.length;
-  $('iEnt').textContent = fin(I.sampEn) ? I.sampEn.toFixed(2) : '--';
-}
-
-function drawAmpBars() {
-  const [ctx, w, h] = fit($('ampBars')); ctx.clearRect(0, 0, w, h);
-  const B = analytics.breaths.filter(b => !b.pause && fin(b.rel)).slice(-40);
-  const y1 = v => h - 2 - Math.min(1.6, v) / 1.6 * (h - 6);
-  ctx.strokeStyle = C.line; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(0, y1(1)); ctx.lineTo(w, y1(1)); ctx.stroke(); ctx.setLineDash([]);
-  if (!B.length) return;
-  const bw = w / 40;
-  B.forEach((b, k) => { const lab = epochLabelAt(b.t); ctx.fillStyle = lab === 'good' || !lab ? C.breath : lab === 'uncertain' ? C.uncertain : C.noisy; const xx = w - (B.length - k) * bw; ctx.fillRect(xx + 1, y1(b.rel), Math.max(1, bw - 2), h - 2 - y1(b.rel)); });
-}
-
-// ---------------------------------------------------------------- session timeline
+// session timeline (inside the Review sheet)
 const tlGeom = {};
 function drawTimeline() {
-  const cv = $('tl'), [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
-  const T = Math.max(analytics.t, 60), padL = 100, padR = 14, pw = w - padL - padR;
-  const x = t => padL + t / T * pw;
+  const cv = $('tl'); if (!cv) return;
+  const [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
+  const T = Math.max(analytics.t, 60), padL = 96, padR = 14, pw = w - padL - padR, x = t => padL + t / T * pw;
   Object.assign(tlGeom, { T, padL, pw });
-  const lanes = [['Signal', 12], ['Rate', 62], ['Amplitude', 46], ['Pattern', 18], ['Pauses', 18]];
+  const lanes = [['Signal', 10], ['Rate', 54], ['Amplitude', 38], ['Pattern', 14], ['Pauses', 14]];
   let yy = 14; const L = {};
-  ctx.font = '13px ' + C.ui; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  ctx.font = '13px ' + C.font; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
   for (const [name, hh] of lanes) { L[name] = { y: yy, h: hh }; ctx.fillStyle = C.muted; ctx.fillText(name, 12, yy + hh / 2); yy += hh + 12; }
   for (const e of review.epochs) { ctx.fillStyle = QCOL[e.label](); ctx.fillRect(x(e.t0), L.Signal.y, Math.max(1, x(e.t1) - x(e.t0) - 0.5), L.Signal.h); }
-  const lane = (key, pts, lo, hi, color) => {
-    const Lk = L[key]; ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, Lk.y + Lk.h); ctx.lineTo(w - padR, Lk.y + Lk.h); ctx.stroke();
-    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.beginPath(); let on = false;
-    for (const p of pts) { if (!fin(p.v)) { on = false; continue; } const py = Lk.y + Lk.h - (Math.min(hi, Math.max(lo, p.v)) - lo) / (hi - lo) * Lk.h; on ? ctx.lineTo(x(p.t), py) : ctx.moveTo(x(p.t), py); on = true; }
-    ctx.stroke(); ctx.lineWidth = 1;
-  };
+  const lane = (key, pts, lo, hi, color) => { const Lk = L[key]; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.beginPath(); let on = false; for (const p of pts) { if (!fin(p.v)) { on = false; continue; } const py = Lk.y + Lk.h - (Math.min(hi, Math.max(lo, p.v)) - lo) / (hi - lo) * Lk.h; on ? ctx.lineTo(x(p.t), py) : ctx.moveTo(x(p.t), py); on = true; } ctx.stroke(); ctx.lineWidth = 1; };
   lane('Rate', review.epochs.map(e => ({ t: (e.t0 + e.t1) / 2, v: e.rr })), 0, 40, C.breath);
-  ctx.fillStyle = C.faint; ctx.font = '11px ' + C.ui; ctx.textAlign = 'right'; ctx.fillText('40', padL - 6, L.Rate.y + 5); ctx.fillText('0', padL - 6, L.Rate.y + L.Rate.h - 4);
-  lane('Amplitude', review.trend().map(p => ({ t: (p.t0 + p.t1) / 2, v: p.amp })), 0, 1.6, '#1fb5e6');
-  for (const s of review.segments) { ctx.fillStyle = C.irregular; ctx.globalAlpha = 0.85; ctx.fillRect(x(s.t0), L.Pattern.y, Math.max(2, x(s.t1) - x(s.t0)), L.Pattern.h); ctx.globalAlpha = 1; }
-  for (const [ev, info] of review.pauseInfo) {
-    ctx.fillStyle = info.confidence === 'confirmed' ? C.pause : C.uncertain;
-    ctx.beginPath(); ctx.arc(x(ev.start + ev.dur / 2), L.Pauses.y + L.Pauses.h / 2, 4.5, 0, 2 * Math.PI); ctx.fill();
-  }
-  if (selected) { ctx.fillStyle = 'rgba(255, 255, 255, .10)'; ctx.fillRect(x(selected.t0), 4, Math.max(2, x(selected.t1) - x(selected.t0)), yy - 8); }
-  ctx.fillStyle = C.faint; ctx.font = '12px ' + C.ui; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  lane('Amplitude', review.trend().map(p => ({ t: (p.t0 + p.t1) / 2, v: p.amp })), 0, 1.6, C.label);
+  for (const s of review.segments) { ctx.fillStyle = C.irregular; ctx.fillRect(x(s.t0), L.Pattern.y, Math.max(2, x(s.t1) - x(s.t0)), L.Pattern.h); }
+  for (const [ev, info] of review.pauseInfo) { ctx.fillStyle = info.confidence === 'confirmed' ? C.pause : C.uncertain; ctx.beginPath(); ctx.arc(x(ev.start + ev.dur / 2), L.Pauses.y + L.Pauses.h / 2, 4.5, 0, 2 * Math.PI); ctx.fill(); }
+  if (selected) { ctx.fillStyle = 'rgba(255, 255, 255, .10)'; ctx.fillRect(x(selected.t0), 6, Math.max(2, x(selected.t1) - x(selected.t0)), yy - 10); }
+  ctx.fillStyle = C.faint; ctx.font = '12px ' + C.font; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   const step = T > 4 * 3600 ? 3600 : T > 3600 ? 1800 : T > 1200 ? 300 : T > 300 ? 60 : 30;
   for (let t = 0; t <= T; t += step) ctx.fillText(tlTime(t), Math.min(w - padR - 16, Math.max(padL + 14, x(t))), yy - 2);
-  if (!review.epochs.length) { ctx.fillStyle = C.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '14px ' + C.ui; ctx.fillText('The session builds up here, 30 seconds at a time', padL + pw / 2, 60); }
 }
-$('tl').addEventListener('click', e => {
+function onTimelineClick(e) {
   if (!review.epochs.length) return;
   const r = $('tl').getBoundingClientRect(), t = (e.clientX - r.left - tlGeom.padL) / tlGeom.pw * tlGeom.T;
   if (!(t >= 0)) return;
   const near = items().find(it => t >= it.t0 - 10 && t <= it.t1 + 10);
   select(near || { kind: 'moment', t0: Math.max(0, t - 20), t1: Math.min(analytics.t, t + 20), title: 'Waveform', sub: '' });
-});
+}
 
-// ---------------------------------------------------------------- review list and waveform snapshot
+// review list and waveform snapshot
 function unclearRuns() {
   const out = []; let cur = null;
   for (const e of review.epochs) {
-    const bad = e.label === 'noisy' || e.label === 'uncertain';
-    if (bad) { if (cur) { cur.t1 = e.t1; cur.why.add(e.why); } else { cur = { t0: e.t0, t1: e.t1, why: new Set([e.why]), labels: new Set() }; out.push(cur); } cur.labels.add(e.label); }
+    if (e.label === 'noisy' || e.label === 'uncertain') { if (cur) { cur.t1 = e.t1; cur.why.add(e.why); } else { cur = { t0: e.t0, t1: e.t1, why: new Set([e.why]), labels: new Set() }; out.push(cur); } cur.labels.add(e.label); }
     else cur = null;
   }
   return out.filter(u => u.t1 - u.t0 >= 60);
 }
 function items() {
   const it = [];
-  for (const [ev, info] of review.pauseInfo) it.push({ kind: 'pause', t0: ev.start, t1: ev.start + ev.dur, conf: info.confidence,
-    title: info.confidence === 'confirmed' ? 'Pause, confirmed' : 'Pause, uncertain', sub: info.confidence === 'confirmed' ? 'Flat signal, clean breathing either side' : info.why });
+  for (const [ev, info] of review.pauseInfo) it.push({ kind: 'pause', t0: ev.start, t1: ev.start + ev.dur, conf: info.confidence, title: info.confidence === 'confirmed' ? 'Pause, confirmed' : 'Pause, uncertain', sub: info.confidence === 'confirmed' ? 'Flat signal, clean breathing either side' : info.why });
   for (const s of review.segments) it.push({ kind: 'irregular', t0: s.t0, t1: s.t1, title: 'Irregular pattern', sub: s.reasons.join(', ') + (fin(s.rr) ? ', about ' + Math.round(s.rr) + ' br/min' : '') });
   for (const u of unclearRuns()) it.push({ kind: 'signal', t0: u.t0, t1: u.t1, title: u.labels.has('noisy') ? 'Noisy signal' : 'Uncertain signal', sub: [...u.why].filter(Boolean).slice(0, 2).join(', ') || 'values here are less reliable' });
   return it.sort((a, b) => b.t0 - a.t0);
 }
 const KCOL = { pause: () => C.pause, irregular: () => C.irregular, signal: () => C.uncertain };
 function renderList(force) {
-  const all = items(), key = filter + ':' + all.length + ':' + all.map(i => i.t1.toFixed(0)).join(',') + ':' + (selected ? selected.t0 : '');
-  const counts = { pause: 0, irregular: 0, signal: 0 }; for (const i of all) counts[i.kind]++;
-  $('revCount').textContent = all.length ? `${counts.pause} pause${counts.pause === 1 ? '' : 's'}, ${counts.irregular} irregular, ${counts.signal} unclear` : 'Nothing yet';
+  const box = $('revList'); if (!box) return;
+  const all = items(), shown = all.filter(i => listFilter === 'all' || i.kind === listFilter);
+  const key = listFilter + ':' + shown.length + ':' + shown.map(i => i.t1.toFixed(0)).join(',') + ':' + (selected ? selected.t0 : '');
   if (!force && key === lastListKey) return;
-  lastListKey = key;
-  const shown = all.filter(i => filter === 'all' || i.kind === filter);
-  $('revList').__items = shown;
-  if (!shown.length) { $('revList').innerHTML = '<div class="empty">' + (all.length ? 'Nothing of this kind yet.' : 'Pauses, irregular periods and stretches of unclear signal will be listed here as they happen.') + '</div>'; return; }
-  $('revList').innerHTML = shown.slice(0, 300).map((i, k) => {
+  lastListKey = key; box.__items = shown;
+  if (!shown.length) { box.innerHTML = '<div class="empty">' + ({ pause: 'No pauses so far.', irregular: 'No irregular periods so far.' }[listFilter] || 'Pauses, irregular periods and unclear signal will be listed here as they happen.') + '</div>'; return; }
+  box.innerHTML = shown.slice(0, 300).map((i, k) => {
     const col = i.kind === 'pause' && i.conf !== 'confirmed' ? C.uncertain : KCOL[i.kind]();
     const sel = selected && selected.kind === i.kind && Math.abs(selected.t0 - i.t0) < 0.5 ? ' sel' : '';
-    return `<div class="item${sel}" tabindex="0" role="button" data-k="${k}"><span class="sw" style="background:${col}"></span><span class="when">${tlTime(i.t0)}</span>` +
-           `<span class="what">${i.title}<small>${i.sub || ''}</small></span><span class="dur">${clock(i.t1 - i.t0)}</span></div>`;
+    return `<div class="item${sel}" tabindex="0" role="button" data-k="${k}"><span class="sw" style="background:${col}"></span><span class="when">${tlTime(i.t0)}</span><span class="what">${i.title}<small>${i.sub || ''}</small></span><span class="dur">${clock(i.t1 - i.t0)}</span></div>`;
   }).join('');
 }
 function select(it) {
   selected = it;
-  $('snapTitle').textContent = it.title + ' at ' + tlTime(it.t0) + ', lasting ' + clock(it.t1 - it.t0) + (it.sub ? '. ' + it.sub[0].toUpperCase() + it.sub.slice(1) + '.' : '.');
+  if ($('snapTitle')) $('snapTitle').textContent = it.title + ' at ' + tlTime(it.t0) + ', lasting ' + clock(it.t1 - it.t0) + (it.sub ? '. ' + it.sub[0].toUpperCase() + it.sub.slice(1) + '.' : '.');
   drawSnap(); renderList(true); drawTimeline();
 }
 function drawSnap() {
-  const [ctx, w, h] = fit($('snap')); ctx.clearRect(0, 0, w, h);
-  if (!selected || !analytics.n) { ctx.fillStyle = C.muted; ctx.font = '14px ' + C.ui; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Select an item to see its waveform', w / 2, h / 2); return; }
+  const cv = $('snap'); if (!cv) return;
+  const [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
+  if (!selected || !analytics.n) { ctx.fillStyle = C.faint; ctx.font = '14px ' + C.font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Select an item to see its waveform', w / 2, h / 2); return; }
   const span = Math.min(240, selected.t1 - selected.t0 + 30), mid = (selected.t0 + selected.t1) / 2;
   const t0 = Math.max(0, mid - span / 2), t1 = Math.min(analytics.t, t0 + span);
   const i0 = Math.round(t0 * FS), i1 = Math.max(i0 + 2, Math.min(analytics.n - 1, Math.round(t1 * FS)));
-  const padT = 10, ribbon = 7, padB = 26, ph = h - padT - padB - ribbon - 6;
-  const x = t => (t - t0) / Math.max(1e-9, t1 - t0) * w;
+  const padT = 10, rib = 6, padB = 24, ph = h - padT - padB - rib - 6, x = t => 8 + (t - t0) / Math.max(1e-9, t1 - t0) * (w - 16);
   let peak = 1; for (let i = i0; i <= i1; i++) peak = Math.max(peak, Math.abs(analytics.val(i)));
   const y = v => padT + ph / 2 - v / (peak * 1.15) * ph / 2;
-  ctx.fillStyle = selected.kind === 'pause' ? 'rgba(239, 79, 86, .13)' : selected.kind === 'irregular' ? 'rgba(31, 181, 230, .13)' : selected.kind === 'signal' ? 'rgba(255, 181, 71, .10)' : 'rgba(255, 255, 255, .05)';
+  ctx.fillStyle = { pause: 'rgba(239, 79, 86, .16)', irregular: 'rgba(31, 181, 230, .14)', signal: 'rgba(255, 181, 71, .12)', breath: 'rgba(63, 224, 143, .14)' }[selected.kind] || 'rgba(255, 255, 255, .06)';
   ctx.fillRect(x(selected.t0), padT, x(selected.t1) - x(selected.t0), ph);
   const step = Math.max(1, Math.floor((i1 - i0) / (w * 2)));
   ctx.fillStyle = 'rgba(90, 90, 90, .45)';
   for (let i = i0; i <= i1; i += step) if (analytics.flags(i) & 1) ctx.fillRect(x(i / FS), padT, Math.max(1, step / FS / (t1 - t0) * w), ph);
-  ctx.strokeStyle = 'rgba(63, 224, 143, .3)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(63, 224, 143, .25)'; ctx.lineWidth = 1;
   for (let i = i0; i <= i1; i++) if (analytics.flags(i) & 2) { ctx.beginPath(); ctx.moveTo(x(i / FS), padT); ctx.lineTo(x(i / FS), padT + ph); ctx.stroke(); }
   ctx.save(); ctx.shadowColor = 'rgba(63, 224, 143, .5)'; ctx.shadowBlur = 8; ctx.strokeStyle = C.breath; ctx.lineWidth = 2; ctx.beginPath();
   for (let i = i0; i <= i1; i += step) { const xx = x(i / FS), yy = y(analytics.val(i)); i === i0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy); }
   ctx.stroke(); ctx.restore();
   const ry = padT + ph + 6;
-  for (let t = Math.floor(t0 / RV.EPOCH_S) * RV.EPOCH_S; t < t1; t += RV.EPOCH_S) { const lab = epochLabelAt(t); ctx.fillStyle = lab ? QCOL[lab]() : C.line; ctx.fillRect(x(Math.max(t0, t)), ry, Math.max(0, x(Math.min(t1, t + RV.EPOCH_S)) - x(Math.max(t0, t)) - 1), ribbon); }
-  ctx.fillStyle = C.faint; ctx.font = '12px ' + C.ui; ctx.textBaseline = 'top';
-  ctx.textAlign = 'left'; ctx.fillText(tlTime(t0), 8, ry + ribbon + 5); ctx.textAlign = 'right'; ctx.fillText(tlTime(t1), w - 8, ry + ribbon + 5);
+  for (let t = Math.floor(t0 / RV.EPOCH_S) * RV.EPOCH_S; t < t1; t += RV.EPOCH_S) { const lab = epochLabelAt(t); ctx.fillStyle = lab ? QCOL[lab]() : C.line; ctx.fillRect(x(Math.max(t0, t)), ry, Math.max(0, x(Math.min(t1, t + RV.EPOCH_S)) - x(Math.max(t0, t)) - 1), rib); }
+  ctx.fillStyle = C.faint; ctx.font = '12px ' + C.font; ctx.textBaseline = 'top';
+  ctx.textAlign = 'left'; ctx.fillText(tlTime(t0), 8, ry + rib + 5); ctx.textAlign = 'right'; ctx.fillText(tlTime(t1), w - 8, ry + rib + 5);
 }
-$('revList').addEventListener('click', e => { const el = e.target.closest('.item'); if (el) select($('revList').__items[+el.dataset.k]); });
-$('revList').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('item')) { e.preventDefault(); select($('revList').__items[+e.target.dataset.k]); } });
-$('filters').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; filter = b.dataset.f; for (const x of $('filters').children) x.classList.toggle('on', x === b); renderList(true); });
 
 // ---------------------------------------------------------------- frame loop
-let lastFrame = performance.now(), carry = 0, lastSlow = 0;
-function renderAll(force) { review.update(); renderParams(); drawTimeline(); renderList(force); drawSnap(); }
+let lastFrame = performance.now(), carry = 0, lastSlow = 0, lastL = {};
+function renderAll(force) { review.update(); seedsCache.e = -1; lastL = renderTiles(); renderSheet(force); }
 function frame(now) {
   const dt = Math.min(0.25, (now - lastFrame) / 1000); lastFrame = now;
   const backlog = queue.length / (FS * playRate);
   carry += dt * FS * playRate * (backlog > 3 ? 3 : backlog > 1.6 ? 1.25 : 1);
   while (carry >= 1 && queue.length) { const [v, b, m] = queue.shift(); writeRing(v, b, m); carry -= 1; }
   if (!queue.length) carry = Math.min(carry, 1);
-  if (source && source.kind !== 'file') {
-    if (performance.now() - lastDataAt > 4000) { $('dot').className = 'dot stale'; $('connText').textContent = 'No data from the ' + (source.kind === 'demo' ? 'demo' : 'patch'); }
-    else $('dot').className = 'dot live';
-  }
-  drawWave();
+  if (source && source.kind !== 'file' && performance.now() - lastDataAt > 4000) { $('dot').className = 'dot stale'; $('connText').textContent = 'No data from the ' + (source.kind === 'demo' ? 'demo' : 'patch'); }
+  drawBloom(dt); drawAmpWave(); drawCycle(lastL); moveSpark();
   if (now - lastSlow > 1000 && !bulk) { lastSlow = now; renderAll(false); }
   requestAnimationFrame(frame);
 }
 
 // ---------------------------------------------------------------- recording and exports
 let wakeLock = null;
-async function keepAwake(on) {
-  try { if (on && navigator.wakeLock && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen'); else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; } } catch (_) { wakeLock = null; }
-}
+async function keepAwake(on) { try { if (on && navigator.wakeLock && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen'); else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; } } catch (_) { wakeLock = null; } }
 document.addEventListener('visibilitychange', () => { if (recording && document.visibilityState === 'visible') keepAwake(true); });
 function toggleRec() {
   recording = !recording;
   const b = $('btnRec');
-  if (recording) { recStart = Date.now(); recFrom = analytics.n; recTo = recFrom; b.textContent = 'Stop recording'; b.classList.add('on'); $('btnSaveWave').disabled = true; keepAwake(true); log('Recording. The screen is kept awake. Keep the device on charge and this page open.'); }
-  else { recTo = analytics.n; b.textContent = 'Record'; b.classList.remove('on'); $('btnSaveWave').disabled = recTo <= recFrom; keepAwake(false); log('Recorded ' + clock((recTo - recFrom) / FS) + '. Save the waveform from More to keep it.'); }
+  if (recording) { recStart = Date.now(); recFrom = analytics.n; recTo = recFrom; b.textContent = 'Stop recording'; b.classList.add('on'); $('btnMenu').textContent = '● Recording'; $('btnSaveWave').disabled = true; keepAwake(true); log('Recording. The screen is kept awake. Keep the device on charge and this page open.'); }
+  else { recTo = analytics.n; b.textContent = 'Record'; b.classList.remove('on'); $('btnMenu').textContent = 'More'; $('btnSaveWave').disabled = recTo <= recFrom; keepAwake(false); log('Recorded ' + clock((recTo - recFrom) / FS) + '. Save the waveform from More to keep it.'); }
 }
-function download(name, parts) {
-  const url = URL.createObjectURL(new Blob(parts, { type: 'text/csv' }));
-  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
+function download(name, parts) { const url = URL.createObjectURL(new Blob(parts, { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); }
 function save(name, header, rows) { download(name, [header + '\n' + rows.map(r => r.join(',')).join('\n') + '\n']); }
 function localStamp(ms) { const d = new Date(ms), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`; }
 const stamp = () => localStamp(recStart || sessionWall);
@@ -2016,65 +2042,67 @@ function saveWaveform() {
   download('breathpatch-waveform-' + stamp() + '.csv', parts);
 }
 function needData() { if (!review.epochs.length) { log('Nothing to save yet. The first values appear after 30 seconds of data.'); return true; } return false; }
-function saveRatePerMinute() {
-  if (needData()) return;
-  const rows = [];
-  for (let m = 0; m * 60 < analytics.t - 1; m++) {
-    const recs = review.breathsIn(m * 60, (m + 1) * 60).filter(r => !r.pause && epochLabelAt(r.t) === 'good' && epochLabelAt(Math.max(0, r.t - r.ibi)) === 'good');
-    const eps = review.epochs.filter(e => e.t0 >= m * 60 - 0.1 && e.t1 <= (m + 1) * 60 + 0.1);
-    const goodShare = eps.length ? eps.filter(e => e.label === 'good').length / eps.length : 0;
-    const rr = recs.length >= 3 ? 60 / median(recs.map(r => r.ibi)) : NaN;
-    rows.push([new Date(sessionWall + m * 60000).toISOString(), m * 60, c(rr, 1), recs.length, c(goodShare, 2), recs.length >= 3 && goodShare >= 0.5 ? 1 : 0]);
+const EXPORTS = {
+  xRate() {
+    if (needData()) return;
+    const rows = [];
+    for (let m = 0; m * 60 < analytics.t - 1; m++) {
+      const recs = review.breathsIn(m * 60, (m + 1) * 60).filter(r => !r.pause && epochLabelAt(r.t) === 'good' && epochLabelAt(Math.max(0, r.t - r.ibi)) === 'good');
+      const eps = review.epochs.filter(e => e.t0 >= m * 60 - 0.1 && e.t1 <= (m + 1) * 60 + 0.1), goodShare = eps.length ? eps.filter(e => e.label === 'good').length / eps.length : 0;
+      const rr = recs.length >= 3 ? 60 / median(recs.map(r => r.ibi)) : NaN;
+      rows.push([new Date(sessionWall + m * 60000).toISOString(), m * 60, c(rr, 1), recs.length, c(goodShare, 2), recs.length >= 3 && goodShare >= 0.5 ? 1 : 0]);
+    }
+    save('breathpatch-rate-per-minute-' + stamp() + '.csv', 'time_iso,t_s,rate_bpm,breaths_used,good_signal_share,reportable', rows);
+  },
+  xBreaths() {
+    if (needData()) return;
+    const riseIn = review.riseIsInhale();
+    save('breathpatch-breaths-' + stamp() + '.csv', 't_s,ibi_s,amplitude_mg,relative_amplitude,ti_s,te_s,timing_reliable,timing_note,signal_quality,pause',
+      analytics.breaths.map((b, k) => { const tk = review.timingOk[k]; return [c(b.t, 2), c(b.ibi, 3), c(b.amp, 3), c(b.rel, 3), tk && tk.ok ? c(riseIn ? b.rise : b.fall, 3) : '', tk && tk.ok ? c(riseIn ? b.fall : b.rise, 3) : '', tk ? (tk.ok ? 1 : 0) : '', tk ? '"' + tk.why + '"' : '', epochLabelAt(b.t) || '', b.pause ? 1 : 0]; }));
+  },
+  xPauses() {
+    if (needData()) return;
+    save('breathpatch-pauses-' + stamp() + '.csv', 'start_iso,start_s,duration_s,confidence,reason,breath_amplitude_before_mg,recovery_amplitude_ratio',
+      [...review.pauseInfo.entries()].map(([ev, i]) => [new Date(sessionWall + ev.start * 1000).toISOString(), c(ev.start, 1), c(ev.dur, 1), i.confidence, '"' + i.why + '"', c(ev.preBase, 2), ev.recovery && !ev.recovery.incomplete ? c(ev.recovery.peakAmp, 2) : '']));
+  },
+  xReview() {
+    if (needData()) return;
+    save('breathpatch-review-' + stamp() + '.csv', 'type,start_iso,start_s,duration_s,detail', items().reverse().map(i => [i.kind === 'pause' ? 'pause_' + i.conf : i.kind, new Date(sessionWall + i.t0 * 1000).toISOString(), c(i.t0, 1), c(i.t1 - i.t0, 1), '"' + i.sub + '"']));
+  },
+  xEpochs() {
+    if (needData()) return;
+    save('breathpatch-signal-quality-' + stamp() + '.csv', 'epoch,t_s,quality,quality_score,reason,movement_share,rate_bpm,amplitude_mg,ibi_cv_2min,amplitude_cv_2min,shape_deviation,sample_entropy,irregularity_index,irregular,irregular_reasons',
+      review.epochs.map(e => [e.e, c(e.t0, 0), e.label, c(e.q, 2), '"' + e.why + '"', c(e.m, 2), c(e.rr, 1), c(e.ampMed, 2), e.win ? c(e.win.ibiCv, 3) : '', e.win ? c(e.win.ampCv, 3) : '', e.win ? c(e.win.shapeDev, 3) : '', e.win ? c(e.win.sampEn, 2) : '', c(e.irr, 0), e.irregular ? 1 : 0, '"' + e.reasons.join('; ') + '"']));
   }
-  save('breathpatch-rate-per-minute-' + stamp() + '.csv', 'time_iso,t_s,rate_bpm,breaths_used,good_signal_share,reportable', rows);
-}
-function saveBreaths() {
-  if (needData()) return;
-  const riseIn = review.riseIsInhale();
-  save('breathpatch-breaths-' + stamp() + '.csv', 't_s,ibi_s,amplitude_mg,relative_amplitude,ti_s,te_s,timing_reliable,timing_note,signal_quality,pause',
-    analytics.breaths.map((b, k) => { const tk = review.timingOk[k]; return [c(b.t, 2), c(b.ibi, 3), c(b.amp, 3), c(b.rel, 3), tk && tk.ok ? c(riseIn ? b.rise : b.fall, 3) : '', tk && tk.ok ? c(riseIn ? b.fall : b.rise, 3) : '', tk ? (tk.ok ? 1 : 0) : '', tk ? '"' + tk.why + '"' : '', epochLabelAt(b.t) || '', b.pause ? 1 : 0]; }));
-}
-function savePauses() {
-  if (needData()) return;
-  save('breathpatch-pauses-' + stamp() + '.csv', 'start_iso,start_s,duration_s,confidence,reason,breath_amplitude_before_mg,recovery_amplitude_ratio',
-    [...review.pauseInfo.entries()].map(([ev, i]) => [new Date(sessionWall + ev.start * 1000).toISOString(), c(ev.start, 1), c(ev.dur, 1), i.confidence, '"' + i.why + '"', c(ev.preBase, 2), ev.recovery && !ev.recovery.incomplete ? c(ev.recovery.peakAmp, 2) : '']));
-}
-function saveReview() {
-  if (needData()) return;
-  save('breathpatch-review-' + stamp() + '.csv', 'type,start_iso,start_s,duration_s,detail',
-    items().reverse().map(i => [i.kind === 'pause' ? 'pause_' + i.conf : i.kind, new Date(sessionWall + i.t0 * 1000).toISOString(), c(i.t0, 1), c(i.t1 - i.t0, 1), '"' + i.sub + '"']));
-}
-function saveEpochs() {
-  if (needData()) return;
-  save('breathpatch-signal-quality-' + stamp() + '.csv', 'epoch,t_s,quality,quality_score,reason,movement_share,rate_bpm,amplitude_mg,ibi_cv_2min,amplitude_cv_2min,shape_deviation,sample_entropy,irregularity_index,irregular,irregular_reasons',
-    review.epochs.map(e => [e.e, c(e.t0, 0), e.label, c(e.q, 2), '"' + e.why + '"', c(e.m, 2), c(e.rr, 1), c(e.ampMed, 2), e.win ? c(e.win.ibiCv, 3) : '', e.win ? c(e.win.ampCv, 3) : '', e.win ? c(e.win.shapeDev, 3) : '', e.win ? c(e.win.sampEn, 2) : '', c(e.irr, 0), e.irregular ? 1 : 0, '"' + e.reasons.join('; ') + '"']));
-}
+};
 
 // ---------------------------------------------------------------- wiring
 const menu = $('menuPanel');
 $('btnMenu').addEventListener('click', e => { e.stopPropagation(); menu.hidden = !menu.hidden; $('btnMenu').setAttribute('aria-expanded', String(!menu.hidden)); });
 document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) { menu.hidden = true; $('btnMenu').setAttribute('aria-expanded', 'false'); } });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { menu.hidden = true; $('btnMenu').focus(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!menu.hidden) { menu.hidden = true; $('btnMenu').focus(); } else if (sheetKind) closeSheet(); } });
 const closeMenu = fn => (...a) => { menu.hidden = true; $('btnMenu').setAttribute('aria-expanded', 'false'); return fn(...a); };
 $('btnBle').addEventListener('click', connectBle);
 $('btnUsb').addEventListener('click', closeMenu(connectUsb));
 $('btnDemo').addEventListener('click', closeMenu(startDemo));
 $('btnNight').addEventListener('click', closeMenu(simulateNight));
+$('btnSession').addEventListener('click', closeMenu(() => openSheet('session')));
 $('speed').addEventListener('change', () => { if (source && source.kind === 'demo') playRate = +$('speed').value; });
 $('fileIn').addEventListener('change', e => { menu.hidden = true; const file = e.target.files[0]; if (file) openRecording(file); e.target.value = ''; });
 $('btnStop').addEventListener('click', closeMenu(() => { stopSource(); log('Disconnected.'); }));
-$('btnRec').addEventListener('click', toggleRec);
+$('btnRec').addEventListener('click', closeMenu(toggleRec));
 $('btnSaveWave').addEventListener('click', closeMenu(saveWaveform));
-$('xRate').addEventListener('click', saveRatePerMinute);
-$('xBreaths').addEventListener('click', saveBreaths);
-$('xPauses').addEventListener('click', savePauses);
-$('xReview').addEventListener('click', saveReview);
-$('xEpochs').addEventListener('click', saveEpochs);
-$('polarity').addEventListener('change', e => { analytics.polarity = e.target.value; renderParams(); });
-window.addEventListener('resize', () => { drawTimeline(); drawSnap(); });
+$('coreHit').addEventListener('click', () => openSheet('rate'));
+for (const t of document.querySelectorAll('.tile[data-sheet]')) {
+  t.addEventListener('click', () => openSheet(t.dataset.sheet));
+  t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSheet(t.dataset.sheet); } });
+}
+$('sheetClose').addEventListener('click', closeSheet);
+$('scrim').addEventListener('click', closeSheet);
+window.addEventListener('resize', () => { fitGolden(); layoutSpiral(); renderSheet(true); });
+if ('ResizeObserver' in window) new ResizeObserver(layoutSpiral).observe($('golden'));
 if (!navigator.serial) $('btnUsb').hidden = true;
 if (!navigator.bluetooth || !window.isSecureContext) { $('banner').textContent = 'Bluetooth is not available here. ' + bluetoothMissing(); $('banner').hidden = false; }
-
 if (/^https?:$/.test(location.protocol)) {
   for (const [rel, href] of [['manifest', 'manifest.webmanifest'], ['apple-touch-icon', 'apple-touch-icon.png'], ['icon', 'icon-192.png']]) { const l = document.createElement('link'); l.rel = rel; l.href = href; document.head.appendChild(l); }
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -2084,10 +2112,11 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); instal
 $('btnInstall').addEventListener('click', async () => { if (!installPrompt) return; installPrompt.prompt(); try { await installPrompt.userChoice; } catch (_) {} installPrompt = null; $('btnInstall').hidden = true; });
 
 loadColors();
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { loadColors(); renderAll(true); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { loadColors(); layoutSpiral(); });
+fitGolden(); layoutSpiral();
 renderAll(true);
 requestAnimationFrame(frame);
-window.BreathPatch = { parseSummary, parseWave, parseLine, analytics, review, items, select };   // exposed for testing
+window.BreathPatch = { parseSummary, parseWave, parseLine, analytics, review, items, select, openSheet, closeSheet, seeds: () => seedsCache.list };   // exposed for testing
 </script>
 </body>
 </html>
