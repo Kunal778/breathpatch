@@ -163,6 +163,32 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
 /* ---------------------------------------------------------------- phones: golden splits instead of the full spiral */
 .mpill { display: none; }
+button.primary.stop { background: var(--pause); border-color: var(--pause); color: #fff; }
+.rec { position: absolute; left: 4cqmin; top: calc(3.2cqmin + max(16px, 3.6cqmin)); z-index: 3; font-size: max(11px, 2.2cqmin); color: var(--muted); display: none; align-items: center; gap: 6px; pointer-events: none; font-variant-numeric: tabular-nums; }
+.rec.on { display: inline-flex; }
+.rec i { width: 8px; height: 8px; border-radius: 50%; background: var(--pause); }
+@media (prefers-reduced-motion: no-preference) { .rec.on i { animation: blinkRec 1.6s ease-in-out infinite; } }
+@keyframes blinkRec { 50% { opacity: .25; } }
+/* night screen: black, almost nothing lit, keeps recording with the screen awake */
+.dim { position: fixed; inset: 0; z-index: 50; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; color: #6f6f6f; cursor: pointer; }
+.dim[hidden] { display: none; }
+.dim .orb { width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(63, 224, 143, .45); box-shadow: 0 0 40px rgba(63, 224, 143, .08) inset; display: grid; place-items: center; }
+.dim .orb b { font-size: 40px; font-weight: 700; color: rgba(63, 224, 143, .75); }
+.dim .t { font-size: 15px; font-variant-numeric: tabular-nums; }
+.dim .h { font-size: 12px; color: #4a4a4a; }
+.form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.form label.wide { grid-column: 1 / -1; }
+.form input, .form textarea { width: 100%; min-width: 0; box-sizing: border-box; font: 500 15px var(--font); color: var(--fg); background: var(--tile); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; }
+.form textarea { min-height: 60px; resize: vertical; }
+.form input:focus-visible, .form textarea:focus-visible { outline: 2px solid var(--breath); outline-offset: 1px; }
+.big-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.big-btns button { flex: 1 1 140px; padding: 12px 16px; font-size: 15px; }
+.hist { border-top: 1px solid var(--line); }
+.hrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+.hrow small { display: block; color: var(--muted); font-size: 12.5px; }
+.hrow button { padding: 6px 12px; font-size: 13px; }
+.warn { font-size: 13px; color: #ffd79b; border: 1px solid #5a4322; border-radius: 10px; padding: 9px 12px; margin: 0; }
 .rowsub { display: none; }
 .short { display: none; }
 .menu-note { font-size: 11.5px; color: var(--faint); padding: 6px 8px 2px; line-height: 1.45; }
@@ -245,22 +271,23 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
       <div><div class="name">BreathPatch</div><div class="by">by Brainiac Healthcare</div></div>
     </div>
     <span class="pill" id="connPill" role="status"><span class="dot" id="dot"></span><b id="connText">Not connected</b><span id="devText"></span></span>
-    <button class="primary" id="btnBle" type="button">Connect<span class="long"> patch</span></button>
+    <button class="primary" id="btnBle" type="button">Start</button>
     <div class="menu">
       <button id="btnMenu" type="button" aria-haspopup="true" aria-expanded="false">More</button>
       <div class="menu-panel" id="menuPanel" hidden>
-        <button class="rec" id="btnRec" type="button">Record</button>
-        <button id="btnSaveWave" type="button" disabled>Save recorded waveform</button>
+        <button id="btnReport" type="button">Make the PDF report</button>
         <button id="btnSession" type="button">Session timeline and review</button>
+        <button id="btnHistory" type="button">Past sessions</button>
         <hr>
-        <button id="btnUsb" type="button">Connect over USB</button>
+        <button id="btnChoose" type="button">Start with a different patch</button>
+        <button id="btnUsb" type="button">Start over USB</button>
         <label class="filebtn">Open a recording<input type="file" id="fileIn" accept=".csv,text/csv"></label>
         <hr>
         <button id="btnDemo" type="button">Play the 12 minute demo</button>
         <button id="btnNight" type="button">Simulate a night with breathing events</button>
         <div class="row"><label for="speed">Demo speed</label><select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="20">20×</option></select></div>
         <hr>
-        <button id="btnStop" type="button" disabled>Disconnect</button>
+        <button id="btnStop" type="button" disabled hidden>Disconnect</button>
         <button id="btnInstall" type="button" hidden>Install as an app</button>
         <div class="menu-note">Breathing effort from chest movement, for research and clinician review, not diagnosis.</div>
       </div>
@@ -272,6 +299,7 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     <section class="tile tA" aria-label="Respiratory rate and the breath bloom">
       <canvas id="bloom" aria-label="Every breath of the session as a seed, newest in the centre. Seed size is breath depth, colour is pause, irregular or uncertain signal."></canvas>
       <span class="lbl">Respiratory rate</span>
+      <span class="rec" id="recClock"><i></i><span id="recText">0:00</span></span>
       <span class="mpill" id="mPill"><span class="dot"></span><b id="mConn">Not connected</b></span>
       <div class="core"><div class="rr" id="rr">–</div><div class="unit">breaths / min</div></div>
       <div class="state" id="state">Waiting for the patch</div>
@@ -312,6 +340,7 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   <p class="foot">Breathing effort from chest movement, for research and clinician review, not diagnosis. Values come only from usable signal.</p>
 </div>
 
+<div class="dim" id="dim" hidden role="button" aria-label="Night screen. Tap to wake."><div class="orb" id="dimOrb"><b id="dimRr">–</b></div><div class="t" id="dimT">Recording</div><div class="h">Recording continues. Tap to wake.</div></div>
 <div class="scrim" id="scrim" hidden></div>
 <aside class="sheet" id="sheet" aria-hidden="true" aria-labelledby="sheetTitle" role="dialog">
   <header><h2 id="sheetTitle">Details</h2><button class="close" id="sheetClose" type="button" aria-label="Close">×</button></header>
@@ -1452,7 +1481,8 @@ const queue = [];
 let lastMotion = false, lastDataAt = 0, lastMarkAt = 0;
 const trend = [];
 const session = { rates: [], validS: 0, totalS: 0 };
-let recording = false, recStart = 0, recFrom = 0, recTo = 0;
+let recording = false, recStart = 0;          // recording = a session is running (Start to Stop)
+let sessionMeta = null;                       // { id, start, kind, device, fw, status, saved, chunks, lastWall, gaps, details }
 let sessionWall = Date.now(), lastSampleWall = 0, bulk = false, lost = 0, lastSeq = null, source = null, playRate = 1;
 const analytics = new BreathAnalytics(FS);
 const review = new ReviewEngine(analytics);
@@ -1487,7 +1517,6 @@ function showRate(s, valid, motion, apnoea) {
   else { st.textContent = 'Settling'; st.className = 'state'; }
 }
 function resetSession(wall = Date.now()) {
-  if (recording) toggleRec();
   sessionWall = wall; lastSampleWall = 0;
   queue.length = 0; wave.fill(0); marks.fill(0); still.fill(1); trend.length = 0; head = 0; lastMotion = false;
   Object.assign(session, { rates: [], validS: 0, totalS: 0 });
@@ -1497,12 +1526,15 @@ function resetSession(wall = Date.now()) {
   renderAll(true);
 }
 function beginLive() { if (recording && analytics.n > 0) { fillGap(); return true; } resetSession(); return false; }
-function fillGap() {
-  const gapS = lastSampleWall ? (Date.now() - lastSampleWall) / 1000 : 0;
-  const n = Math.min(Math.round(gapS * FS), Math.round(2 * 3600 * FS));
+// Time without data (a dropped link, the page closed or frozen) keeps its place on the timeline as movement,
+// and is listed in the report as time without data.
+function fillGap(n) {
+  if (n === undefined) { const gapS = lastSampleWall ? (Date.now() - lastSampleWall) / 1000 : 0; n = Math.round(gapS * FS); }
+  n = Math.max(0, Math.min(n, Math.round(12 * 3600 * FS)));
+  if (sessionMeta && n > 3 * FS) sessionMeta.gaps.push({ t0: analytics.t, dur: n / FS });
   for (let k = 0; k < n; k++) onSample(0, false, true, true);
   lost = 0; lastSeq = null;
-  if (n > FS) log('Reconnected. ' + clock(n / FS) + ' without data is shown as movement.');
+  if (n > FS) log('Back after ' + clock(n / FS) + ' without data. That time is marked in the report.');
   return n;
 }
 
@@ -1527,18 +1559,35 @@ function parseInfo(text) { const o = {}; for (const kv of String(text || '').spl
 
 // ---------------------------------------------------------------- Bluetooth, with automatic reconnection
 let bleDevice = null, bleWanted = false, bleRetry = null, bleAttempt = 0, bleBusy = false;
+let lastPacketWall = 0;
 function onWavePacket(e) {
-  const w = parseWave(e.target.value);
-  if (lastSeq !== null && w.seq !== ((lastSeq + 1) & 127)) { const gap = ((w.seq - lastSeq - 1) & 127) * w.samples.length; lost += gap; for (let k = 0; k < gap; k++) onSample(0, false, true); }
+  const w = parseWave(e.target.value), now = Date.now();
+  if (lastSeq !== null && w.seq !== ((lastSeq + 1) & 127)) {
+    // the sequence number wraps every 128 packets (about 40 s), so a long silence is measured by the clock instead
+    const bySeq = ((w.seq - lastSeq - 1) & 127) * w.samples.length, wallS = (now - lastPacketWall) / 1000;
+    const gap = wallS > 30 ? Math.max(bySeq, Math.round(wallS * FS) - w.samples.length) : bySeq;
+    lost += gap;
+    if (gap > 3 * FS) fillGap(gap); else for (let k = 0; k < gap; k++) onSample(0, false, true);
+  }
+  lastPacketWall = now;
   lastSeq = w.seq;
   for (const [v, b, m] of w.samples) onSample(v, b, !!m);
 }
 function onSummaryPacket(e) { onSummary(parseSummary(e.target.value)); }
-async function connectBle() {
-  if (!navigator.bluetooth) { log(bluetoothMissing()); return; }
-  let device;
-  try { device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SVC] }, { namePrefix: 'BreathPatch' }], optionalServices: [SVC] }); }
-  catch (err) { log(err && err.name === 'NotFoundError' ? 'No patch chosen. If BreathPatch did not appear, check it is switched on and not connected to another phone or laptop.' : 'Bluetooth: ' + (err && err.message ? err.message : err)); return; }
+// A patch chosen once is remembered by the browser where it supports getDevices(), so later starts skip the chooser.
+async function rememberedPatch() {
+  try { if (navigator.bluetooth && navigator.bluetooth.getDevices) { const list = await navigator.bluetooth.getDevices(); return list.find(d => (d.name || '').startsWith('BreathPatch')) || null; } } catch (_) {}
+  return null;
+}
+async function pickPatch(choose) {
+  if (!navigator.bluetooth) { log(bluetoothMissing()); return null; }
+  if (!choose) { const d = await rememberedPatch(); if (d) return d; }
+  try { return await navigator.bluetooth.requestDevice({ filters: [{ services: [SVC] }, { namePrefix: 'BreathPatch' }], optionalServices: [SVC] }); }
+  catch (err) { log(err && err.name === 'NotFoundError' ? 'No patch chosen. If BreathPatch did not appear, check it is switched on and not connected to another phone or laptop.' : 'Bluetooth: ' + (err && err.message ? err.message : err)); return null; }
+}
+async function connectBle(choose = false) {
+  const device = await pickPatch(choose === true);
+  if (!device) return;
   stopSource();
   bleDevice = device; bleWanted = true; bleAttempt = 0;
   if (!device.__bpWatched) { device.addEventListener('gattserverdisconnected', () => onBleDropped(device)); device.__bpWatched = true; }
@@ -1564,8 +1613,11 @@ async function bleAttachInner(device, first) {
     bleAttempt = 0;
     setConn(device.name || 'BreathPatch', true);
     $('devText').textContent = info.fw ? 'firmware ' + info.fw : '';
+    lastPacketWall = Date.now();
+    if (!recording) startSession('ble', device.name || 'BreathPatch', info.fw);
+    else if (sessionMeta && info.fw) sessionMeta.fw = info.fw;
     if (!first) log('Bluetooth link restored. The session continues.');
-    else if (!resumed) log('Connected. Stay still for about 15 seconds while the signal settles.');
+    else if (!resumed) log('Recording started. Stay still for about 15 seconds while the signal settles.');
     return true;
   } catch (err) { log('Bluetooth: ' + (err && err.message ? err.message : err)); return false; }
 }
@@ -1600,7 +1652,8 @@ async function connectUsb() {
   let reading = true, reader;
   source = { kind: 'usb', stop: async () => { reading = false; try { await reader.cancel(); } catch (_) {} try { await port.close(); } catch (_) {} } };
   setConn('USB', true);
-  if (!resumed) log('Connected over USB. Stay still for about 15 seconds while the signal settles.');
+  if (!recording) startSession('usb', 'USB');
+  if (!resumed) log('Recording over USB. Stay still for about 15 seconds while the signal settles.');
   const decoder = new TextDecoder(); let buf = '';
   try {
     reader = port.readable.getReader();
@@ -1634,6 +1687,7 @@ function startDemo() {
   t0 = performance.now() - made / FS / playRate * 1000;
   source = { kind: 'demo', stop: () => clearInterval(timer) };
   setConn('Demo, simulated data', true);
+  startSession('demo', 'Demo');
   log('Demo: movement at 2:00, a pause at 3:20, weaker breathing at 5:00, irregular rhythm at 5:35, waxing and waning from 7:00.');
 }
 function ingest(total, nextSample, label, onDone) {
@@ -1676,7 +1730,7 @@ function simulateNight() {
   const gen = new NightGenerator(FS, 'breathing', (Math.random() * 1e9) >>> 0);
   ingest(Math.round(gen.duration * FS), () => gen.next(), 'simulated night', () => log('Simulated night with ' + gen.truth().events + ' scripted breathing events. The bloom holds the last 610 breaths; Review has the whole night.'));
 }
-function stopSource() { bleWanted = false; clearTimeout(bleRetry); if (source) { const s = source; source = null; s.stop(); } setConn('Not connected', false); $('devText').textContent = ''; }
+function stopSource() { lastPacketWall = 0; bleWanted = false; clearTimeout(bleRetry); if (source) { const s = source; source = null; s.stop(); } setConn('Not connected', false); $('devText').textContent = ''; }
 function setConn(text, live) {
   $('connText').textContent = text; $('mConn').textContent = text;
   $('connPill').classList.toggle('live', !!live); $('mPill').classList.toggle('live', !!live);
@@ -1768,7 +1822,7 @@ function drawBloom(dt) {
   // the last breath marker: a ripple from the core
   const since = (performance.now() - lastMarkAt) / 1000;
   if (since < 1.6 && !matchMedia('(prefers-reduced-motion: reduce)').matches) { ctx.strokeStyle = 'rgba(63, 224, 143, ' + (0.5 * (1 - since / 1.6)) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, rLive + since * rc * 0.35, 0, 2 * Math.PI); ctx.stroke(); }
-  if (!analytics.n) { ctx.fillStyle = C.faint; ctx.font = '15px ' + C.font; ctx.textAlign = 'center'; ctx.fillText('Connect the patch, or play the demo from More', cx, cy + rc + 40); }
+  if (!analytics.n) { ctx.fillStyle = C.faint; ctx.font = '15px ' + C.font; ctx.textAlign = 'center'; ctx.fillText('Tap Start to connect the patch', cx, cy + rc + 40); }
 }
 function seedAt(px, py) {
   let best = null, bd = Infinity;
@@ -1907,9 +1961,13 @@ const sheetEl = $('sheet');
 function openSheet(kind, extra) {
   sheetKind = kind; listFilter = { pauses: 'pause', pattern: 'irregular' }[kind] || 'all'; lastListKey = '';
   if (kind !== 'breath' && kind !== 'session' && kind !== 'pauses' && kind !== 'pattern') selected = null;
-  const titles = { rate: 'Respiratory rate', amp: 'Amplitude and variability', timing: 'Timing', pauses: 'Pauses', pattern: 'Breathing pattern', session: 'Session review', breath: 'Breath' };
+  const titles = { rate: 'Respiratory rate', amp: 'Amplitude and variability', timing: 'Timing', pauses: 'Pauses', pattern: 'Breathing pattern', session: 'Session review', breath: 'Breath',
+                   report: 'Session report', resume: 'Unfinished session', history: 'Past sessions' };
   $('sheetTitle').textContent = titles[kind];
-  $('sbody').innerHTML = sheetHtml(kind);
+  $('sbody').innerHTML = sheetHtml(kind, extra);
+  sheetExtra = extra;
+  if (kind === 'report') wireReportForm();
+  if (kind === 'history') renderHistory();
   if ($('polarity')) { $('polarity').value = analytics.polarity; $('polarity').addEventListener('change', e => { analytics.polarity = e.target.value; renderSheet(true); }); }
   for (const [id, fn] of Object.entries(EXPORTS)) if ($(id)) $(id).addEventListener('click', fn);
   if ($('filters')) $('filters').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; listFilter = b.dataset.f; for (const x of $('filters').children) x.classList.toggle('on', x === b); renderList(true); });
@@ -1927,12 +1985,91 @@ function openSheet(kind, extra) {
   renderSheet(true);
   if (selected && $('snapTitle') && kind !== 'breath') select(selected);
 }
+let sheetExtra = null, reportDetails = {};
 function closeSheet() { sheetKind = null; sheetEl.classList.remove('open'); sheetEl.setAttribute('aria-hidden', 'true'); $('scrim').hidden = true; }
+function detailsStore() { return sessionMeta ? (sessionMeta.details = sessionMeta.details || {}) : reportDetails; }
+function wireReportForm() {
+  const d = detailsStore(), map = { dName: 'name', dAge: 'age', dRef: 'ref', dPlace: 'place', dNotes: 'notes' };
+  for (const [id, key] of Object.entries(map)) {
+    const el = $(id); el.value = d[key] || '';
+    el.addEventListener('input', () => { d[key] = el.value; clearTimeout(wireReportForm.t); wireReportForm.t = setTimeout(() => { if (stored()) idbPut('sessions', sessionMeta).catch(() => {}); }, 600); });
+  }
+  const canShare = !!(navigator.canShare && window.File && navigator.canShare({ files: [new File(['x'], 'x.pdf', { type: 'application/pdf' })] }));
+  $('xShare').hidden = !canShare;
+  $('xPdf').addEventListener('click', () => pdfAction(false));
+  $('xShare').addEventListener('click', () => pdfAction(true));
+  $('xCsv').addEventListener('click', saveWaveform);
+}
+async function pdfAction(share) {
+  if (!analytics.n || !review.epochs.length) { $('pdfNote').textContent = 'There is not enough data for a report yet. A report needs at least 30 seconds of recording.'; return; }
+  const note = $('pdfNote'); note.dataset.busy = '1'; note.textContent = 'Preparing the report…';
+  for (const b of ['xPdf', 'xShare']) $(b).disabled = true;
+  try {
+    const { blob, name } = await makeReportPdf(detailsStore());
+    lastPdf = { blob, name };
+    if (share) {
+      try { await navigator.share({ files: [new File([blob], name, { type: 'application/pdf' })], title: 'BreathPatch report', text: 'BreathPatch breathing effort report' }); note.textContent = 'Shared.'; }
+      catch (err) { if (err && err.name === 'AbortError') note.textContent = 'Sharing cancelled.'; else { downloadBlob(blob, name); note.textContent = 'Sharing is not available here, so the PDF was downloaded instead.'; } }
+    } else { downloadBlob(blob, name); note.textContent = 'Saved as ' + name + '.'; }
+  } catch (err) { note.textContent = 'The report could not be made: ' + (err && err.message ? err.message : err); }
+  finally { delete note.dataset.busy; for (const b of ['xPdf', 'xShare']) $(b).disabled = false; }
+}
+let lastPdf = null;
+function downloadBlob(blob, name) { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 8000); }
+async function renderHistory() {
+  const box = $('histList'); if (!box) return;
+  let list = [];
+  try { list = (await idbAllSessions()).filter(m => m.saved > 0).sort((a, b) => b.start - a.start); } catch (_) { box.innerHTML = '<div class="empty">This browser does not allow saved sessions.</div>'; return; }
+  if (!list.length) { box.innerHTML = '<div class="empty">No saved sessions yet. Sessions recorded from the patch are saved here automatically.</div>'; return; }
+  box.innerHTML = list.map(m => {
+    const when = new Date(m.start).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const who = m.details && m.details.name ? m.details.name + ', ' : '';
+    return `<div class="hrow"><span>${when}<small>${who}${clock(m.saved / FS)} recorded${m.status === 'running' ? ', not stopped' : ''}</small></span>` +
+      `<button type="button" data-act="open" data-id="${m.id}"${recording ? ' disabled' : ''}>Open</button><button type="button" data-act="delete" data-id="${m.id}">Delete</button></div>`;
+  }).join('');
+  box.__list = list;
+}
+$('sbody').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const act = b.dataset.act;
+  if (sheetKind === 'resume') {
+    const m = sheetExtra;
+    if (act === 'continue') continueSession(m);
+    else if (act === 'finish') finishSaved(m);
+    else if (act === 'discard') {
+      if (b.dataset.sure) { await idbDeleteSession(m.id).catch(() => {}); closeSheet(); log('Session discarded.'); }
+      else { b.dataset.sure = '1'; b.textContent = 'Tap again to discard it for good'; }
+    }
+  } else if (sheetKind === 'history') {
+    const m = ($('histList').__list || []).find(x => x.id === b.dataset.id); if (!m) return;
+    if (act === 'open') { closeSheet(); await loadSession(m, () => { recording = false; sessionUi(); openSheet('report'); }); }
+    else if (act === 'delete') {
+      if (b.dataset.sure) { await idbDeleteSession(m.id).catch(() => {}); if (sessionMeta && sessionMeta.id === m.id) sessionMeta = null; renderHistory(); }
+      else { b.dataset.sure = '1'; b.textContent = 'Sure?'; }
+    }
+  }
+});
 function fact(v, k, id) { return `<div class="fact"><div class="v" ${id ? 'id="' + id + '"' : ''}>${v}</div><div class="k">${k}</div></div>`; }
 const LISTBLOCK = (filters) => (filters ? `<div class="filters" id="filters"><button type="button" class="on" data-f="all">All</button><button type="button" data-f="pause">Pauses</button><button type="button" data-f="irregular">Irregular</button><button type="button" data-f="signal">Unclear signal</button></div>` : '') +
   `<div class="list" id="revList"></div><div class="snaptitle" id="snapTitle">Select an item to see its waveform</div><canvas class="c-snap" id="snap"></canvas>`;
-function sheetHtml(kind) {
+function sheetHtml(kind, extra) {
   switch (kind) {
+    case 'report': return `<div class="facts" id="sFacts"></div>
+      <p class="note">Add what should appear on the report. It is kept with this session on this device only.</p>
+      <div class="form"><label>Name or patient ID<input id="dName" autocomplete="off"></label><label>Age<input id="dAge" inputmode="numeric" autocomplete="off"></label>
+      <label>Referred by<input id="dRef" autocomplete="off"></label><label>Recorded at<input id="dPlace" placeholder="Home, ward, clinic" autocomplete="off"></label>
+      <label class="wide">Notes<textarea id="dNotes"></textarea></label></div>
+      <div class="big-btns"><button type="button" class="primary" id="xPdf">Download PDF</button><button type="button" id="xShare" hidden>Share PDF</button></div>
+      <p class="note" id="pdfNote"></p>
+      <div class="row-btns"><span class="k">Raw data</span><button type="button" id="xCsv">Session waveform CSV</button><button type="button" id="xBreaths">Breath table CSV</button></div>`;
+    case 'resume': {
+      const m = extra, when = new Date(m.start).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      return `<p class="note">A session started on <b>${when}</b> with ${m.device || 'the patch'} was not stopped. ${clock(m.saved / FS)} of it is saved on this device.</p>
+      <div class="big-btns"><button type="button" class="primary" data-act="continue">Continue recording</button><button type="button" data-act="finish">Stop it and make the report</button></div>
+      <div class="row-btns"><button type="button" data-act="discard">Discard this session</button></div>
+      <p class="note">If you continue, the time the app was closed is marked as time without data.</p>`;
+    }
+    case 'history': return `<p class="note">Sessions are kept in this browser on this device. Open one to see it again and make its report.</p><div class="hist" id="histList"><div class="empty">Loading…</div></div>`;
     case 'rate': return `<div class="facts" id="sFacts"></div><p class="note">Rate over the session, from usable signal only. The strip under the line is the signal quality.</p><canvas class="c-trend" id="sTrend"></canvas><div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xRate">Rate per minute</button></div>`;
     case 'amp': return `<div class="facts" id="sFacts"></div><p class="note">The last 60 breaths, compared with this person's usual breath (dashed line at 100 %).</p><canvas class="c-bars" id="sBars"></canvas><p class="note">Relative amplitude across the session, every 5 minutes.</p><canvas class="c-trend" id="sTrend"></canvas>`;
     case 'timing': return `<div class="facts" id="sFacts"></div><div class="split" aria-hidden="true"><i class="ti" id="tiBar" style="width:0"></i><i class="te" id="teBar" style="width:0"></i></div><p class="note" id="tNote"></p><label class="note">Breathing in shows as <select id="polarity"><option value="auto">auto</option><option value="rise">upward stroke</option><option value="fall">downward stroke</option></select></label><p class="note">Interval between the last 60 breaths.</p><canvas class="c-bars" id="sBars"></canvas><div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xBreaths">Breath table</button></div>`;
@@ -1972,6 +2109,11 @@ function renderSheet(force) {
     $('iWhy').innerHTML = q && q.reasons.length ? q.reasons.map(x => '<span class="chip">' + x + '</span>').join('') : '';
     renderList(force); drawSnap();
   } else if (sheetKind === 'session') { drawTimeline(); renderList(force); drawSnap(); }
+  else if (sheetKind === 'report') {
+    const noData = sessionMeta ? sessionMeta.gaps.reduce((a, g) => a + g.dur, 0) : 0;
+    set(fact(clock(analytics.t), 'duration') + fact(S.epochs ? Math.round(100 * (S.share.good + S.share.uncertain)) + '<small>%</small>' : '--', 'usable signal') + fact(fin(S.rr.mean) ? S.rr.mean.toFixed(1) : '--', 'mean rate') + fact(S.pauses.confirmed, 'pauses'));
+    if ($('pdfNote') && !$('pdfNote').dataset.busy) $('pdfNote').textContent = noData > 0 ? clock(noData) + ' without data will be marked in the report.' : '';
+  }
   else if (sheetKind === 'breath') { $('snapTitle').textContent = selected ? selected.title + ' at ' + tlTime(selected.t1) + (selected.sub ? ', ' + selected.sub + '.' : '.') : ''; drawSnap(); }
 }
 function drawSeries(cv, pts, lo, hi, color, ribbon) {
@@ -2091,7 +2233,7 @@ function drawSnap() {
 }
 
 // ---------------------------------------------------------------- frame loop
-let lastFrame = performance.now(), carry = 0, lastSlow = 0, lastL = {};
+let lastFrame = performance.now(), carry = 0, lastSlow = 0, lastL = {}, lastSave = 0;
 function renderAll(force) { review.update(); seedsCache.e = -1; lastL = renderTiles(); renderSheet(force); }
 function frame(now) {
   const dt = Math.min(0.25, (now - lastFrame) / 1000); lastFrame = now;
@@ -2101,30 +2243,406 @@ function frame(now) {
   if (!queue.length) carry = Math.min(carry, 1);
   if (source && source.kind !== 'file' && performance.now() - lastDataAt > 4000) { $('dot').className = 'dot stale'; $('connText').textContent = 'No data from the ' + (source.kind === 'demo' ? 'demo' : 'patch'); }
   drawBloom(dt); drawAmpWave(); drawCycle(lastL); moveSpark();
-  if (now - lastSlow > 1000 && !bulk) { lastSlow = now; renderAll(false); }
+  drawDim();
+  if (now - lastSlow > 1000 && !bulk) {
+    lastSlow = now; renderAll(false);
+    if (recording) $('recText').textContent = clock(analytics.t);
+    if (recording && now - lastSave > 5000) { lastSave = now; saveProgress(); }
+  }
   requestAnimationFrame(frame);
+}
+
+// ---------------------------------------------------------------- sessions: Start to Stop, saved as it goes
+// Every few seconds the new samples are written to this browser's storage (IndexedDB), so a closed or crashed page
+// loses at most a few seconds. Demo sessions are not stored.
+const IDB = {};
+function idb() {
+  return IDB.p || (IDB.p = new Promise((res, rej) => {
+    const r = indexedDB.open('breathpatch', 1);
+    r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('sessions', { keyPath: 'id' }); d.createObjectStore('chunks', { keyPath: ['sid', 'idx'] }).createIndex('sid', 'sid'); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+}
+function idbReq(store, mode, fn) {
+  return idb().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(store, mode), r = fn(tx.objectStore(store));
+    tx.oncomplete = () => res(r && 'result' in r ? r.result : undefined); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
+  }));
+}
+const idbPut = (store, obj) => idbReq(store, 'readwrite', st => st.put(obj));
+const idbAllSessions = () => idbReq('sessions', 'readonly', st => st.getAll());
+const idbChunks = sid => idbReq('chunks', 'readonly', st => st.index('sid').getAll(sid)).then(a => a.sort((x, y) => x.idx - y.idx));
+async function idbDeleteSession(sid) {
+  await idbReq('sessions', 'readwrite', st => st.delete(sid));
+  const ch = await idbChunks(sid);
+  await idbReq('chunks', 'readwrite', st => { for (const c of ch) st.delete([sid, c.idx]); });
+}
+const stored = () => sessionMeta && (sessionMeta.kind === 'ble' || sessionMeta.kind === 'usb');
+let storageOk = true, saving = false;
+
+function startSession(kind, device, fw) {
+  recording = true; recStart = sessionWall;
+  sessionMeta = { id: 'bp-' + Date.now(), start: sessionWall, kind, device, fw: fw || '', status: 'running', saved: 0, chunks: 0, lastWall: Date.now(), gaps: [], details: {} };
+  if (stored()) idbPut('sessions', sessionMeta).catch(() => { storageOk = false; log('This browser will not keep the session if the page closes (storage is blocked). Keep the page open.'); });
+  keepAwake(true); sessionUi(); armDim();
+}
+async function saveProgress() {
+  if (!stored() || saving || !storageOk) return;
+  const from = sessionMeta.saved, to = analytics.n;
+  if (to <= from) return;
+  saving = true;
+  try {
+    const v = new Float32Array(to - from), f = new Uint8Array(to - from);
+    for (let i = from; i < to; i++) { v[i - from] = analytics.val(i); f[i - from] = analytics.flags(i); }
+    await idbPut('chunks', { sid: sessionMeta.id, idx: sessionMeta.chunks, from, v, f });
+    sessionMeta.chunks++; sessionMeta.saved = to; sessionMeta.lastWall = lastSampleWall || Date.now();
+    await idbPut('sessions', sessionMeta);
+  } catch (_) { storageOk = false; }
+  finally { saving = false; }
+}
+async function stopSession() {
+  if (!recording) return;
+  await saveProgress();
+  recording = false;
+  if (sessionMeta) { sessionMeta.status = 'done'; sessionMeta.end = sessionWall + analytics.t * 1000; if (stored()) idbPut('sessions', sessionMeta).catch(() => {}); }
+  stopSource(); keepAwake(false); hideDim(); sessionUi();
+  review.update(); renderAll(true);
+  openSheet('report');
+}
+function sessionUi() {
+  const b = $('btnBle');
+  b.textContent = recording ? 'Stop' : 'Start';
+  b.classList.toggle('stop', recording);
+  b.setAttribute('aria-label', recording ? 'Stop the session and make the report' : 'Start a session: connect the patch and record');
+  for (const id of ['btnDemo', 'btnNight', 'btnChoose', 'btnUsb']) $(id).disabled = recording;
+  $('fileIn').disabled = recording;
+  $('recClock').classList.toggle('on', recording);
+}
+window.addEventListener('beforeunload', e => { if (recording && stored()) { saveProgress(); e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveProgress(); });
+
+// Night screen: after a minute without a touch the screen goes black apart from a dim breathing orb.
+// The screen stays awake (wake lock) so the browser keeps receiving data.
+let dimTimer = null;
+function armDim() { clearTimeout(dimTimer); if (recording) dimTimer = setTimeout(() => { if (recording && !sheetKind) $('dim').hidden = false; }, 60000); }
+function hideDim() { $('dim').hidden = true; armDim(); }
+// waking the screen must not also press whatever sits under the finger
+let swallowClick = false;
+for (const ev of ['pointerdown', 'keydown']) document.addEventListener(ev, e => {
+  if (!$('dim').hidden) { e.preventDefault(); e.stopPropagation(); swallowClick = ev === 'pointerdown'; hideDim(); }
+  else armDim();
+}, true);
+document.addEventListener('click', e => { if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); } }, true);
+function drawDim() {
+  if ($('dim').hidden) return;
+  const v = analytics.n ? Math.max(-1, Math.min(1, nowSignal() / scale)) : 0;
+  $('dimOrb').style.transform = 'scale(' + (0.92 + 0.08 * v).toFixed(3) + ')';
+  $('dimRr').textContent = $('rr').textContent;
+  $('dimT').textContent = 'Recording ' + clock(analytics.t);
+}
+
+// Unfinished sessions: offer to continue, finish or discard when the app opens.
+async function checkUnfinished() {
+  let list = [];
+  try { list = (await idbAllSessions()).filter(m => m.status === 'running' && m.saved > 0).sort((a, b) => b.start - a.start); } catch (_) { return false; }
+  if (!list.length) return false;
+  openSheet('resume', list[0]);
+  return true;
+}
+async function loadSession(meta, onDone) {
+  const chunks = await idbChunks(meta.id);
+  const total = chunks.reduce((a, c) => a + c.v.length, 0);
+  stopSource();
+  resetSession(meta.start);
+  sessionMeta = meta;
+  let ci = 0, off = 0;
+  ingest(total, () => {
+    while (ci < chunks.length && off >= chunks[ci].v.length) { ci++; off = 0; }
+    const ch = chunks[ci], k = off++;
+    return { v: ch.v[k], breath: !!(ch.f[k] & 2), motion: !!(ch.f[k] & 1) };
+  }, 'saved session', () => { setConn('Not connected', false); onDone && onDone(); });
+}
+async function continueSession(meta) {
+  const device = await pickPatch(false);          // inside the tap, so the chooser may open if needed
+  closeSheet();
+  await loadSession(meta, async () => {
+    recording = true; recStart = meta.start; meta.status = 'running';
+    lastSampleWall = meta.lastWall; keepAwake(true); sessionUi(); armDim();
+    if (!device) { log('Session reloaded. Tap Stop to finish, or More, Start with a different patch.'); return; }
+    bleDevice = device; bleWanted = true; bleAttempt = 0;
+    if (!device.__bpWatched) { device.addEventListener('gattserverdisconnected', () => onBleDropped(device)); device.__bpWatched = true; }
+    if (!(await bleAttach(device, false))) scheduleReconnect();
+  });
+}
+async function finishSaved(meta) {
+  closeSheet();
+  await loadSession(meta, () => { meta.status = 'done'; meta.end = meta.lastWall; idbPut('sessions', meta).catch(() => {}); openSheet('report'); });
+}
+async function startOrStop() {
+  if (recording) { stopSession(); return; }
+  if (await checkUnfinished()) return;
+  connectBle(false);
 }
 
 // ---------------------------------------------------------------- recording and exports
 let wakeLock = null;
 async function keepAwake(on) { try { if (on && navigator.wakeLock && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen'); else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; } } catch (_) { wakeLock = null; } }
 document.addEventListener('visibilitychange', () => { if (recording && document.visibilityState === 'visible') keepAwake(true); });
-function toggleRec() {
-  recording = !recording;
-  const b = $('btnRec');
-  if (recording) { recStart = Date.now(); recFrom = analytics.n; recTo = recFrom; b.textContent = 'Stop recording'; b.classList.add('on'); $('btnMenu').textContent = '● Recording'; $('btnSaveWave').disabled = true; keepAwake(true); log('Recording. The screen is kept awake. Keep the device on charge and this page open.'); }
-  else { recTo = analytics.n; b.textContent = 'Record'; b.classList.remove('on'); $('btnMenu').textContent = 'More'; $('btnSaveWave').disabled = recTo <= recFrom; keepAwake(false); log('Recorded ' + clock((recTo - recFrom) / FS) + '. Save the waveform from More to keep it.'); }
+// report.js : the clinician PDF report for a BreathPatch session.
+// Runs inside the monitor page (uses analytics, review, items(), sessionMeta and sessionWall from it) and builds
+// an A4 PDF with jsPDF, loaded on first use from jspdf.umd.min.js next to the page.
+
+const RP = {
+  ink: [24, 24, 24], muted: [96, 96, 96], faint: [150, 150, 150], line: [222, 222, 222], soft: [246, 246, 246],
+  green: [18, 160, 92], cyan: [11, 143, 191], red: [214, 51, 59], amber: [222, 146, 22]
+};
+const rgb = a => 'rgb(' + a.join(',') + ')';
+// standard PDF fonts only cover basic Latin, so typographic characters are swapped for plain ones
+const T = s => String(s ?? '').replace(/[–—]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"')
+  .replace(/·/g, '|').replace(/×/g, 'x').replace(/≥/g, '>=').replace(/≤/g, '<=').replace(/µ/g, 'u').replace(/[^\x20-\x7E\n]/g, '');
+
+let jspdfLoading = null;
+function loadJsPdf() {
+  if (window.jspdf) return Promise.resolve();
+  return jspdfLoading || (jspdfLoading = new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = 'jspdf.umd.min.js';
+    s.onload = () => res(); s.onerror = () => { jspdfLoading = null; rej(new Error('The PDF tool could not be loaded. Open the app once while online so it is saved for offline use.')); };
+    document.head.appendChild(s);
+  }));
 }
+
+const wallAt = t => new Date(sessionWall + t * 1000);
+const hhmm = t => { const d = wallAt(t), p = n => String(n).padStart(2, '0'); return p(d.getHours()) + ':' + p(d.getMinutes()); };
+const hhmmss = t => { const d = wallAt(t), p = n => String(n).padStart(2, '0'); return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); };
+const dateLong = ms => new Date(ms).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+const timeShort = ms => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+function durText(s) { if (!fin(s)) return '--'; s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + ' h ' + String(m).padStart(2, '0') + ' min' : m ? m + ' min ' + String(s % 60).padStart(2, '0') + ' s' : s + ' s'; }
+
+// ---------------------------------------------------------------- charts for print (white background)
+function reportTimeline(W, H, gaps) {
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d'), k = W / 1000;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  const T0 = Math.max(analytics.t, 60), padL = 120 * k, padR = 14 * k, pw = W - padL - padR, x = t => padL + t / T0 * pw;
+  const lanes = [['Signal quality', 16], ['Rate (br/min)', 120], ['Amplitude', 80], ['Irregular', 22], ['Pauses', 22]];
+  const L = {}; let y = 10 * k;
+  ctx.font = (13 * k) + 'px Helvetica, Arial, sans-serif'; ctx.textBaseline = 'middle';
+  for (const [name, hh] of lanes) { L[name] = { y, h: hh * k }; ctx.fillStyle = rgb(RP.muted); ctx.textAlign = 'left'; ctx.fillText(name, 4 * k, y + hh * k / 2); y += (hh + 16) * k; }
+  // time without data, across all lanes
+  ctx.fillStyle = 'rgba(0,0,0,.06)';
+  for (const g of gaps) ctx.fillRect(x(g.t0), L['Signal quality'].y - 4 * k, Math.max(2, x(g.t0 + g.dur) - x(g.t0)), y - L['Signal quality'].y - 8 * k);
+  const qc = { good: rgb(RP.green), uncertain: rgb(RP.amber), noisy: '#9a9a9a', movement: '#cfcfcf' };
+  for (const e of review.epochs) { ctx.fillStyle = qc[e.label]; ctx.fillRect(x(e.t0), L['Signal quality'].y, Math.max(1, x(e.t1) - x(e.t0) - 0.5), L['Signal quality'].h); }
+  const grid = (Lk, lo, hi, ticks, fmt) => {
+    ctx.strokeStyle = rgb(RP.line); ctx.lineWidth = 1 * k; ctx.fillStyle = rgb(RP.faint); ctx.textAlign = 'right'; ctx.font = (11 * k) + 'px Helvetica, Arial, sans-serif';
+    for (const v of ticks) { const yy = Lk.y + Lk.h - (v - lo) / (hi - lo) * Lk.h; ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke(); ctx.fillText(fmt(v), padL - 6 * k, yy); }
+  };
+  const line = (Lk, pts, lo, hi, color) => {
+    ctx.strokeStyle = color; ctx.lineWidth = 2 * k; ctx.lineJoin = 'round'; ctx.beginPath(); let on = false;
+    for (const p of pts) { if (!fin(p.v)) { on = false; continue; } const yy = Lk.y + Lk.h - (Math.min(hi, Math.max(lo, p.v)) - lo) / (hi - lo) * Lk.h; on ? ctx.lineTo(x(p.t), yy) : ctx.moveTo(x(p.t), yy); on = true; }
+    ctx.stroke();
+  };
+  grid(L['Rate (br/min)'], 0, 40, [0, 10, 20, 30, 40], v => v);
+  line(L['Rate (br/min)'], review.epochs.map(e => ({ t: (e.t0 + e.t1) / 2, v: e.rr })), 0, 40, rgb(RP.green));
+  grid(L.Amplitude, 0, 1.6, [0, 0.5, 1, 1.5], v => Math.round(v * 100) + '%');
+  line(L.Amplitude, review.trend().map(p => ({ t: (p.t0 + p.t1) / 2, v: p.amp })), 0, 1.6, rgb(RP.cyan));
+  for (const s of review.segments) { ctx.fillStyle = rgb(RP.cyan); ctx.fillRect(x(s.t0), L.Irregular.y, Math.max(2 * k, x(s.t1) - x(s.t0)), L.Irregular.h); }
+  for (const [ev, info] of review.pauseInfo) { ctx.fillStyle = info.confidence === 'confirmed' ? rgb(RP.red) : rgb(RP.amber); ctx.beginPath(); ctx.arc(x(ev.start + ev.dur / 2), L.Pauses.y + L.Pauses.h / 2, 5 * k, 0, 2 * Math.PI); ctx.fill(); }
+  ctx.fillStyle = rgb(RP.muted); ctx.font = (12 * k) + 'px Helvetica, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const step = T0 > 6 * 3600 ? 3600 : T0 > 2 * 3600 ? 1800 : T0 > 3600 ? 900 : T0 > 1200 ? 300 : 60;
+  for (let t = 0; t <= T0 + 1; t += step) ctx.fillText(hhmm(t), Math.min(W - padR - 18 * k, Math.max(padL + 18 * k, x(t))), y - 6 * k);
+  return cv.toDataURL('image/png');
+}
+function reportSnap(item, W, H) {
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d'), k = H / 300;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  const span = Math.min(180, item.t1 - item.t0 + 30), mid = (item.t0 + item.t1) / 2;
+  const t0 = Math.max(0, mid - span / 2), t1 = Math.min(analytics.t, t0 + span);
+  const i0 = Math.round(t0 * FS), i1 = Math.max(i0 + 2, Math.min(analytics.n - 1, Math.round(t1 * FS)));
+  const padT = 10 * k, rib = 10 * k, padB = 34 * k, ph = H - padT - padB - rib - 8 * k, x = t => 6 * k + (t - t0) / Math.max(1e-9, t1 - t0) * (W - 12 * k);
+  let peak = 1; for (let i = i0; i <= i1; i++) peak = Math.max(peak, Math.abs(analytics.val(i)));
+  const y = v => padT + ph / 2 - v / (peak * 1.15) * ph / 2;
+  ctx.fillStyle = item.kind === 'pause' ? 'rgba(214,51,59,.12)' : item.kind === 'irregular' ? 'rgba(11,143,191,.12)' : 'rgba(222,146,22,.12)';
+  ctx.fillRect(x(item.t0), padT, x(item.t1) - x(item.t0), ph);
+  ctx.strokeStyle = rgb(RP.line); ctx.lineWidth = 1 * k; ctx.beginPath(); ctx.moveTo(x(t0), y(0)); ctx.lineTo(x(t1), y(0)); ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,.06)';
+  const step = Math.max(1, Math.floor((i1 - i0) / (W * 1.5)));
+  for (let i = i0; i <= i1; i += step) if (analytics.flags(i) & 1) ctx.fillRect(x(i / FS), padT, Math.max(1, step / FS / (t1 - t0) * W), ph);
+  ctx.strokeStyle = 'rgba(18,160,92,.35)';
+  for (let i = i0; i <= i1; i++) if (analytics.flags(i) & 2) { ctx.beginPath(); ctx.moveTo(x(i / FS), padT); ctx.lineTo(x(i / FS), padT + ph); ctx.stroke(); }
+  ctx.strokeStyle = rgb(RP.ink); ctx.lineWidth = 2.2 * k; ctx.lineJoin = 'round'; ctx.beginPath();
+  for (let i = i0; i <= i1; i += step) { const xx = x(i / FS), yy = y(analytics.val(i)); i === i0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy); }
+  ctx.stroke();
+  const qc = { good: rgb(RP.green), uncertain: rgb(RP.amber), noisy: '#9a9a9a', movement: '#cfcfcf' }, ry = padT + ph + 8 * k;
+  for (let t = Math.floor(t0 / RV.EPOCH_S) * RV.EPOCH_S; t < t1; t += RV.EPOCH_S) { const e = review.epochAt(t); ctx.fillStyle = e ? qc[e.label] : '#eee'; ctx.fillRect(x(Math.max(t0, t)), ry, Math.max(0, x(Math.min(t1, t + RV.EPOCH_S)) - x(Math.max(t0, t)) - 1), rib); }
+  ctx.fillStyle = rgb(RP.muted); ctx.font = (20 * k) + 'px Helvetica, Arial, sans-serif'; ctx.textBaseline = 'top';
+  ctx.textAlign = 'left'; ctx.fillText(hhmmss(t0), 6 * k, ry + rib + 4 * k); ctx.textAlign = 'right'; ctx.fillText(hhmmss(t1), W - 6 * k, ry + rib + 4 * k);
+  return cv.toDataURL('image/png');
+}
+
+// ---------------------------------------------------------------- the report
+async function makeReportPdf(details = {}) {
+  await loadJsPdf();
+  review.update();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+  const W = 210, H = 297, M = 16, CW = W - 2 * M;
+  const S = review.summary(), meta = sessionMeta || { start: sessionWall, kind: source ? source.kind : 'file', device: '', fw: '', gaps: [] };
+  const gaps = meta.gaps || [], noData = gaps.reduce((a, g) => a + g.dur, 0);
+  const startMs = sessionWall, endMs = sessionWall + analytics.t * 1000;
+  const id = 'BP-' + localStamp(startMs).replace(/-/g, '').slice(2, 12);
+  const name = (details.name || '').trim();
+  let y = M;
+  const color = (a, what = 'text') => (what === 'text' ? doc.setTextColor(...a) : what === 'draw' ? doc.setDrawColor(...a) : doc.setFillColor(...a));
+  const font = (size, style = 'normal', c = RP.ink) => { doc.setFont('helvetica', style); doc.setFontSize(size); color(c); };
+  const text = (s, x, yy, o) => doc.text(T(s), x, yy, o);
+  const ensure = need => { if (y + need > H - 22) { doc.addPage(); y = M + 4; smallHeader(); } };
+  function smallHeader() { font(9, 'bold', RP.green); text('BreathPatch', M, y); font(9, 'normal', RP.muted); text('Breathing effort report' + (name ? '  |  ' + name : ''), M + 22, y); color(RP.line, 'draw'); doc.setLineWidth(0.2); doc.line(M, y + 2.5, W - M, y + 2.5); y += 9; }
+  function heading(s) { ensure(14); font(12.5, 'bold', RP.ink); text(s, M, y); y += 2.5; color(RP.green, 'draw'); doc.setLineWidth(0.6); doc.line(M, y, M + 14, y); y += 6; }
+
+  // ---- header with the logo
+  color(RP.green, 'draw'); doc.setLineWidth(0.5); doc.circle(M + 5, y + 4, 5, 'S');
+  const wave = []; const bez = (p0, p1, p2, p3) => { for (let i = 0; i <= 16; i++) { const t = i / 16, u = 1 - t; wave.push([u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0], u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1]]); } };
+  bez([6, 22], [10, 22], [11, 13], [15, 13]); bez([15, 13], [19, 13], [20, 27], [25, 27]); bez([25, 27], [29, 27], [30, 18], [34, 18]);
+  doc.setLineWidth(0.7);
+  for (let i = 1; i < wave.length; i++) doc.line(M + wave[i - 1][0] / 4, y - 1 + wave[i - 1][1] / 4, M + wave[i][0] / 4, y - 1 + wave[i][1] / 4);
+  font(17, 'bold'); text('BreathPatch', M + 13, y + 3.5);
+  font(8.5, 'normal', RP.muted); text('by Brainiac Healthcare', M + 13, y + 8);
+  font(13, 'bold'); text('Breathing effort report', W - M, y + 3, { align: 'right' });
+  font(8.5, 'normal', RP.muted); text('Report ' + id + '   |   Generated ' + dateLong(Date.now()) + ', ' + timeShort(Date.now()), W - M, y + 8, { align: 'right' });
+  y += 14; color(RP.line, 'draw'); doc.setLineWidth(0.3); doc.line(M, y, W - M, y); y += 7;
+
+  // ---- patient and session
+  const kv = (rows, x0, colW) => { let yy = y; for (const [k, v] of rows) { font(8.5, 'normal', RP.muted); text(k, x0, yy); font(10, 'bold'); const lines = doc.splitTextToSize(T(v || '--'), colW - 32); doc.text(lines, x0 + 32, yy); yy += 5.6 * Math.max(1, lines.length); } return yy; };
+  const leftEnd = kv([['Name or ID', name || 'Not given'], ['Age', details.age], ['Referred by', details.ref], ['Recorded at', details.place]], M, CW / 2);
+  const rightEnd = kv([['Started', dateLong(startMs) + ', ' + timeShort(startMs)], ['Ended', dateLong(endMs) + ', ' + timeShort(endMs)], ['Duration', durText(analytics.t)],
+    ['Usable signal', S.epochs ? Math.round(100 * (S.share.good + S.share.uncertain)) + ' % of the session' : '--'], ['Without data', noData > 0 ? durText(noData) + ' in ' + gaps.length + ' gap' + (gaps.length === 1 ? '' : 's') : 'None'],
+    ['Device', (meta.device || (meta.kind === 'demo' ? 'Demo, simulated data' : meta.kind === 'file' ? 'Recording file' : '--')) + (meta.fw ? ', firmware ' + meta.fw : '')]], M + CW / 2 + 2, CW / 2);
+  y = Math.max(leftEnd, rightEnd) + 1;
+  if ((details.notes || '').trim()) { font(8.5, 'normal', RP.muted); text('Notes', M, y); font(9.5, 'normal'); const l = doc.splitTextToSize(T(details.notes.trim()), CW - 32); doc.text(l, M + 32, y); y += 5 * l.length + 1; }
+  if (meta.kind === 'demo' || meta.kind === 'file') { font(9, 'bold', RP.amber); text(meta.kind === 'demo' ? 'This report was made from simulated demo data.' : 'This report was made from a recording file.', M, y); y += 6; }
+  y += 3;
+
+  // ---- results table
+  heading('Results');
+  const P = S.pauses, I = S.irregular, tm = S.timing;
+  const rows = [
+    ['Respiratory rate', fin(S.rr.mean) ? S.rr.mean.toFixed(1) + ' breaths/min' : '--', fin(S.rr.mean) ? 'Range ' + Math.round(S.rr.min) + ' to ' + Math.round(S.rr.max) + ' br/min across 30 s stretches. Measured in ' + Math.round(100 * (S.share.good + S.share.uncertain)) + ' % of the session.' : 'Not enough usable signal.'],
+    ['Amplitude and variability', fin(S.amp.relMedian) ? Math.round(100 * S.amp.relMedian) + ' % of usual breath' : '--', 'Breath-to-breath amplitude variability ' + (fin(S.amp.cvMedian) ? Math.round(100 * S.amp.cvMedian) + ' %' : '--') + ' (median of 2 min windows). Weakest 10 % of breaths at ' + (fin(S.amp.relP10) ? Math.round(100 * S.amp.relP10) + ' %' : '--') + ' of usual.'],
+    ['Timing', fin(tm.ibiMean) ? tm.ibiMean.toFixed(2) + ' s between breaths' : '--', 'Interval variability ' + (fin(tm.ibiCv) ? Math.round(100 * tm.ibiCv) + ' %' : '--') + ', RMSSD ' + (fin(tm.rmssd) ? tm.rmssd.toFixed(2) + ' s' : '--') + '. Breath in ' + (fin(tm.ti) ? tm.ti.toFixed(2) + ' s' : '--') + ', breath out ' + (fin(tm.te) ? tm.te.toFixed(2) + ' s' : '--') + ', from the ' + (fin(tm.usableShare) ? Math.round(100 * tm.usableShare) + ' %' : '--') + ' of breaths clean enough to time.'],
+    ['Pauses', P.confirmed + ' confirmed' + (P.uncertain ? ', ' + P.uncertain + ' uncertain' : ''), (S.usableHours >= 0.25 && fin(P.perHour) ? P.perHour.toFixed(1) + ' confirmed per hour of usable signal. ' : '') + (fin(P.longest) ? 'Longest ' + Math.round(P.longest) + ' s. ' : '') + 'A pause is 10 s or more beyond one typical breath.'],
+    ['Pattern', fin(I.share) ? Math.round(100 * I.share) + ' % irregular' : '--', I.segments.length + ' period' + (I.segments.length === 1 ? '' : 's') + ' flagged for review against this person\'s own calm breathing. Interval sample entropy ' + (fin(I.sampEn) ? I.sampEn.toFixed(2) : '--') + '.']
+  ];
+  const cw = [44, 42, CW - 86];
+  color(RP.soft, 'fill'); doc.rect(M, y - 4, CW, 6.5, 'F');
+  font(8.5, 'bold', RP.muted); text('Parameter', M + 2, y); text('Result', M + 2 + cw[0], y); text('Detail', M + 2 + cw[0] + cw[1], y); y += 5;
+  for (const [a, b, c2] of rows) {
+    font(9, 'normal'); const dl = doc.splitTextToSize(T(c2), cw[2] - 3); font(10, 'bold'); const bl = doc.splitTextToSize(T(b), cw[1] - 3), hgt = Math.max(dl.length, bl.length) * 4.3 + 3.2;
+    ensure(hgt + 2);
+    font(10, 'bold'); text(a, M + 2, y + 1);
+    font(10, 'bold', RP.green); doc.text(bl, M + 2 + cw[0], y + 1);
+    font(9, 'normal', RP.ink); doc.text(dl, M + 2 + cw[0] + cw[1], y + 1);
+    y += hgt; color(RP.line, 'draw'); doc.setLineWidth(0.2); doc.line(M, y - 2, W - M, y - 2);
+  }
+  y += 4;
+
+  // ---- session overview chart
+  heading('Session overview');
+  const chartH = CW * 0.37;
+  ensure(chartH + 12);
+  doc.addImage(reportTimeline(2000, 740, gaps), 'PNG', M, y, CW, chartH, undefined, 'FAST');
+  y += chartH + 3;
+  font(8, 'normal', RP.muted);
+  const legend = [[RP.green, 'Good signal, rate'], [RP.amber, 'Uncertain signal, uncertain pause'], [[154, 154, 154], 'Noisy'], [[207, 207, 207], 'Movement'], [RP.cyan, 'Irregular, amplitude'], [RP.red, 'Confirmed pause']];
+  let lx = M;
+  for (const [c3, label] of legend) { color(c3, 'fill'); doc.rect(lx, y - 2.3, 3, 2.6, 'F'); color(RP.muted); text(label, lx + 4, y); lx += 5 + doc.getTextWidth(T(label)) + 4; if (lx > W - M - 30) { lx = M; y += 4.5; } }
+  y += 5;
+  font(8.5, 'normal', RP.muted);
+  text('Signal quality across the session: good ' + Math.round(100 * (S.share.good || 0)) + ' %, uncertain ' + Math.round(100 * (S.share.uncertain || 0)) + ' %, noisy ' + Math.round(100 * (S.share.noisy || 0)) + ' %, movement or no data ' + Math.round(100 * (S.share.movement || 0)) + ' %. Shaded areas are time without data.', M, y, { maxWidth: CW });
+  y += 9;
+
+  // ---- events for review
+  const evs = items().slice().reverse();
+  heading('Events for review');
+  if (!evs.length) { font(10, 'normal', RP.muted); text('No pauses, irregular periods or stretches of unclear signal were found.', M, y); y += 8; }
+  else {
+    const cols = [22, 44, 22, CW - 88];
+    const headRow = () => { color(RP.soft, 'fill'); doc.rect(M, y - 4, CW, 6.5, 'F'); font(8.5, 'bold', RP.muted); let xx = M + 2; for (const [i, h] of ['Time', 'Event', 'Duration', 'Detail'].entries()) { text(h, xx, y); xx += cols[i]; } y += 5; };
+    headRow();
+    for (const e of evs) {
+      const detail = e.kind === 'pause' && e.conf === 'confirmed' ? 'Flat signal, clean breathing either side' : e.sub || '';
+      font(9, 'normal'); const dl = doc.splitTextToSize(T(detail.charAt(0).toUpperCase() + detail.slice(1)), cols[3] - 3), hgt = dl.length * 4.2 + 2.6;
+      if (y + hgt > H - 22) { doc.addPage(); y = M + 4; smallHeader(); headRow(); }
+      const col = e.kind === 'pause' ? (e.conf === 'confirmed' ? RP.red : RP.amber) : e.kind === 'irregular' ? RP.cyan : RP.amber;
+      color(col, 'fill'); doc.circle(M + 1, y - 1, 0.9, 'F');
+      font(9.5, 'bold'); text(hhmmss(e.t0), M + 3, y);
+      font(9.5, 'normal'); text(e.title, M + 2 + cols[0], y); text(durText(e.t1 - e.t0), M + 2 + cols[0] + cols[1], y);
+      font(9, 'normal', RP.muted); doc.text(dl, M + 2 + cols[0] + cols[1] + cols[2], y);
+      y += hgt;
+    }
+    y += 3;
+  }
+
+  // ---- example waveforms
+  const pauses = evs.filter(e => e.kind === 'pause');
+  const picks = [...pauses.filter(e => e.conf === 'confirmed').sort((a, b) => (b.t1 - b.t0) - (a.t1 - a.t0)).slice(0, 3),
+                 ...pauses.filter(e => e.conf !== 'confirmed').slice(0, 1),
+                 ...evs.filter(e => e.kind === 'irregular').sort((a, b) => (b.t1 - b.t0) - (a.t1 - a.t0)).slice(0, 2)].sort((a, b) => a.t0 - b.t0);
+  if (picks.length) {
+    heading('Example waveforms');
+    font(8.5, 'normal', RP.muted); text('Chest movement around each event. Shaded: the event. Thin green lines: detected breaths. Strip below: signal quality.', M, y, { maxWidth: CW }); y += 6;
+    for (const e of picks) {
+      const h = CW * 0.15;
+      ensure(h + 15);
+      font(9.5, 'bold'); text(e.title + ' at ' + hhmmss(e.t0) + ', ' + durText(e.t1 - e.t0), M, y);
+      if (e.sub && !(e.kind === 'pause' && e.conf === 'confirmed')) { y += 4; font(8.5, 'normal', RP.muted); text(e.sub.charAt(0).toUpperCase() + e.sub.slice(1), M, y, { maxWidth: CW }); }
+      y += 2;
+      doc.addImage(reportSnap(e, 2000, 300), 'PNG', M, y, CW, h, undefined, 'FAST');
+      y += h + 6;
+    }
+  }
+
+  // ---- how to read it, and sign-off
+  heading('How to read this report');
+  const notes = [
+    'Breathing effort is measured from chest movement with a motion sensor on the chest. It is not airflow and not oxygen saturation.',
+    'Every 30 s of the session is graded for signal quality. Rate, amplitude, timing and pattern are calculated only from usable stretches, and the share of usable time is stated with each result.',
+    'Amplitude is relative to this person\'s usual breath during the session (100 %), so it shows change, not absolute depth.',
+    'Breath-in and breath-out times come only from breaths clean enough to time, and depend on sensor position.',
+    'A pause is a gap between breaths at least 10 s longer than one typical breath. Confirmed: flat signal with clean breathing either side. Uncertain: the reason is listed, for example movement just before or a weak signal.',
+    'Irregular pattern compares timing, amplitude and waveform shape with this person\'s own calm breathing in the same session. It is assessed only on good signal.',
+    'Limits: a single chest sensor cannot see airway obstruction directly, because the chest may keep moving during an obstructive event. This is not a sleep study and not a diagnosis. Results are for review by a qualified clinician alongside other findings.'
+  ];
+  for (const n of notes) { font(9, 'normal', RP.ink); const l = doc.splitTextToSize(T(n), CW - 5); ensure(l.length * 4.3 + 2); color(RP.green, 'fill'); doc.circle(M + 1, y - 1.1, 0.7, 'F'); font(9, 'normal', RP.ink); doc.text(l, M + 4, y); y += l.length * 4.3 + 1.6; }
+  y += 6; ensure(22);
+  color(RP.line, 'draw'); doc.setLineWidth(0.3);
+  const sw = (CW - 8) / 3;
+  for (const [i, lab] of ['Reviewed by', 'Signature', 'Date'].entries()) { const x0 = M + i * (sw + 4); doc.line(x0, y + 10, x0 + sw, y + 10); font(8.5, 'normal', RP.muted); text(lab, x0, y + 14.5); }
+
+  // ---- footer on every page
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    color(RP.line, 'draw'); doc.setLineWidth(0.2); doc.line(M, H - 14, W - M, H - 14);
+    font(7.5, 'normal', RP.faint);
+    text('BreathPatch by Brainiac Healthcare  |  ' + (name || 'No name given') + '  |  ' + dateLong(startMs) + '  |  Report ' + id, M, H - 10);
+    text('For clinician review. Not a diagnosis.', M, H - 6.5);
+    text('Page ' + i + ' of ' + pages, W - M, H - 10, { align: 'right' });
+  }
+  const fname = 'BreathPatch-report-' + (name ? name.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' : '') + localStamp(startMs).slice(0, 16) + '.pdf';
+  return { blob: doc.output('blob'), name: fname };
+}
+
 function download(name, parts) { const url = URL.createObjectURL(new Blob(parts, { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); }
 function save(name, header, rows) { download(name, [header + '\n' + rows.map(r => r.join(',')).join('\n') + '\n']); }
 function localStamp(ms) { const d = new Date(ms), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`; }
 const stamp = () => localStamp(recStart || sessionWall);
 const c = (x, d) => (fin(x) ? x.toFixed(d) : '');
 function saveWaveform() {
-  if (recTo <= recFrom) { log('Nothing recorded yet. Press Record first.'); return; }
-  if (recTo > analytics.n) { log('The recording was cleared by a new session.'); return; }
+  if (!analytics.n) { log('Nothing recorded yet.'); return; }
   const parts = ['t_s,signal_mg,breath,motion\n']; let buf = [];
-  for (let i = recFrom; i < recTo; i++) { const m = analytics.flags(i); buf.push(((i - recFrom) / FS).toFixed(3) + ',' + analytics.val(i).toFixed(3) + ',' + ((m >> 1) & 1) + ',' + (m & 1)); if (buf.length === 20000) { parts.push(buf.join('\n') + '\n'); buf = []; } }
+  for (let i = 0; i < analytics.n; i++) { const m = analytics.flags(i); buf.push((i / FS).toFixed(3) + ',' + analytics.val(i).toFixed(3) + ',' + ((m >> 1) & 1) + ',' + (m & 1)); if (buf.length === 20000) { parts.push(buf.join('\n') + '\n'); buf = []; } }
   if (buf.length) parts.push(buf.join('\n') + '\n');
   download('breathpatch-waveform-' + stamp() + '.csv', parts);
 }
@@ -2169,7 +2687,11 @@ $('btnMenu').addEventListener('click', e => { e.stopPropagation(); menu.hidden =
 document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) { menu.hidden = true; $('btnMenu').setAttribute('aria-expanded', 'false'); } });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!menu.hidden) { menu.hidden = true; $('btnMenu').focus(); } else if (sheetKind) closeSheet(); } });
 const closeMenu = fn => (...a) => { menu.hidden = true; $('btnMenu').setAttribute('aria-expanded', 'false'); return fn(...a); };
-$('btnBle').addEventListener('click', connectBle);
+$('btnBle').addEventListener('click', startOrStop);
+$('btnChoose').addEventListener('click', closeMenu(() => connectBle(true)));
+$('btnReport').addEventListener('click', closeMenu(() => openSheet('report')));
+$('btnHistory').addEventListener('click', closeMenu(() => openSheet('history')));
+
 $('btnUsb').addEventListener('click', closeMenu(connectUsb));
 $('btnDemo').addEventListener('click', closeMenu(startDemo));
 $('btnNight').addEventListener('click', closeMenu(simulateNight));
@@ -2177,8 +2699,6 @@ $('btnSession').addEventListener('click', closeMenu(() => openSheet('session')))
 $('speed').addEventListener('change', () => { if (source && source.kind === 'demo') playRate = +$('speed').value; });
 $('fileIn').addEventListener('change', e => { menu.hidden = true; const file = e.target.files[0]; if (file) openRecording(file); e.target.value = ''; });
 $('btnStop').addEventListener('click', closeMenu(() => { stopSource(); log('Disconnected.'); }));
-$('btnRec').addEventListener('click', closeMenu(toggleRec));
-$('btnSaveWave').addEventListener('click', closeMenu(saveWaveform));
 $('coreHit').addEventListener('click', () => openSheet('rate'));
 for (const t of document.querySelectorAll('.tile[data-sheet]')) {
   t.addEventListener('click', () => openSheet(t.dataset.sheet));
@@ -2204,9 +2724,18 @@ $('btnInstall').addEventListener('click', async () => { if (!installPrompt) retu
 loadColors();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { loadColors(); layoutSpiral(); });
 fitGolden(); layoutSpiral();
-renderAll(true);
+renderAll(true); sessionUi();
 requestAnimationFrame(frame);
-window.BreathPatch = { parseSummary, parseWave, parseLine, analytics, review, items, select, openSheet, closeSheet, seeds: () => seedsCache.list };   // exposed for testing
+(async () => {
+  if (await checkUnfinished()) return;
+  const d = await rememberedPatch();
+  if (d) { log('Connecting to ' + (d.name || 'your patch') + '. The session starts as soon as it answers.'); bleDevice = d; bleWanted = true; bleAttempt = 0;
+    if (!d.__bpWatched) { d.addEventListener('gattserverdisconnected', () => onBleDropped(d)); d.__bpWatched = true; }
+    if (!(await bleAttach(d, true))) scheduleReconnect(); }
+  else if (navigator.bluetooth) log('Tap Start to connect the patch. Recording runs until you tap Stop.');
+})();
+window.BreathPatch = { parseSummary, parseWave, parseLine, analytics, review, items, select, openSheet, closeSheet, seeds: () => seedsCache.list,
+  session: () => sessionMeta, makeReportPdf: (d) => makeReportPdf(d), idbAllSessions };   // exposed for testing
 </script>
 </body>
 </html>

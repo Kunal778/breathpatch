@@ -1,7 +1,7 @@
 // sw.js : offline cache for the BreathPatch Monitor web app.
 // The page is fetched from the network first so updates arrive, with the cached copy used when offline.
-const CACHE = 'breathpatch-3.1';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './lab.html', './classic.html'];
+const CACHE = 'breathpatch-4.0';
+const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './lab.html', './classic.html', './jspdf.umd.min.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
