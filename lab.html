@@ -936,7 +936,7 @@ const BREATH = {                 // rate br/min, interval CV, amplitude CV, ampl
 
 class NightGenerator {
   constructor(fs, profile = 'good', seed = 1) {
-    this.fs = fs; this.seed = seed >>> 0 || 1; this.n = 0; this.profile = profile;
+    this.fs = fs; this.seed = seed >>> 0 || 1; this.seed0 = this.seed; this.n = 0; this.profile = profile;
     this.P = NIGHT_PROFILES[profile];
     this.tl = this.build();
     this.duration = this.tl[this.tl.length - 1].to;
@@ -1072,7 +1072,50 @@ class NightGenerator {
   }
 }
 
-if (typeof module !== 'undefined') module.exports = { sleepReport, sleepGrade, SL, NightGenerator, NIGHT_PROFILES };
+// ---------------------------------------------------------------- body position for simulated nights
+// Body axes: x = the patient's left, y = towards the head, z = the front of the chest. The accelerometer reads "up",
+// so lying on the back reads +z, lying on the left side reads the patient's right (-x), sitting up reads +y.
+const BODY_UP = { supine: [0, 0, 1], prone: [0, 0, -1], left: [-1, 0, 0], right: [1, 0, 0], upright: [0, 1, 0] };
+function rotX(v, a) { const c = Math.cos(a), s = Math.sin(a); return [v[0], c * v[1] - s * v[2], s * v[1] + c * v[2]]; }
+function rotY(v, a) { const c = Math.cos(a), s = Math.sin(a); return [c * v[0] + s * v[2], v[1], -s * v[0] + c * v[2]]; }
+function rotZ(v, a) { const c = Math.cos(a), s = Math.sin(a); return [c * v[0] - s * v[1], s * v[0] + c * v[1], v[2]]; }
+const unit3 = v => { const n = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / n, v[1] / n, v[2] / n]; };
+// The patch is never stuck on perfectly square: this turns body directions into the patch's own axes.
+const PATCH_MOUNT = v => rotX(rotZ(v, 0.55), -0.30);
+
+// Position timeline for a NightGenerator night. Positions change only during movement, as in real sleep.
+// Uses its own random stream, so the breathing of the night is unchanged.
+NightGenerator.prototype.positions = function () {
+  if (this.posTl) return this.posTl;
+  let seed = (this.seed0 || 1) * 7919 + 13 >>> 0;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const P = this.P, sitUntil = P.wakeA * 60, standFrom = this.duration - 120, out = [];
+  let pos = 'upright';
+  const push = (from, to, p) => { if (to <= from) return; const last = out[out.length - 1]; if (last && last.pos === p) { last.to = to; return; } out.push({ from, to, pos: p, roll: (rnd() - 0.5) * 0.35, pitch: (rnd() - 0.5) * 0.25 }); };
+  for (const s of this.tl) {
+    if (s.to <= sitUntil || s.from >= standFrom) { push(s.from, s.to, 'upright'); continue; }
+    if (pos === 'upright') pos = 'supine';
+    if (s.kind === 'move' && rnd() < 0.6) {
+      const r = rnd(), next = r < 0.42 ? 'supine' : r < 0.69 ? 'left' : r < 0.96 ? 'right' : 'prone';
+      if (next !== pos) { push(s.from, s.from + (s.to - s.from) / 2, pos); pos = next; push(s.from + (s.to - s.from) / 2, s.to, pos); continue; }
+    }
+    push(Math.max(s.from, sitUntil), Math.min(s.to, standFrom), pos);
+  }
+  this.posTl = out;
+  return out;
+};
+NightGenerator.prototype.posAt = function (t) { const tl = this.positions(); let lo = 0, hi = tl.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (tl[m].to <= t) lo = m + 1; else hi = m; } return tl[lo]; };
+// Unit gravity vector in the patch's axes at time t, as firmware 1.7 sends it once a second.
+NightGenerator.prototype.gravAt = function (t) {
+  const s = this.posAt(t);
+  let v = BODY_UP[s.pos];
+  v = rotY(v, s.roll); v = rotX(v, s.pitch);       // nobody lies exactly square
+  return unit3(PATCH_MOUNT(v));
+};
+// What the technologist would record with the two calibration taps.
+NightGenerator.calibration = () => ({ sup: unit3(PATCH_MOUNT(BODY_UP.supine)), up: unit3(PATCH_MOUNT(rotX(BODY_UP.upright, -0.25))) });
+
+if (typeof module !== 'undefined') module.exports = { sleepReport, sleepGrade, SL, NightGenerator, NIGHT_PROFILES, BODY_UP, PATCH_MOUNT, unit3 };
 
 // walking.js : breathing rate while moving, from the raw BreathPatch accelerometer and gyroscope.
 // Experimental. Pure JavaScript, runs in the monitor page and in Node tests.

@@ -67,16 +67,20 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
 /* ---------------------------------------------------------------- the golden layout */
 .golden { position: relative; display: grid; gap: var(--gap); margin: 0 auto;
-  grid-template-columns: 1fr .146fr .09fr .382fr; grid-template-rows: .618fr .146fr .236fr;
+  grid-template-columns: 1fr .146fr .09fr .146fr .236fr; grid-template-rows: .382fr .236fr .146fr .236fr;
   width: 100%; aspect-ratio: 1.618; }
+/* The B square (.618) is cut once more at the golden ratio: amplitude on top (.618 x .382),
+   then sleep (.382 x .236, a golden rectangle) and position (.236 square) beneath it. */
 .tile { position: relative; background: var(--tile); border-radius: 16px; overflow: hidden; cursor: pointer; container-type: size; min-width: 0; min-height: 0; border: 1px solid transparent; transition: border-color .3s; }
 .tile:hover { border-color: #444; }
-.tA { grid-column: 1 / 2; grid-row: 1 / 4; background: #050505; border-color: #1c1c1c; cursor: default; }
-.tB { grid-column: 2 / 5; grid-row: 1 / 2; }
-.tC { grid-column: 4 / 5; grid-row: 2 / 4; }
-.tD { grid-column: 2 / 4; grid-row: 3 / 4; }
-.tE { grid-column: 2 / 3; grid-row: 2 / 3; }
-.tF { grid-column: 3 / 4; grid-row: 2 / 3; }
+.tA { grid-column: 1 / 2; grid-row: 1 / 5; background: #050505; border-color: #1c1c1c; cursor: default; }
+.tB { grid-column: 2 / 6; grid-row: 1 / 2; }
+.tS { grid-column: 2 / 5; grid-row: 2 / 3; }
+.tP { grid-column: 5 / 6; grid-row: 2 / 3; }
+.tC { grid-column: 4 / 6; grid-row: 3 / 5; }
+.tD { grid-column: 2 / 4; grid-row: 4 / 5; }
+.tE { grid-column: 2 / 3; grid-row: 3 / 4; }
+.tF { grid-column: 3 / 4; grid-row: 3 / 4; }
 .tile canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .lbl { position: absolute; left: 7cqmin; top: 6cqmin; font-size: max(11px, 6.5cqmin); font-weight: 600; color: var(--label); z-index: 2; pointer-events: none; }
 .val { position: absolute; z-index: 2; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; pointer-events: none; }
@@ -97,15 +101,25 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tip b { font-weight: 700; }
 .tip[hidden] { display: none; }
 /* B amplitude */
-.tB .val { right: 3cqw; top: 6cqh; font-size: min(21cqh, 13cqw); }
-.tB .lbl { font-size: max(12px, min(6.5cqh, 4.5cqw)); left: 3cqw; top: 7cqh; }
-.tB .sub { left: 3cqw; top: calc(7cqh + max(18px, min(9cqh, 6cqw))); font-size: max(11px, min(4.6cqh, 3.2cqw)); }
+.tB .val { right: 3cqw; top: 8cqh; font-size: min(30cqh, 12cqw); }
+.tB .lbl { font-size: max(12px, min(10cqh, 4.5cqw)); left: 3cqw; top: 9cqh; }
+.tB .sub { left: 3cqw; top: calc(9cqh + max(18px, min(13cqh, 6cqw))); font-size: max(11px, min(7cqh, 3.2cqw)); }
+/* S sleep: state word, sleep so far, and a sleep / wake band along the bottom */
+.tS .lbl { font-size: max(12px, min(10cqh, 6cqw)); left: 5cqw; top: 9cqh; }
+.tS .val { left: 5cqw; top: 31cqh; font-size: max(18px, min(25cqh, 13cqw)); }
+.tS .sub { left: 5cqw; top: 62cqh; font-size: max(11px, min(8cqh, 4.6cqw)); }
+.tS .val.asleep { color: var(--breath); } .tS .val.awake { color: var(--fg); } .tS .val.settling { color: var(--muted); }
+/* P position: a body seen from the feet, turning with the patient */
+.tP .lbl { font-size: max(11px, 9cqmin); left: 8cqmin; top: 8cqmin; }
+.tP .val { left: 0; right: 0; bottom: 8cqmin; text-align: center; font-size: max(13px, 13cqmin); }
+.tP .val.setup { color: var(--uncertain); }
+.tP .sub { left: 0; right: 0; bottom: 24cqmin; text-align: center; font-size: max(10px, 7cqmin); }
 /* C timing */
 .tC .val { left: 50%; top: 53%; transform: translate(-50%, -50%); font-size: 19cqmin; text-align: center; }
 .tC .sub { left: 0; right: 0; bottom: 6cqmin; text-align: center; }
 /* D pauses */
 .tD .val { left: 7cqmin; bottom: 7cqmin; font-size: 44cqmin; }
-.tD .sub { right: 7cqmin; bottom: 8cqmin; text-align: right; max-width: 50%; }
+.tD .sub { right: 7cqmin; top: 7cqmin; text-align: right; max-width: 52%; font-size: max(10px, 5.6cqmin); line-height: 1.3; }
 .tD.alarm { border-color: var(--pause); }
 .tD.alarm .val { color: var(--pause); }
 @media (prefers-reduced-motion: no-preference) { .tD.alarm { animation: pulseB 1.2s ease-in-out infinite alternate; } }
@@ -116,6 +130,11 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tF .val { left: 50%; top: 55%; transform: translate(-50%, -50%); font-size: max(16px, 34cqmin); text-align: center; }
 .tF .lbl { left: 50%; transform: translateX(-50%); }
 .spiral { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; }
+/* study log chip: replaces the seed hint in the bloom while a session runs */
+.logChip { position: absolute; right: 4cqmin; bottom: 2.4cqmin; z-index: 4; display: none; padding: 6px 13px; font-size: max(12px, 2.2cqmin); font-weight: 600; border-color: #3a3a3a; background: rgba(38, 38, 38, .9); }
+.logChip.on { display: inline-flex; align-items: center; gap: 6px; }
+.logChip.on ~ .sub.hint { display: none; }
+.logChip i { width: 7px; height: 7px; border-radius: 50%; background: var(--label); }
 
 /* ---------------------------------------------------------------- detail sheet */
 .scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); z-index: 40; }
@@ -135,7 +154,7 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .fact .k { font-size: 12.5px; color: var(--muted); }
 .note { font-size: 13.5px; color: var(--muted); margin: 0; }
 .sbody canvas { width: 100%; display: block; background: #000; border-radius: 12px; }
-.c-trend { height: 170px; } .c-bars { height: 120px; } .c-tl { height: 240px; cursor: crosshair; } .c-snap { height: 210px; }
+.c-trend { height: 170px; } .c-bars { height: 120px; } .c-tl { height: 330px; cursor: crosshair; } .c-snap { height: 210px; }
 .split { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; display: flex; }
 .split i { display: block; height: 100%; } .split .ti { background: var(--breath); } .split .te { background: rgba(63, 224, 143, .35); }
 .meter { position: relative; height: 10px; border-radius: 5px; background: linear-gradient(90deg, rgba(63, 224, 143, .55), rgba(255, 181, 71, .6) 50%, var(--pause)); }
@@ -192,6 +211,26 @@ button.primary.stop { background: var(--pause); border-color: var(--pause); colo
 .rowsub { display: none; }
 .short { display: none; }
 .menu-note { font-size: 11.5px; color: var(--faint); padding: 6px 8px 2px; line-height: 1.45; }
+.c-study { height: 200px; }
+.steps { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.steps th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 6px 6px; border-bottom: 1px solid var(--line); }
+.steps td { padding: 8px 6px; border-bottom: 1px solid var(--line); }
+.steps td:first-child { font-weight: 700; }
+.calrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; background: var(--tile); border-radius: 12px; }
+.calrow b { display: block; font-size: 15px; }
+.calrow small { display: block; color: var(--muted); font-size: 12.5px; }
+.calrow .ok { color: var(--breath); }
+.inline { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+.inline label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.inline label[hidden] { display: none; }
+.inline input, .inline select { font: 500 15px var(--font); color: var(--fg); background: var(--tile); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; width: 88px; }
+.inline input.wide { width: 220px; max-width: 60vw; }
+.inline select { width: auto; border-radius: 10px; }
+.bars { display: grid; gap: 6px; }
+.bar { display: grid; grid-template-columns: 76px minmax(0, 1fr) 96px; gap: 8px; align-items: center; font-size: 13px; }
+.bar .tr { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.bar .tr i { display: block; height: 100%; background: var(--breath); }
+.bar .n { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------- phones: the whole screen, no scrolling
    Height splits at the golden ratio: the bloom takes 61.8 %, the rest holds a slim amplitude strip (38.2 % of it)
@@ -208,13 +247,15 @@ button.primary.stop { background: var(--pause); border-color: var(--pause); colo
   header button { padding: 8px 13px; }
   .long { display: none; }
   .short { display: inline; }
-  .golden { width: 100%; aspect-ratio: auto; grid-template-columns: 38% 1fr; grid-template-rows: 1.618fr .382fr .206fr .206fr .206fr; flex: 1 1 auto; min-height: 0; }
-  .tA { grid-column: 1 / 3; grid-row: 1 / 2; }
-  .tB { grid-column: 1 / 3; grid-row: 2 / 3; }
-  .tC { grid-column: 1 / 2; grid-row: 3 / 6; }
-  .tD { grid-column: 2 / 3; grid-row: 3 / 4; }
-  .tE { grid-column: 2 / 3; grid-row: 4 / 5; }
-  .tF { grid-column: 2 / 3; grid-row: 5 / 6; }
+  .golden { width: 100%; aspect-ratio: auto; grid-template-columns: 38% 23.8% 1fr; grid-template-rows: 1.618fr .191fr .191fr .206fr .206fr .206fr; flex: 1 1 auto; min-height: 0; }
+  .tA { grid-column: 1 / 4; grid-row: 1 / 2; }
+  .tB { grid-column: 1 / 3; grid-row: 2 / 4; }
+  .tS { grid-column: 3 / 4; grid-row: 2 / 3; }
+  .tP { grid-column: 3 / 4; grid-row: 3 / 4; }
+  .tC { grid-column: 1 / 2; grid-row: 4 / 7; }
+  .tD { grid-column: 2 / 4; grid-row: 4 / 5; }
+  .tE { grid-column: 2 / 4; grid-row: 5 / 6; }
+  .tF { grid-column: 2 / 4; grid-row: 6 / 7; }
   .tile { border-radius: 14px; }
   .spiral { display: none; }
   /* bloom: status pill inside the tile, shorter hint */
@@ -232,16 +273,23 @@ button.primary.stop { background: var(--pause); border-color: var(--pause); colo
   /* amplitude strip */
   .tB .lbl { font-size: 13px; left: 14px; top: 10px; }
   .tB .sub { font-size: 11.5px; left: 14px; top: 29px; }
-  .tB .val { right: 14px; top: 50%; transform: translateY(-50%); font-size: max(26px, min(46cqh, 13cqw)); }
+  .tB .val { right: 12px; top: 50%; transform: translateY(-50%); font-size: max(24px, min(46cqh, 17cqw)); }
   @container (max-height: 100px) { .tB .sub { display: none; } }
   /* timing ring */
   .tC .lbl { font-size: 13px; left: 12px; top: 10px; }
   .tC .val { top: 55%; font-size: max(20px, 17cqmin); }
   .tC .sub { display: none; }
   /* compact rows: label on the left, value on the right, nothing wasted */
-  .tD, .tE, .tF { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 14px; }
-  .tD .lbl, .tE .lbl, .tF .lbl, .tD .val, .tE .val, .tF .val, .tD .sub { position: static; transform: none; }
-  .tD .lbl, .tE .lbl, .tF .lbl { font-size: 13px; display: flex; flex-direction: column; gap: 1px; }
+  .tD, .tE, .tF, .tS, .tP { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 14px; }
+  .tS, .tP { padding: 0 10px; gap: 1px; flex-direction: column; align-items: flex-start; justify-content: center; }
+  .tD .lbl, .tE .lbl, .tF .lbl, .tD .val, .tE .val, .tF .val, .tD .sub, .tS .lbl, .tS .val, .tP .lbl, .tP .val { position: static; transform: none; }
+  .tD .lbl, .tE .lbl, .tF .lbl, .tS .lbl, .tP .lbl { font-size: 13px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .tS .lbl, .tP .lbl { font-size: 12px; flex-direction: row; align-items: baseline; gap: 6px; max-width: 100%; white-space: nowrap; overflow: hidden; }
+  .rowsub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tS canvas, .tP canvas, .tS .sub, .tP .sub { display: none; }
+  .tS .val, .tP .val { font-size: max(15px, min(40cqh, 18px)); text-align: left; white-space: nowrap; line-height: 1.05; }
+  .tS .rowsub, .tP .rowsub { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .logChip { right: 3cqmin; bottom: 2.6cqmin; padding: 5px 11px; font-size: 12px; }
   .rowsub { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
   .tD .sub { display: none; }
   .tD .val, .tF .val { font-size: max(22px, min(62cqh, 30px)); }
@@ -258,7 +306,9 @@ button.primary.stop { background: var(--pause); border-color: var(--pause); colo
   .sbody { padding: 2px 16px 20px; gap: 12px; }
   .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
   .fact { padding: 8px 8px; } .fact .v { font-size: 18px; white-space: nowrap; } .fact .k { font-size: 11px; line-height: 1.3; }
-  .c-trend { height: 130px; } .c-bars { height: 92px; } .c-tl { height: 190px; } .c-snap { height: 160px; }
+  .c-trend { height: 130px; } .c-bars { height: 92px; } .c-tl { height: 260px; } .c-snap { height: 160px; } .c-study { height: 170px; }
+  .steps { font-size: 12px; } .steps th { font-size: 11px; padding: 5px 3px; } .steps td { padding: 7px 3px; }
+  .bar { grid-template-columns: 64px minmax(0, 1fr) 84px; font-size: 12px; }
   .list { max-height: 26dvh; }
 }
 </style>
@@ -277,6 +327,7 @@ button.primary.stop { background: var(--pause); border-color: var(--pause); colo
       <div class="menu-panel" id="menuPanel" hidden>
         <button id="btnReport" type="button">Make the PDF report</button>
         <button id="btnSession" type="button">Session timeline and review</button>
+        <button id="btnLog" type="button">Study log: lights, CPAP pressure, notes</button>
         <button id="btnHistory" type="button">Past sessions</button>
         <hr>
         <button id="btnChoose" type="button">Start with a different patch</button>
@@ -305,6 +356,7 @@ button.primary.stop { background: var(--pause); border-color: var(--pause); colo
       <div class="state" id="state">Waiting for the patch</div>
       <button class="coreHit" id="coreHit" type="button" aria-label="Open respiratory rate details"></button>
       <span class="sub q" id="liveQ">Signal quality appears after 10 s</span>
+      <button class="logChip" id="logChip" type="button" aria-label="Open the study log: lights off and on, CPAP pressure, notes"><i></i><span id="logChipText">Study log</span></button>
       <span class="sub hint"><span class="long">Each seed is a breath. Tap one to see it.</span><span class="short">Tap a seed</span></span>
       <div class="tip" id="tip" hidden></div>
     </section>
@@ -313,6 +365,18 @@ button.primary.stop { background: var(--pause); border-color: var(--pause); colo
       <span class="lbl">Amplitude</span>
       <span class="sub" id="aSub">variability --</span>
       <span class="val" id="aVal">--</span>
+    </section>
+    <section class="tile tS" tabindex="0" role="button" data-sheet="sleep" aria-label="Sleep, estimated, open details">
+      <canvas id="sleepBand"></canvas>
+      <span class="lbl">Sleep<span class="rowsub" id="sRow">estimated</span></span>
+      <span class="val settling" id="sVal">--</span>
+      <span class="sub" id="sSub">estimated, appears after 10 min</span>
+    </section>
+    <section class="tile tP" tabindex="0" role="button" data-sheet="position" aria-label="Body position, open details">
+      <canvas id="posGlyph"></canvas>
+      <span class="lbl">Position<span class="rowsub" id="poRow">--</span></span>
+      <span class="sub" id="poSub"></span>
+      <span class="val" id="poVal">--</span>
     </section>
     <section class="tile tC" tabindex="0" role="button" data-sheet="timing" aria-label="Respiratory timing, open details">
       <canvas id="cycle"></canvas>
@@ -944,7 +1008,7 @@ const BREATH = {                 // rate br/min, interval CV, amplitude CV, ampl
 
 class NightGenerator {
   constructor(fs, profile = 'good', seed = 1) {
-    this.fs = fs; this.seed = seed >>> 0 || 1; this.n = 0; this.profile = profile;
+    this.fs = fs; this.seed = seed >>> 0 || 1; this.seed0 = this.seed; this.n = 0; this.profile = profile;
     this.P = NIGHT_PROFILES[profile];
     this.tl = this.build();
     this.duration = this.tl[this.tl.length - 1].to;
@@ -1080,7 +1144,50 @@ class NightGenerator {
   }
 }
 
-if (typeof module !== 'undefined') module.exports = { sleepReport, sleepGrade, SL, NightGenerator, NIGHT_PROFILES };
+// ---------------------------------------------------------------- body position for simulated nights
+// Body axes: x = the patient's left, y = towards the head, z = the front of the chest. The accelerometer reads "up",
+// so lying on the back reads +z, lying on the left side reads the patient's right (-x), sitting up reads +y.
+const BODY_UP = { supine: [0, 0, 1], prone: [0, 0, -1], left: [-1, 0, 0], right: [1, 0, 0], upright: [0, 1, 0] };
+function rotX(v, a) { const c = Math.cos(a), s = Math.sin(a); return [v[0], c * v[1] - s * v[2], s * v[1] + c * v[2]]; }
+function rotY(v, a) { const c = Math.cos(a), s = Math.sin(a); return [c * v[0] + s * v[2], v[1], -s * v[0] + c * v[2]]; }
+function rotZ(v, a) { const c = Math.cos(a), s = Math.sin(a); return [c * v[0] - s * v[1], s * v[0] + c * v[1], v[2]]; }
+const unit3 = v => { const n = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / n, v[1] / n, v[2] / n]; };
+// The patch is never stuck on perfectly square: this turns body directions into the patch's own axes.
+const PATCH_MOUNT = v => rotX(rotZ(v, 0.55), -0.30);
+
+// Position timeline for a NightGenerator night. Positions change only during movement, as in real sleep.
+// Uses its own random stream, so the breathing of the night is unchanged.
+NightGenerator.prototype.positions = function () {
+  if (this.posTl) return this.posTl;
+  let seed = (this.seed0 || 1) * 7919 + 13 >>> 0;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const P = this.P, sitUntil = P.wakeA * 60, standFrom = this.duration - 120, out = [];
+  let pos = 'upright';
+  const push = (from, to, p) => { if (to <= from) return; const last = out[out.length - 1]; if (last && last.pos === p) { last.to = to; return; } out.push({ from, to, pos: p, roll: (rnd() - 0.5) * 0.35, pitch: (rnd() - 0.5) * 0.25 }); };
+  for (const s of this.tl) {
+    if (s.to <= sitUntil || s.from >= standFrom) { push(s.from, s.to, 'upright'); continue; }
+    if (pos === 'upright') pos = 'supine';
+    if (s.kind === 'move' && rnd() < 0.6) {
+      const r = rnd(), next = r < 0.42 ? 'supine' : r < 0.69 ? 'left' : r < 0.96 ? 'right' : 'prone';
+      if (next !== pos) { push(s.from, s.from + (s.to - s.from) / 2, pos); pos = next; push(s.from + (s.to - s.from) / 2, s.to, pos); continue; }
+    }
+    push(Math.max(s.from, sitUntil), Math.min(s.to, standFrom), pos);
+  }
+  this.posTl = out;
+  return out;
+};
+NightGenerator.prototype.posAt = function (t) { const tl = this.positions(); let lo = 0, hi = tl.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (tl[m].to <= t) lo = m + 1; else hi = m; } return tl[lo]; };
+// Unit gravity vector in the patch's axes at time t, as firmware 1.7 sends it once a second.
+NightGenerator.prototype.gravAt = function (t) {
+  const s = this.posAt(t);
+  let v = BODY_UP[s.pos];
+  v = rotY(v, s.roll); v = rotX(v, s.pitch);       // nobody lies exactly square
+  return unit3(PATCH_MOUNT(v));
+};
+// What the technologist would record with the two calibration taps.
+NightGenerator.calibration = () => ({ sup: unit3(PATCH_MOUNT(BODY_UP.supine)), up: unit3(PATCH_MOUNT(rotX(BODY_UP.upright, -0.25))) });
+
+if (typeof module !== 'undefined') module.exports = { sleepReport, sleepGrade, SL, NightGenerator, NIGHT_PROFILES, BODY_UP, PATCH_MOUNT, unit3 };
 
 // review.js : the five priority parameters, with signal quality and confidence on every number.
 // Reads the samples and breath records kept by BreathAnalytics (biomarkers.js). Pure JavaScript, runs in the
@@ -1446,6 +1553,315 @@ class ReviewEngine {
 
 if (typeof module !== 'undefined') module.exports = { ReviewEngine, RV, sampleEntropy };
 
+// study.js : sleep study read-outs for BreathPatch, used next to CPAP during a sleep study.
+//   Sleep (estimated)   sleep time, efficiency, sleep onset, wake after sleep onset, between lights off and lights on
+//   Effort events       pauses (effort absent 10 s or more) and reduced effort (30 % drop for 10 s or more), per hour of sleep
+//   Periodic breathing  waxing and waning, with a Cheyne-Stokes-like flag for long cycles with repeated events
+//   Body position       back, left, right, front or upright from the patch tilt, after a calibration tap
+//   Technologist log    lights off and on, CPAP pressure steps and notes; results are split by pressure step
+// Reads BreathAnalytics (biomarkers.js), ReviewEngine (review.js) and sleepReport (sleep.js). Pure JavaScript, runs in
+// the page and in Node tests.
+// The patch measures breathing effort and position. It does not measure airflow, oxygen or brain activity, so sleep is
+// an estimate without stages, and obstructive events (where effort continues) are not detected here. Research use.
+
+const SSX = (typeof sleepReport === 'undefined') ? require('./sleep.js') : { sleepReport };
+
+const ST = {
+  EPOCH_S: 30,
+  UPRIGHT: 0.64,        // head-to-foot share of gravity above this (about 40 degrees up from lying) = sitting or standing
+  SUPINE_DEG: 45,       // within 45 degrees of the calibrated back position = on the back
+  PRONE_DEG: 135,       // more than 135 degrees from it = on the front
+  CAL_S: 5,             // a calibration tap averages the last 5 s of tilt
+  HOLD_S: 5,            // a missing tilt reading is filled from the last one for up to 5 s
+  MIN_POS_S: 30,        // a position must last 30 s to count as a change
+  MIN_POS_SLEEP_S: 600, // events per hour in a position need 10 min of sleep in it
+  CSR_CYCLE_S: 40,      // Cheyne-Stokes-like: waxing and waning with cycles of 40 s or longer ...
+  CSR_MIN_EVENTS: 3,    // ... with at least three effort events inside the episode
+  PB_MIN_S: 60          // periodic breathing episodes shorter than this are not reported
+};
+const POS_KEYS = ['supine', 'left', 'right', 'prone', 'upright', 'side', 'unknown'];
+const POS_NAME = { supine: 'Back', left: 'Left side', right: 'Right side', prone: 'Front', upright: 'Upright', side: 'Side or front', unknown: 'Unknown' };
+const POS_SHORT = { supine: 'Back', left: 'Left', right: 'Right', prone: 'Front', upright: 'Upright', side: 'Side', unknown: '--' };
+
+const sDot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const sUnit = v => { const n = Math.hypot(v[0], v[1], v[2]); return n > 0 ? [v[0] / n, v[1] / n, v[2] / n] : null; };
+const sCross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const sMedian = a => { if (!a.length) return NaN; const s = a.slice().sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const sFin = Number.isFinite;
+
+function pressureLabel(m) {
+  if (!m) return '';
+  if (m.mode === 'BPAP') return 'BPAP ' + m.ipap + '/' + m.epap;
+  return (m.mode || 'CPAP') + ' ' + m.value;
+}
+
+class SleepStudy {
+  constructor(analytics, review) { this.a = analytics; this.r = review; this.gaps = []; this.reset(); }
+
+  reset() {
+    this.g = new Int8Array(3 * 3600 * 4);   // tilt, one unit vector a second, scaled to +-127; 0,0,0 = no reading
+    this.gn = 0; this.gCount = 0;
+    this.state = { cal: { sup: null, up: null }, markers: [] };
+    this.calVer = 0; this.pos = null; this.rep = null; this.repEp = -1;
+  }
+  // Restores what a saved session kept: calibration and log (state) and the tilt seconds (chunks of Int8Array).
+  load(state) {
+    this.state = state || { cal: { sup: null, up: null }, markers: [] };
+    this.state.cal = this.state.cal || { sup: null, up: null }; this.state.markers = this.state.markers || [];
+    this.calVer++; this.pos = null;
+  }
+
+  // ---------------------------------------------------------------- tilt and body position
+  ensure(sec) { if (3 * sec > this.g.length) { const g = new Int8Array(Math.max(3 * sec, 2 * this.g.length)); g.set(this.g); this.g = g; } }
+  pushGrav(t, v) {
+    if (!v || !(Math.abs(v[0]) + Math.abs(v[1]) + Math.abs(v[2]) > 0.3)) return;
+    const s = Math.max(0, Math.floor(t)); this.ensure(s + 1);
+    const q = v.map(x => Math.max(-127, Math.min(127, Math.round(x * 127))));
+    if (this.gn > 0 && s > this.gn && s - this.gn <= ST.HOLD_S) for (let k = this.gn; k < s; k++) this.g.copyWithin(3 * k, 3 * (this.gn - 1), 3 * this.gn);
+    this.g[3 * s] = q[0]; this.g[3 * s + 1] = q[1]; this.g[3 * s + 2] = q[2];
+    if (s >= this.gn) this.gn = s + 1;
+    this.gCount++;
+    if (this.pos && this.pos.n > s) this.pos.n = s;  // reclassify from here
+  }
+  setGravSeconds(from, arr) {
+    const n = arr.length / 3; this.ensure(from + n);
+    this.g.set(arr, 3 * from); this.gn = Math.max(this.gn, from + n);
+    for (let k = 0; k < n; k++) if (arr[3 * k] || arr[3 * k + 1] || arr[3 * k + 2]) this.gCount++;
+    this.pos = null;
+  }
+  gravSeconds(from, to) { return this.g.slice(3 * from, 3 * to); }
+  hasTilt() { return this.gCount > 0; }
+  gravAt(s) {
+    if (s < 0 || s >= this.gn) return null;
+    const x = this.g[3 * s], y = this.g[3 * s + 1], z = this.g[3 * s + 2];
+    return x || y || z ? sUnit([x, y, z]) : null;
+  }
+  meanGrav(t, span) {
+    const acc = [0, 0, 0]; let n = 0;
+    for (let s = Math.floor(t) - span; s <= Math.floor(t); s++) { const v = this.gravAt(s); if (v) { acc[0] += v[0]; acc[1] += v[1]; acc[2] += v[2]; n++; } }
+    return n ? sUnit(acc) : null;
+  }
+  // kind 'sup' = patient lying on the back, 'up' = patient sitting up. Uses the last few seconds of tilt.
+  calibrate(kind, t) {
+    const v = this.meanGrav(t, ST.CAL_S);
+    if (!v) return false;
+    if (kind === 'up' && this.state.cal.sup && Math.abs(sDot(v, this.state.cal.sup.v)) > 0.8) return 'same';
+    if (kind === 'sup' && this.state.cal.up && Math.abs(sDot(v, this.state.cal.up.v)) > 0.8) return 'same';
+    this.state.cal[kind] = { v, t };
+    this.calVer++; this.pos = null;
+    return true;
+  }
+  // demo and simulated nights: the calibration a technologist would have made
+  presetCalibration(c, t = 0) {
+    this.state.cal = { sup: c.sup ? { v: c.sup, t, preset: true } : null, up: c.up ? { v: c.up, t, preset: true } : null };
+    this.calVer++; this.pos = null;
+  }
+  clearCalibration() { this.state.cal = { sup: null, up: null }; this.calVer++; this.pos = null; }
+  calibrated() { const c = this.state.cal; return c.sup ? (c.up ? 'full' : 'back') : 'none'; }
+  frame() {
+    const c = this.state.cal; if (!c.sup) return null;
+    const A = c.sup.v; let H = null, L = null;
+    if (c.up) {
+      const u = c.up.v, d = sDot(u, A), h = sUnit([u[0] - d * A[0], u[1] - d * A[1], u[2] - d * A[2]]);
+      if (h) { H = h; L = sCross(H, A); }    // L = the patient's left
+    }
+    return { A, H, L };
+  }
+  classify(v, F) {
+    if (!v || !F) return 'unknown';
+    const ant = sDot(v, F.A);
+    if (F.H) {
+      if (sDot(v, F.H) > ST.UPRIGHT) return 'upright';
+      const roll = Math.atan2(sDot(v, F.L), ant) * 180 / Math.PI;    // left side down reads the patient's right
+      if (Math.abs(roll) <= ST.SUPINE_DEG) return 'supine';
+      if (Math.abs(roll) >= ST.PRONE_DEG) return 'prone';
+      return roll < 0 ? 'left' : 'right';
+    }
+    const ang = Math.acos(Math.max(-1, Math.min(1, ant))) * 180 / Math.PI;
+    return ang <= ST.SUPINE_DEG ? 'supine' : 'side';
+  }
+  // position index (into POS_KEYS) for every second, kept up to date as tilt arrives
+  positions() {
+    if (!this.pos || this.pos.ver !== this.calVer) this.pos = { ver: this.calVer, arr: new Uint8Array(Math.max(16, this.gn + 3600)), n: 0, F: this.frame() };
+    const P = this.pos;
+    if (P.arr.length < this.gn) { const b = new Uint8Array(this.gn + 3600); b.set(P.arr); P.arr = b; }
+    for (let s = P.n; s < this.gn; s++) P.arr[s] = POS_KEYS.indexOf(this.classify(this.gravAt(s), P.F));
+    P.n = this.gn;
+    return P;
+  }
+  posAt(t) {
+    const P = this.positions(), s = Math.floor(t);
+    if (s >= P.n) { const k = P.n - 1; return k >= 0 && s - k <= ST.HOLD_S ? POS_KEYS[P.arr[k]] : 'unknown'; }
+    return s >= 0 ? POS_KEYS[P.arr[s]] : 'unknown';
+  }
+
+  // seconds the patient has been in the current position
+  posRun() {
+    const P = this.positions(); if (!P.n) return 0;
+    const k = P.arr[P.n - 1]; let s = P.n - 1;
+    while (s > 0 && P.arr[s - 1] === k) s--;
+    return P.n - s;
+  }
+
+  // ---------------------------------------------------------------- technologist log
+  addMarker(m) {
+    const M = this.state.markers;
+    m.id = m.id || 'm' + Date.now().toString(36) + Math.floor(Math.random() * 1e4);
+    M.push(m); M.sort((x, y) => x.t - y.t);
+    return m;
+  }
+  removeMarker(id) { const M = this.state.markers, k = M.findIndex(m => m.id === id); if (k >= 0) M.splice(k, 1); }
+  window() {
+    const M = this.state.markers, off = M.find(m => m.kind === 'lightsOff');
+    const on = [...M].reverse().find(m => m.kind === 'lightsOn' && (!off || m.t > off.t));
+    const end = this.a.t;
+    return { t0: off ? off.t : 0, t1: on ? Math.min(on.t, end) : end, off: !!off, on: !!on };
+  }
+  pressureAt(t) { let p = null; for (const m of this.state.markers) { if (m.t > t) break; if (m.kind === 'pressure') p = m; } return p; }
+
+  // ---------------------------------------------------------------- sleep (estimated)
+  sleep() {
+    const ep = Math.floor(this.a.n / (ST.EPOCH_S * this.a.fs));
+    if (ep !== this.repEp) { this.rep = SSX.sleepReport(this.a); this.repEp = ep; }
+    return this.rep;
+  }
+  noDataEpochs() {
+    const E = ST.EPOCH_S, set = new Set();
+    for (const g of this.gaps || []) {
+      for (let e = Math.floor(g.t0 / E); e * E < g.t0 + g.dur; e++) {
+        const ov = Math.min((e + 1) * E, g.t0 + g.dur) - Math.max(e * E, g.t0);
+        if (ov >= E / 2) set.add(e);
+      }
+    }
+    return set;
+  }
+
+  // ---------------------------------------------------------------- whole study
+  summary(S) {
+    const a = this.a, rv = this.r, E = ST.EPOCH_S, rep = this.sleep(), W = this.window();
+    S = S || rv.summary();
+    const nd = this.noDataEpochs();
+    const ready = !!(rep && rep.ready && !rep.noSleep);
+    const nEp = rep && rep.epochs ? rep.epochs.length : 0;
+    const asleepEp = e => ready && e >= 0 && e < nEp && rep.epochs[e].state !== 'wake' && !nd.has(e);
+    const inWin = t => t >= W.t0 && t < W.t1;
+    const asleepT = t => inWin(t) && asleepEp(Math.floor(t / E));
+    const e0 = Math.floor(W.t0 / E), e1 = Math.min(nEp, Math.floor(W.t1 / E));
+
+    // sleep
+    let sleepEp = 0, first = -1, last = -1, ndS = 0, moves = 0;
+    for (let e = e0; e < e1; e++) {
+      if (nd.has(e)) { ndS += E; continue; }
+      if (asleepEp(e)) { sleepEp++; if (first < 0) first = e; last = e; moves += (a.ep[e] || { moves: 0 }).moves; }
+    }
+    let wasoEp = 0, awakenings = 0;
+    for (let e = first; first >= 0 && e <= last;) {
+      if (asleepEp(e) || nd.has(e)) { e++; continue; }
+      let j = e; while (j <= last && !asleepEp(j) && !nd.has(j)) j++;
+      wasoEp += j - e; if (j - e >= 2) awakenings++;
+      e = j;
+    }
+    const tib = Math.max(0, W.t1 - W.t0), tst = sleepEp * E, h = tst / 3600;
+    const rrAsleep = [], rrAwake = [];
+    for (const ep of rv.epochs) { if (!inWin(ep.t0) || !sFin(ep.rr)) continue; (asleepEp(Math.floor(ep.t0 / E)) ? rrAsleep : rrAwake).push(ep.rr); }
+    const sleep = {
+      ready, need: rep && !rep.ready ? rep.need : 0, tib, noData: ndS, tst, se: tib - ndS > 0 ? tst / (tib - ndS) : NaN,
+      sol: first >= 0 ? Math.max(0, first * E - W.t0) : NaN, waso: wasoEp * E, awakenings,
+      movesPerH: h > 0 ? moves / h : NaN, rrAsleep: sMedian(rrAsleep), rrAwake: sMedian(rrAwake)
+    };
+
+    // effort events: confirmed pauses and reduced effort, scored only during estimated sleep
+    const posOf = t => this.posAt(t);
+    const qualOk = t => { const ep = rv.epochAt(t); return !ep || ep.label === 'good' || ep.label === 'uncertain'; };
+    const pauses = S.pauses.list.filter(p => inWin(p.ev.start));
+    const ev = [];
+    for (const p of pauses) if (p.confidence === 'confirmed' && asleepT(p.ev.start)) ev.push({ kind: 'pause', t: p.ev.start, dur: p.ev.dur, pos: posOf(p.ev.start) });
+    const reducedAll = a.events.filter(x => x.type === 'reduced' && inWin(x.start) && qualOk(x.start));
+    for (const x of reducedAll) if (asleepT(x.start)) ev.push({ kind: 'reduced', t: x.start, dur: x.dur, pos: posOf(x.start), minRel: x.minRel });
+    ev.sort((x, y) => x.t - y.t);
+    const nP = ev.filter(x => x.kind === 'pause').length, nR = ev.length - nP;
+    const events = {
+      list: ev, pauses: nP, reduced: nR, total: ev.length,
+      uncertainPauses: pauses.filter(p => p.confidence !== 'confirmed').length,
+      awakeOrUnscored: pauses.filter(p => p.confidence === 'confirmed').length + reducedAll.length - ev.length,
+      pauseIdx: h > 0 ? nP / h : NaN, reducedIdx: h > 0 ? nR / h : NaN, idx: h > 0 ? ev.length / h : NaN,
+      longestPause: nP ? Math.max(...ev.filter(x => x.kind === 'pause').map(x => x.dur)) : NaN
+    };
+
+    // periodic breathing
+    const pbs = [], cycles = [], half = (typeof BM !== 'undefined' ? BM : require('./biomarkers.js').BM).PB_WIN_S / 2;
+    for (const x of a.events) {
+      if (x.type !== 'periodic' || x.dur < ST.PB_MIN_S) continue;
+      const s0 = Math.max(x.start, W.t0), s1 = Math.min(x.start + x.dur, W.t1);
+      if (s1 <= s0) continue;
+      let inSleep = 0; for (let t = s0; t < s1; t += E / 2) if (asleepT(t)) inSleep += E / 2;
+      const n = ev.filter(y => y.t >= x.start && y.t < x.start + x.dur).length;
+      // cycle length: median of the 10 s evaluations inside the episode (so long episodes weigh more)
+      const cs = a.pb.filter(p => p.flag && p.t - half >= x.start - 1 && p.t - half < x.start + x.dur).map(p => p.cycle);
+      cycles.push(...cs);
+      const cyc = cs.length ? sMedian(cs) : x.cycle;
+      pbs.push({ t: x.start, dur: x.dur, sleepS: Math.min(inSleep, s1 - s0), cycle: cyc, events: n, csr: cyc >= ST.CSR_CYCLE_S && n >= ST.CSR_MIN_EVENTS });
+    }
+    const pbS = pbs.reduce((s, x) => s + x.sleepS, 0), csrS = pbs.filter(x => x.csr).reduce((s, x) => s + x.sleepS, 0);
+    const periodic = { list: pbs, sleepS: pbS, pct: tst > 0 ? pbS / tst : NaN, csrS, csrPct: tst > 0 ? csrS / tst : NaN, cycle: sMedian(cycles) };
+
+    // body position
+    let position = null;
+    if (this.hasTilt() && this.calibrated() !== 'none') {
+      const P = this.positions(), by = {};
+      for (const k of POS_KEYS) by[k] = { all: 0, sleep: 0, events: 0 };
+      let changes = 0, runK = -1, runLen = 0, lastStable = -1;
+      for (let s = Math.max(0, Math.floor(W.t0)); s < Math.min(P.n, Math.ceil(W.t1)); s++) {
+        const k = P.arr[s], key = POS_KEYS[k];
+        by[key].all++;
+        if (asleepT(s)) by[key].sleep++;
+        if (k === runK) runLen++; else { runK = k; runLen = 1; }
+        if (runLen === ST.MIN_POS_S && key !== 'unknown') { if (lastStable >= 0 && lastStable !== k) changes++; lastStable = k; }
+      }
+      for (const x of ev) by[x.pos].events++;
+      for (const k of POS_KEYS) { const b = by[k]; b.idx = b.sleep >= ST.MIN_POS_SLEEP_S ? b.events / (b.sleep / 3600) : NaN; }
+      const sleepS = POS_KEYS.reduce((s, k) => s + by[k].sleep, 0);
+      const supineIdx = by.supine.idx, nonSleep = sleepS - by.supine.sleep - by.unknown.sleep;
+      const nonEv = ev.filter(x => x.pos !== 'supine' && x.pos !== 'unknown').length;
+      position = { mode: this.calibrated(), by, changes, supinePct: sleepS > 0 ? by.supine.sleep / sleepS : NaN,
+                   supineIdx, nonSupineIdx: nonSleep >= ST.MIN_POS_SLEEP_S ? nonEv / (nonSleep / 3600) : NaN };
+    }
+
+    // CPAP pressure steps from the log
+    const steps = [];
+    const P = this.state.markers.filter(m => m.kind === 'pressure');
+    const addStep = (t0, t1, m) => {
+      t0 = Math.max(t0, W.t0); t1 = Math.min(t1, W.t1); if (t1 - t0 < 1) return;
+      let sl = 0, sup = 0; const rr = [];
+      for (let t = Math.floor(t0); t < t1; t++) if (asleepT(t)) { sl++; if (position && this.posAt(t) === 'supine') sup++; }
+      for (const ep of rv.epochs) if (ep.t0 >= t0 && ep.t0 < t1 && sFin(ep.rr) && asleepEp(Math.floor(ep.t0 / E))) rr.push(ep.rr);
+      const inS = ev.filter(x => x.t >= t0 && x.t < t1), hh = sl / 3600;
+      steps.push({ t0, t1, label: m ? pressureLabel(m) : 'Before first entry', marker: m || null, sleepS: sl,
+                   pauses: inS.filter(x => x.kind === 'pause').length, reduced: inS.filter(x => x.kind === 'reduced').length,
+                   idx: sl >= 300 ? inS.length / hh : NaN, supinePct: position && sl > 0 ? sup / sl : NaN, rr: sMedian(rr) });
+    };
+    if (P.length) {
+      if (P[0].t > W.t0 + 60) addStep(W.t0, P[0].t, null);
+      P.forEach((m, i) => addStep(m.t, i + 1 < P.length ? P[i + 1].t : W.t1, m));
+    }
+
+    return { window: W, sleep, events, periodic, position, steps, markers: this.state.markers.slice() };
+  }
+
+  // compact read-out for the live screen
+  live() {
+    const rep = this.sleep(), E = ST.EPOCH_S, t = this.a.t;
+    let state = 'settling';
+    if (rep && rep.ready && rep.epochs.length) state = rep.epochs[rep.epochs.length - 1].state === 'wake' ? 'awake' : 'asleep';
+    const p = this.pressureAt(t);
+    const lastS = this.gn - 1;
+    return { state, pos: this.hasTilt() ? this.posAt(Math.min(t, lastS + 0.5)) : 'unknown', tilt: this.hasTilt(), cal: this.calibrated(),
+             pressure: p ? pressureLabel(p) : '', lightsOff: this.window().off, epochS: E };
+  }
+}
+
+if (typeof module !== 'undefined') module.exports = { SleepStudy, ST, POS_KEYS, POS_NAME, POS_SHORT, pressureLabel };
+
 </script>
 <script>
 'use strict';
@@ -1486,6 +1902,7 @@ let sessionMeta = null;                       // { id, start, kind, device, fw, 
 let sessionWall = Date.now(), lastSampleWall = 0, bulk = false, lost = 0, lastSeq = null, source = null, playRate = 1;
 const analytics = new BreathAnalytics(FS);
 const review = new ReviewEngine(analytics);
+const study = new SleepStudy(analytics, review);
 const SUMMARY_EVERY = Math.round(FS);
 let selected = null, sheetKind = null, listFilter = 'all', lastListKey = '';
 
@@ -1495,10 +1912,16 @@ function onSample(v, breath, motion, direct = false) {
   lastMotion = motion; lastDataAt = performance.now();
   analytics.push(v, breath, motion);
   if (!bulk) lastSampleWall = Date.now();
-  if (source && (source.kind === 'demo' || source.kind === 'file') && analytics.n % SUMMARY_EVERY === 0) onSummary(analytics.summary());
+  if (source && (source.kind === 'demo' || source.kind === 'file') && analytics.n % SUMMARY_EVERY === 0) {
+    const s = analytics.summary();
+    if (source.grav) s.grav = source.grav(analytics.t);
+    onSummary(s);
+    if (source.tick) source.tick(analytics.t);
+  }
 }
 function onSummary(s) {
   lastDataAt = performance.now();
+  if (s.grav) study.pushGrav(analytics.t, s.grav);
   const valid = !!(s.flags & 1), motion = !!(s.flags & 2), apnoea = !!(s.flags & 4);
   const t = analytics.t;
   trend.push({ t, rate: s.rate, valid, motion });
@@ -1521,7 +1944,7 @@ function resetSession(wall = Date.now()) {
   queue.length = 0; wave.fill(0); marks.fill(0); still.fill(1); trend.length = 0; head = 0; lastMotion = false;
   Object.assign(session, { rates: [], validS: 0, totalS: 0 });
   lost = 0; lastSeq = null;
-  analytics.reset(); review.reset();
+  analytics.reset(); review.reset(); study.reset(); study.gaps = [];
   selected = null; lastListKey = ''; seedsCache.n = -1; bloomShift = 1; bloomFill = 144;
   renderAll(true);
 }
@@ -1540,8 +1963,10 @@ function fillGap(n) {
 
 // ---------------------------------------------------------------- decoders (firmware byte layout)
 function parseSummary(dv) {
-  return { ver: dv.getUint8(0), flags: dv.getUint8(1), rate: dv.getUint16(2, true) / 10, amp: dv.getUint16(4, true) / 100,
-           depth: dv.getUint16(6, true), batt: dv.getUint16(8, true), since: dv.getUint16(10, true) / 10, count: dv.getUint32(12, true) };
+  const s = { ver: dv.getUint8(0), flags: dv.getUint8(1), rate: dv.getUint16(2, true) / 10, amp: dv.getUint16(4, true) / 100,
+              depth: dv.getUint16(6, true), batt: dv.getUint16(8, true), since: dv.getUint16(10, true) / 10, count: dv.getUint32(12, true) };
+  if (s.ver >= 3 && dv.byteLength >= 19) s.grav = [dv.getInt8(16) / 127, dv.getInt8(17) / 127, dv.getInt8(18) / 127];   // firmware 1.7: tilt for body position
+  return s;
 }
 function parseWave(dv) {
   const b0 = dv.getUint8(0), seq = b0 & 0x7F, motion = b0 >> 7, mask = dv.getUint8(1), n = (dv.byteLength - 2) >> 1, out = [];
@@ -1551,7 +1976,8 @@ function parseWave(dv) {
 function parseLine(line) {
   const p = line.trim().split(',');
   if (p[0] === 'S' && p.length >= 3) return { type: 'S', v: parseFloat(p[1]), breath: p[2] === '1', motion: p.length > 3 ? p[3] === '1' : lastMotion };
-  if (p[0] === 'R' && p.length >= 8) return { type: 'R', s: { rate: +p[1], amp: +p[2], depth: +p[3], flags: parseInt(p[4], 10), batt: +p[5], since: +p[6], count: +p[7] } };
+  if (p[0] === 'R' && p.length >= 8) return { type: 'R', s: { rate: +p[1], amp: +p[2], depth: +p[3], flags: parseInt(p[4], 10), batt: +p[5], since: +p[6], count: +p[7],
+    grav: p.length >= 11 ? [+p[8] / 1000, +p[9] / 1000, +p[10] / 1000] : undefined } };
   if (line.startsWith('#')) return { type: 'msg', text: line.slice(1).trim() };
   return null;
 }
@@ -1685,10 +2111,26 @@ function startDemo() {
   const timer = setInterval(tick, 250);
   for (let i = 0; i < Math.round(FS); i++) { const s = gen.next(); onSample(s.v, s.breath, s.motion); made++; }
   t0 = performance.now() - made / FS / playRate * 1000;
-  source = { kind: 'demo', stop: () => clearInterval(timer) };
+  source = { kind: 'demo', stop: () => clearInterval(timer), grav: demoGrav, tick: demoLog() };
   setConn('Demo, simulated data', true);
   startSession('demo', 'Demo');
+  study.presetCalibration(NightGenerator.calibration());
   log('Demo: movement at 2:00, a pause at 3:20, weaker breathing at 5:00, irregular rhythm at 5:35, waxing and waning from 7:00.');
+}
+// Demo body position: on the back, then a turn at every 2:00 movement, alternating left side and back.
+function demoGrav(t) {
+  const k = Math.floor(t / DEMO_CYCLE), c = t % DEMO_CYCLE, after = j => (j % 2 === 0 ? 'left' : 'supine');
+  const pos = c < 124 ? (k === 0 ? 'supine' : after(k - 1)) : after(k);
+  return unit3(PATCH_MOUNT(BODY_UP[pos]));
+}
+function demoLog() {
+  const done = new Set();
+  return t => {
+    const add = (key, at, m) => { if (t >= at && !done.has(key)) { done.add(key); study.addMarker(Object.assign({ t: at }, m)); persistMeta(); } };
+    add('off', 15, { kind: 'lightsOff' });
+    add('p1', 20, { kind: 'pressure', mode: 'CPAP', value: 6 });
+    add('p2', 380, { kind: 'pressure', mode: 'CPAP', value: 8 });
+  };
 }
 function ingest(total, nextSample, label, onDone) {
   const token = {};
@@ -1728,7 +2170,12 @@ function simulateNight() {
   const d = new Date(); d.setDate(d.getDate() - 1); d.setHours(22, 40, 0, 0);
   resetSession(d.getTime());
   const gen = new NightGenerator(FS, 'breathing', (Math.random() * 1e9) >>> 0);
-  ingest(Math.round(gen.duration * FS), () => gen.next(), 'simulated night', () => log('Simulated night with ' + gen.truth().events + ' scripted breathing events. The bloom holds the last 610 breaths; Review has the whole night.'));
+  ingest(Math.round(gen.duration * FS), () => gen.next(), 'simulated night', () => log('Simulated CPAP night with ' + gen.truth().events + ' scripted breathing events, body position and a study log. Review has the whole night.'));
+  source.grav = t => gen.gravAt(t);
+  study.presetCalibration(NightGenerator.calibration());
+  const off = gen.P.wakeA * 60 + 30;
+  for (const m of [{ kind: 'lightsOff', t: off }, { kind: 'pressure', t: off + 10, mode: 'CPAP', value: 5 }, { kind: 'pressure', t: off + 2.5 * 3600, mode: 'CPAP', value: 8 },
+                   { kind: 'note', t: off + 3 * 3600, text: 'Mask refitted for leak' }, { kind: 'pressure', t: off + 5 * 3600, mode: 'CPAP', value: 10 }, { kind: 'lightsOn', t: gen.duration - 180 }]) study.addMarker(m);
 }
 function stopSource() { lastPacketWall = 0; bleWanted = false; clearTimeout(bleRetry); if (source) { const s = source; source = null; s.stop(); } setConn('Not connected', false); $('devText').textContent = ''; }
 function setConn(text, live) {
@@ -1883,6 +2330,59 @@ function drawCycle(L) {
   }
 }
 
+// ---------------------------------------------------------------- sleep band and position glyph
+const POSCOL = { supine: '#3fe08f', left: '#1fb5e6', right: '#8c9dff', prone: '#ffb547', upright: '#9a9a9a', side: '#1fb5e6', unknown: 'transparent' };
+const REDUCED_COL = '#c38bff';
+// sleep (green) and wake (grey) per 30 s epoch across the session, lights off and on, pressure changes
+function drawSleepBand() {
+  const cv = $('sleepBand'); if (!cv || !cv.clientWidth) return;
+  const [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
+  const rep = study.sleep(), T = Math.max(analytics.t, 1800), y0 = h * 0.80, bh = Math.max(6, h * 0.09), x = t => w * 0.05 + t / T * w * 0.90;
+  ctx.fillStyle = '#333'; ctx.fillRect(x(0), y0, x(analytics.t) - x(0), bh);
+  if (rep && rep.ready && rep.epochs) for (let e = 0; e < rep.epochs.length; e++) {
+    if (rep.epochs[e].state === 'wake') continue;
+    ctx.fillStyle = C.breath; ctx.fillRect(x(e * 30), y0, Math.max(1, x(30) - x(0) + 0.3), bh);
+  }
+  for (const m of study.state.markers) {
+    if (m.kind === 'note') continue;
+    ctx.fillStyle = m.kind === 'pressure' ? C.label : C.fg;
+    ctx.fillRect(x(m.t) - 1, y0 - bh * 0.9, 2, bh * 0.75);
+  }
+}
+let glyphAng = 0, glyphUp = 0;
+function postureNow() {
+  const F = study.frame(), v = study.gravAt(study.gn - 1);
+  if (!F || !v) return null;
+  const ant = v[0] * F.A[0] + v[1] * F.A[1] + v[2] * F.A[2];
+  if (!F.H) return { ang: Math.acos(Math.max(-1, Math.min(1, ant))), up: 0, sided: false };
+  const head = v[0] * F.H[0] + v[1] * F.H[1] + v[2] * F.H[2], lat = v[0] * F.L[0] + v[1] * F.L[1] + v[2] * F.L[2];
+  return { ang: -Math.atan2(lat, ant), up: head > ST.UPRIGHT ? 1 : 0, sided: true };   // seen from the feet: left side down turns the front to the right
+}
+function drawPosGlyph(dt) {
+  const cv = $('posGlyph'); if (!cv || !cv.clientWidth) return;
+  const [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
+  const P = postureNow(), k = Math.min(1, dt * 4);
+  if (P) { let d = P.ang - glyphAng; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; glyphAng += d * k; glyphUp += (P.up - glyphUp) * k; }
+  const m = Math.min(w, h), cx = w / 2, bedY = h * 0.60, a = m * 0.19, b = a * 0.62;
+  ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx - m * 0.32, bedY); ctx.lineTo(cx + m * 0.32, bedY); ctx.stroke();
+  const live = !!P, col = live ? C.breath : '#4a4a4a';
+  ctx.save(); ctx.globalAlpha = 1 - glyphUp;
+  const th = glyphAng, half = Math.sqrt((b * Math.cos(th)) ** 2 + (a * Math.sin(th)) ** 2), cy = bedY - half - 2;
+  ctx.translate(cx, cy); ctx.rotate(th);
+  ctx.shadowColor = 'rgba(63, 224, 143, .45)'; ctx.shadowBlur = live ? 10 : 0;
+  ctx.strokeStyle = col; ctx.lineWidth = Math.max(2, m * 0.025); if (!live) ctx.setLineDash([4, 5]);
+  ctx.beginPath(); ctx.ellipse(0, 0, a, b, 0, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+  if (live && P.sided) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, -b * 0.55, Math.max(2.5, m * 0.03), 0, 2 * Math.PI); ctx.fill(); }   // the front of the chest
+  ctx.restore();
+  if (glyphUp > 0.02) {        // sitting or standing: a figure seen from the front
+    ctx.save(); ctx.globalAlpha = glyphUp; ctx.strokeStyle = col; ctx.lineWidth = Math.max(2, m * 0.025);
+    ctx.beginPath(); ctx.arc(cx, bedY - m * 0.30, m * 0.055, 0, 2 * Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(cx - m * 0.085, bedY - m * 0.225, m * 0.17, m * 0.21, m * 0.06) : ctx.rect(cx - m * 0.085, bedY - m * 0.225, m * 0.17, m * 0.21); ctx.stroke();
+    ctx.restore();
+  }
+}
+
 // ---------------------------------------------------------------- the golden spiral overlay
 // Quarter circles through the golden squares: A, then B, C, D, E, F, each 1.618 times smaller.
 function fitGolden() {
@@ -1895,8 +2395,10 @@ function fitGolden() {
     const A = Math.round(Math.min(H * 0.618, W * 1.08));          // the bloom never grows much taller than it is wide
     const rest = H - A - gap, B = Math.round(rest * 0.382), R3 = rest - B - gap;
     const row = (R3 - 2 * gap) / 3, col = Math.round(Math.min(R3, W * 0.5));
-    g.style.gridTemplateRows = `${A}px ${B}px ${row}px ${row}px ${row}px`;
-    g.style.gridTemplateColumns = `${col}px 1fr`;
+    // amplitude keeps 61.8 % of the width; sleep and position share the other 38.2 % as two rows
+    const half = (B - gap) / 2, ampW = Math.round(W * 0.618), mid = Math.max(20, ampW - col - gap);
+    g.style.gridTemplateRows = `${A}px ${half}px ${half}px ${row}px ${row}px ${row}px`;
+    g.style.gridTemplateColumns = `${col}px ${mid}px 1fr`;
     return;
   }
   g.style.gridTemplateRows = ''; g.style.gridTemplateColumns = '';
@@ -1953,21 +2455,64 @@ function renderTiles() {
   const nItems = items().length;
   $('fVal').textContent = nItems;
   $('fVal').style.color = nItems ? C.fg : C.faint;
+  renderStudyTiles(S);
   return L;
 }
+// Sleep and position tiles, the reduced-effort count on the pauses tile, and the study log chip.
+let studyCache = null, studyCacheAt = -1;
+function studySummary(S) {
+  const key = analytics.n + ':' + study.state.markers.length + ':' + study.calVer + ':' + review.epochs.length;
+  if (studyCacheAt !== key || !studyCache) { studyCache = study.summary(S); studyCacheAt = key; }
+  return studyCache;
+}
+function renderStudyTiles(S) {
+  const Lv = study.live(), Y = studySummary(S);
+  const sv = $('sVal');
+  sv.textContent = { asleep: 'Asleep', awake: 'Awake', settling: analytics.n ? 'Settling' : '--' }[Lv.state];
+  sv.className = 'val ' + Lv.state;
+  const sl = Y.sleep;
+  const so = sl.ready && sl.tst > 0 ? clockHM(sl.tst) + ' asleep' + (fin(sl.se) ? ', ' + Math.round(100 * sl.se) + ' %' : '') : '';
+  const rep0 = study.sleep();
+  $('sSub').textContent = so || (!analytics.n ? 'estimated from movement and breathing' : rep0 && rep0.ready ? 'no sleep yet' : 'estimate starts after 10 min');
+  $('sRow').textContent = so ? clockHM(sl.tst) : 'estimated';
+  const pv = $('poVal');
+  if (!Lv.tilt) { pv.textContent = '--'; pv.className = 'val'; $('poRow').textContent = analytics.n ? 'no tilt data' : 'needs the patch'; $('poSub').textContent = analytics.n ? 'needs firmware 1.7' : ''; }
+  else if (Lv.cal === 'none') { pv.textContent = 'Set up'; pv.className = 'val setup'; $('poRow').textContent = 'tap to calibrate'; $('poSub').textContent = 'tap to calibrate'; }
+  else {
+    pv.textContent = (Lv.cal === 'back' && Lv.pos === 'side') ? 'Not back' : POS_SHORT[Lv.pos];
+    pv.className = 'val';
+    const P = Y.position, sup = P && fin(P.supinePct) ? 'back ' + Math.round(100 * P.supinePct) + ' % of sleep' : (Lv.cal === 'back' ? 'back only' : '');
+    const run = study.posRun();
+    $('poRow').textContent = run >= 60 ? 'for ' + clockHM(run) : 'just now'; $('poSub').textContent = sup || (run >= 60 ? 'for ' + clockHM(run) : '');
+  }
+  const P0 = S.pauses, nRed = analytics.events.filter(ev => ev.type === 'reduced' && !['noisy', 'movement'].includes(epochLabelAt(ev.start))).length;
+  if (nRed && !document.querySelector('.tD').classList.contains('alarm')) {
+    const t = nRed + ' reduced' + (P0.uncertain ? ', ' + P0.uncertain + ' uncertain' : '');
+    $('pSub').textContent = t; $('pRow').textContent = t;
+  }
+  const chip = $('logChip');
+  chip.classList.toggle('on', !!(recording || study.state.markers.length));
+  $('logChipText').textContent = Lv.pressure ? Lv.pressure + ' cmH\u2082O' : Lv.lightsOff ? 'Lights off' : 'Study log';
+}
+const clockHM = s => { if (!fin(s)) return '--'; const m = Math.round(s / 60); return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm'; };
+// time axis ticks at least ~64 px apart
+function tickStep(T, pw) { for (const st of [30, 60, 300, 600, 900, 1800, 3600, 7200]) if (pw / (T / st) >= 64) return st; return 7200; }
 
 // ---------------------------------------------------------------- detail sheets
 const sheetEl = $('sheet');
 function openSheet(kind, extra) {
-  sheetKind = kind; listFilter = { pauses: 'pause', pattern: 'irregular' }[kind] || 'all'; lastListKey = '';
+  sheetKind = kind; listFilter = { pauses: 'pause', pattern: 'irregular' }[kind] || 'all'; lastListKey = ''; logArm = null; calNote = '';
   if (kind !== 'breath' && kind !== 'session' && kind !== 'pauses' && kind !== 'pattern') selected = null;
   const titles = { rate: 'Respiratory rate', amp: 'Amplitude and variability', timing: 'Timing', pauses: 'Pauses', pattern: 'Breathing pattern', session: 'Session review', breath: 'Breath',
-                   report: 'Session report', resume: 'Unfinished session', history: 'Past sessions' };
+                   report: 'Session report', resume: 'Unfinished session', history: 'Past sessions', sleep: 'Sleep, estimated', position: 'Body position', log: 'Study log' };
   $('sheetTitle').textContent = titles[kind];
   $('sbody').innerHTML = sheetHtml(kind, extra);
   sheetExtra = extra;
   if (kind === 'report') wireReportForm();
   if (kind === 'history') renderHistory();
+  if (kind === 'log') wireLogForm();
+  if ($('goLog')) $('goLog').addEventListener('click', () => openSheet('log'));
+  if ($('goPos')) $('goPos').addEventListener('click', () => openSheet('position'));
   if ($('polarity')) { $('polarity').value = analytics.polarity; $('polarity').addEventListener('change', e => { analytics.polarity = e.target.value; renderSheet(true); }); }
   for (const [id, fn] of Object.entries(EXPORTS)) if ($(id)) $(id).addEventListener('click', fn);
   if ($('filters')) $('filters').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; listFilter = b.dataset.f; for (const x of $('filters').children) x.classList.toggle('on', x === b); renderList(true); });
@@ -1978,8 +2523,8 @@ function openSheet(kind, extra) {
   if ($('tl')) $('tl').addEventListener('click', onTimelineClick);
   $('scrim').hidden = false; sheetEl.classList.add('open'); sheetEl.setAttribute('aria-hidden', 'false');
   $('sheetClose').focus();
-  if (['pauses', 'pattern', 'session'].includes(kind) && (!selected || (listFilter !== 'all' && selected.kind !== listFilter))) {
-    const first = items().find(i => listFilter === 'all' || i.kind === listFilter);
+  if (['pauses', 'pattern', 'session'].includes(kind) && (!selected || !inFilter(selected, listFilter))) {
+    const first = items().find(i => inFilter(i, listFilter));
     if (first) selected = first;
   }
   renderSheet(true);
@@ -2002,6 +2547,7 @@ function wireReportForm() {
 }
 async function pdfAction(share) {
   if (!analytics.n || !review.epochs.length) { $('pdfNote').textContent = 'There is not enough data for a report yet. A report needs at least 30 seconds of recording.'; return; }
+  clearTimeout(wireReportForm.t); persistMeta();     // keep the typed details with the session before the slow part
   const note = $('pdfNote'); note.dataset.busy = '1'; note.textContent = 'Preparing the report…';
   for (const b of ['xPdf', 'xShare']) $(b).disabled = true;
   try {
@@ -2050,7 +2596,7 @@ $('sbody').addEventListener('click', async e => {
   }
 });
 function fact(v, k, id) { return `<div class="fact"><div class="v" ${id ? 'id="' + id + '"' : ''}>${v}</div><div class="k">${k}</div></div>`; }
-const LISTBLOCK = (filters) => (filters ? `<div class="filters" id="filters"><button type="button" class="on" data-f="all">All</button><button type="button" data-f="pause">Pauses</button><button type="button" data-f="irregular">Irregular</button><button type="button" data-f="signal">Unclear signal</button></div>` : '') +
+const LISTBLOCK = (filters) => (filters ? `<div class="filters" id="filters"><button type="button" class="on" data-f="all">All</button><button type="button" data-f="pause">Pauses and reduced</button><button type="button" data-f="irregular">Irregular</button><button type="button" data-f="signal">Unclear signal</button></div>` : '') +
   `<div class="list" id="revList"></div><div class="snaptitle" id="snapTitle">Select an item to see its waveform</div><canvas class="c-snap" id="snap"></canvas>`;
 function sheetHtml(kind, extra) {
   switch (kind) {
@@ -2073,7 +2619,27 @@ function sheetHtml(kind, extra) {
     case 'rate': return `<div class="facts" id="sFacts"></div><p class="note">Rate over the session, from usable signal only. The strip under the line is the signal quality.</p><canvas class="c-trend" id="sTrend"></canvas><div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xRate">Rate per minute</button></div>`;
     case 'amp': return `<div class="facts" id="sFacts"></div><p class="note">The last 60 breaths, compared with this person's usual breath (dashed line at 100 %).</p><canvas class="c-bars" id="sBars"></canvas><p class="note">Relative amplitude across the session, every 5 minutes.</p><canvas class="c-trend" id="sTrend"></canvas>`;
     case 'timing': return `<div class="facts" id="sFacts"></div><div class="split" aria-hidden="true"><i class="ti" id="tiBar" style="width:0"></i><i class="te" id="teBar" style="width:0"></i></div><p class="note" id="tNote"></p><label class="note">Breathing in shows as <select id="polarity"><option value="auto">auto</option><option value="rise">upward stroke</option><option value="fall">downward stroke</option></select></label><p class="note">Interval between the last 60 breaths.</p><canvas class="c-bars" id="sBars"></canvas><div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xBreaths">Breath table</button></div>`;
-    case 'pauses': return `<div class="facts" id="sFacts"></div>${LISTBLOCK(false)}<div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xPauses">Pauses</button></div>`;
+    case 'pauses': return `<div class="facts" id="sFacts"></div><div class="facts" id="sFacts2"></div>
+      <p class="note">Pauses are stretches with no breathing effort for 10 s or more. Reduced effort is a drop of 30 % or more for 10 s or more. Both suggest central events. Obstructive events cannot be seen here, because the chest keeps moving; read them from the CPAP machine's flow. Events per hour count only estimated sleep.</p>
+      ${LISTBLOCK(false)}<div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xPauses">Pauses</button><button type="button" id="xStudy">All events with position and pressure</button></div>`;
+    case 'sleep': return `<div class="facts" id="sFacts"></div><canvas class="c-study" id="studyTl"></canvas>
+      <p class="note">Estimated from movement and how settled the breathing is, between lights off and lights on. There are no sleep stages, which need EEG. Events per hour use this estimated sleep time.</p>
+      <div id="stepBox"></div>
+      <div class="row-btns"><button type="button" id="goLog">Open the study log</button><span class="k">Save as CSV</span><button type="button" id="xStudy">Events with position and pressure</button></div>`;
+    case 'position': return `<div class="facts" id="sFacts"></div><div class="bars" id="posBars"></div><div id="calBox"></div>
+      <p class="note">Position comes from the tilt of the patch, once a second. Calibration applies to the whole recording, so it can be done at any time while the patient is still on the patch.</p>`;
+    case 'log': return `<div class="facts" id="sFacts"></div>
+      <div class="big-btns"><button type="button" data-log="lightsOff">Lights off</button><button type="button" data-log="lightsOn">Lights on</button></div>
+      <div class="inline"><label>Mode<select id="lgMode"><option>CPAP</option><option>APAP</option><option>BPAP</option></select></label>
+        <label id="lgV">cmH₂O<input id="lgVal" inputmode="decimal" autocomplete="off"></label>
+        <label id="lgI" hidden>IPAP<input id="lgIpap" inputmode="decimal" autocomplete="off"></label><label id="lgE" hidden>EPAP<input id="lgEpap" inputmode="decimal" autocomplete="off"></label>
+        <button type="button" class="primary" data-log="pressure">Add pressure</button></div>
+      <div class="inline"><label>Note<input id="lgNote" class="wide" autocomplete="off" placeholder="Mask leak, patient awake, position change"></label><button type="button" data-log="note">Add note</button></div>
+      <div class="inline"><label>Time<input type="time" id="lgTime"></label><p class="note">Leave empty for now, or set the clock time it happened.</p></div>
+      <p class="note" id="lgMsg"></p>
+      <div class="hist" id="logList"></div>
+      <div id="stepBox"></div>
+      <div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xLog">Study log</button></div>`;
     case 'pattern': return `<div class="facts" id="sFacts"></div><div class="meter" aria-hidden="true"><span class="th"></span><span class="mark" id="iMark"></span></div><div class="chips" id="iWhy"></div><p class="note">Timing, amplitude and waveform shape against this person's own calm breathing. Only assessed on good signal.</p>${LISTBLOCK(false)}<div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xEpochs">Signal quality</button></div>`;
     case 'session': return `<canvas class="c-tl" id="tl"></canvas>${LISTBLOCK(true)}<div class="row-btns"><span class="k">Save as CSV</span><button type="button" id="xRate">Rate per minute</button><button type="button" id="xBreaths">Breath table</button><button type="button" id="xPauses">Pauses</button><button type="button" id="xReview">Review list</button><button type="button" id="xEpochs">Signal quality</button></div>`;
     case 'breath': return `<div class="snaptitle" id="snapTitle"></div><canvas class="c-snap" id="snap"></canvas><p class="note">The highlighted stretch is the breath or pause you tapped. Breath markers are the faint vertical lines.</p>`;
@@ -2099,9 +2665,25 @@ function renderSheet(force) {
     const B = analytics.breaths.filter(b => !b.pause).slice(-60), med = analytics.medIbi();
     drawBars($('sBars'), B, b => b.ibi / med, 2, 1);
   } else if (sheetKind === 'pauses') {
-    const P = S.pauses;
-    set(fact(P.confirmed, 'confirmed') + fact(P.uncertain, 'uncertain') + fact(S.usableHours >= 0.25 && fin(P.perHour) ? P.perHour.toFixed(1) : '--', 'per hour') + fact(fin(P.longest) ? P.longest.toFixed(0) + '<small>s</small>' : '--', 'longest'));
+    const P = S.pauses, Y = studySummary(S), R = Y.events, PB = Y.periodic, hasSleep = Y.sleep.ready && Y.sleep.tst >= 600;
+    set(fact(P.confirmed, 'confirmed pauses') + fact(P.uncertain, 'uncertain') + fact(S.usableHours >= 0.25 && fin(P.perHour) ? P.perHour.toFixed(1) : '--', 'pauses per hour of signal') + fact(fin(P.longest) ? P.longest.toFixed(0) + '<small>s</small>' : '--', 'longest'));
+    $('sFacts2').innerHTML = fact(R.reduced, 'reduced effort, asleep') + fact(hasSleep ? R.idx.toFixed(1) : '--', 'events per hour of sleep') + fact(hasSleep ? Math.round(PB.sleepS / 60) + '<small>min</small>' : '--', 'periodic breathing') + fact(hasSleep ? Math.round(PB.csrS / 60) + '<small>min</small>' : '--', 'Cheyne-Stokes-like');
     renderList(force); drawSnap();
+  } else if (sheetKind === 'sleep') {
+    const Y = studySummary(S), sl = Y.sleep, W = Y.window;
+    set(fact(clockHM(sl.tib), W.off ? 'in bed, lights off' + (W.on ? ' to on' : ' to now') : 'recorded, no lights off yet') + fact(sl.ready ? clockHM(sl.tst) : '--', 'asleep') + fact(sl.ready ? pct(sl.se) : '--', 'sleep efficiency') +
+        fact(sl.ready && fin(sl.sol) ? Math.round(sl.sol / 60) + '<small>min</small>' : '--', 'sleep onset') + fact(sl.ready ? Math.round(sl.waso / 60) + '<small>min</small>' : '--', 'awake after onset') +
+        fact(sl.ready ? sl.awakenings : '--', 'awakenings') + fact(sl.ready && fin(sl.movesPerH) ? sl.movesPerH.toFixed(1) : '--', 'movements per hour asleep') + fact(fin(sl.rrAsleep) ? sl.rrAsleep.toFixed(1) : '--', 'rate asleep, br/min'));
+    drawStudyTimeline($('studyTl')); renderSteps(Y);
+  } else if (sheetKind === 'position') {
+    const Y = studySummary(S), Lv = study.live(), P = Y.position;
+    set(fact(Lv.tilt && Lv.cal !== 'none' ? (Lv.cal === 'back' && Lv.pos === 'side' ? 'Not back' : POS_SHORT[Lv.pos]) : '--', 'now') + fact(P ? pct(P.supinePct) : '--', 'of sleep on the back') +
+        fact(P ? P.changes : '--', 'position changes') + fact(P && fin(P.supineIdx) ? P.supineIdx.toFixed(1) + ' / ' + (fin(P.nonSupineIdx) ? P.nonSupineIdx.toFixed(1) : '--') : '--', 'events per hour, back / not back'));
+    renderPosBars(P); renderCal(Lv);
+  } else if (sheetKind === 'log') {
+    const Y = studySummary(S), M = study.state.markers, off = M.find(m => m.kind === 'lightsOff'), on = [...M].reverse().find(m => m.kind === 'lightsOn'), Lv = study.live();
+    set(fact(off ? wallClock(off.t) : '--', 'lights off') + fact(on ? wallClock(on.t) : '--', 'lights on') + fact(Lv.pressure || '--', 'pressure now, cmH₂O') + fact(M.length, 'entries'));
+    renderLogList(force); renderSteps(Y);
   } else if (sheetKind === 'pattern') {
     const q = L.quality, I = S.irregular;
     set(fact(q && q.win ? (q.irregular ? 'Irregular' : 'Regular') : '--', 'now') + fact(pct(I.share), 'irregular time') + fact(I.segments.length, 'periods flagged') + fact(fin(I.sampEn) ? I.sampEn.toFixed(2) : '--', 'sample entropy'));
@@ -2116,6 +2698,135 @@ function renderSheet(force) {
   }
   else if (sheetKind === 'breath') { $('snapTitle').textContent = selected ? selected.title + ' at ' + tlTime(selected.t1) + (selected.sub ? ', ' + selected.sub + '.' : '.') : ''; drawSnap(); }
 }
+// ---------------------------------------------------------------- sleep study sheets
+// lanes shared by the study chart and the session timeline
+function laneSleep(ctx, x, y, hh) {
+  const rep = study.sleep();
+  ctx.fillStyle = '#3a3a3a'; ctx.fillRect(x(0), y, x(analytics.t) - x(0), hh);
+  if (!rep || !rep.ready || !rep.epochs) return;
+  ctx.fillStyle = C.breath;
+  for (let e = 0; e < rep.epochs.length; e++) if (rep.epochs[e].state !== 'wake') ctx.fillRect(x(e * 30), y, Math.max(1, x((e + 1) * 30) - x(e * 30) + 0.4), hh);
+}
+function lanePosition(ctx, x, y, hh) {
+  if (!study.hasTilt() || study.calibrated() === 'none') { ctx.fillStyle = C.faint; ctx.font = '12px ' + C.font; ctx.textBaseline = 'middle'; ctx.fillText(study.hasTilt() ? 'not calibrated' : 'no tilt data', x(0) + 4, y + hh / 2); return; }
+  const P = study.positions(), step = Math.max(1, Math.floor(analytics.t / 1500));
+  for (let s0 = 0; s0 < P.n; s0 += step) { const key = POS_KEYS[P.arr[s0]]; if (key === 'unknown') continue; ctx.fillStyle = POSCOL[key]; ctx.fillRect(x(s0), y, Math.max(1, x(s0 + step) - x(s0) + 0.4), hh); }
+}
+function laneEvents(ctx, x, y, hh) {
+  for (const ev of analytics.events) if (ev.type === 'reduced') { ctx.fillStyle = REDUCED_COL; ctx.fillRect(x(ev.start), y + hh * 0.2, Math.max(2, x(ev.start + ev.dur) - x(ev.start)), hh * 0.6); }
+  for (const [ev, info] of review.pauseInfo) { ctx.fillStyle = info.confidence === 'confirmed' ? C.pause : C.uncertain; ctx.beginPath(); ctx.arc(x(ev.start + ev.dur / 2), y + hh / 2, Math.min(4.5, hh / 2), 0, 2 * Math.PI); ctx.fill(); }
+}
+function lanePressure(ctx, x, y, hh) {
+  const M = study.state.markers, P = M.filter(m => m.kind === 'pressure');
+  ctx.font = '11px ' + C.font; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  P.forEach((m, i) => {
+    const x0 = x(m.t), x1 = x(i + 1 < P.length ? P[i + 1].t : analytics.t);
+    ctx.fillStyle = i % 2 ? 'rgba(31, 181, 230, .30)' : 'rgba(31, 181, 230, .18)'; ctx.fillRect(x0, y, Math.max(1, x1 - x0 - 1), hh);
+    const lab = pressureLabel(m); if (x1 - x0 > ctx.measureText(lab).width + 8) { ctx.fillStyle = '#cfefff'; ctx.fillText(lab, x0 + 4, y + hh / 2); }
+  });
+  for (const m of M) if (m.kind === 'lightsOff' || m.kind === 'lightsOn') { ctx.fillStyle = C.fg; ctx.fillRect(x(m.t) - 1, y - 3, 2, hh + 6); }
+}
+function drawStudyTimeline(cv) {
+  if (!cv) return;
+  const [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
+  const T = Math.max(analytics.t, 60), padL = 78, padR = 12, x = t => padL + t / T * (w - padL - padR);
+  const lanes = [['Sleep', 16, laneSleep], ['Position', 16, lanePosition], ['Events', 16, laneEvents], ['Pressure', 18, lanePressure]];
+  const gap = Math.max(8, (h - 34 - lanes.reduce((a, l) => a + l[1], 0)) / lanes.length);
+  let y = 10; ctx.font = '12.5px ' + C.font; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  for (const [name, hh, fn] of lanes) { ctx.fillStyle = C.muted; ctx.font = '12.5px ' + C.font; ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillText(name, 10, y + hh / 2); fn(ctx, x, y, hh); y += hh + gap; }
+  ctx.fillStyle = C.faint; ctx.font = '12px ' + C.font; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const step = tickStep(T, w - padL - padR);
+  for (let t = 0; t <= T; t += step) ctx.fillText(tlTime(t), Math.min(w - padR - 16, Math.max(padL + 14, x(t))), h - 18);
+}
+function renderSteps(Y) {
+  const box = $('stepBox'); if (!box) return;
+  if (!Y.steps.length) { box.innerHTML = '<p class="note">Add pressure changes in the study log to see events at each pressure step.</p>'; return; }
+  box.innerHTML = '<table class="steps"><thead><tr><th>Pressure</th><th>From</th><th>Asleep</th><th>Pauses</th><th>Reduced</th><th>Per hour</th><th>Back</th></tr></thead><tbody>' +
+    Y.steps.map(st => `<tr><td>${st.label}</td><td>${wallClock(st.t0)}</td><td>${clockHM(st.sleepS)}</td><td>${st.pauses}</td><td>${st.reduced}</td><td>${fin(st.idx) ? st.idx.toFixed(1) : '--'}</td><td>${pct(st.supinePct)}</td></tr>`).join('') +
+    '</tbody></table><p class="note">Per hour counts pauses and reduced effort during estimated sleep at that pressure. Steps with under 5 min of sleep show no rate.</p>';
+}
+function renderPosBars(P) {
+  const box = $('posBars'); if (!box) return;
+  if (!P) { box.innerHTML = ''; return; }
+  const keys = POS_KEYS.filter(k => k !== 'unknown' && P.by[k].all > 0), tot = keys.reduce((a, k) => a + P.by[k].all, 0) || 1;
+  box.innerHTML = keys.map(k => `<div class="bar"><span>${POS_NAME[k]}</span><span class="tr"><i style="width:${(100 * P.by[k].all / tot).toFixed(1)}%;background:${POSCOL[k]}"></i></span><span class="n">${clockHM(P.by[k].all)}${fin(P.by[k].idx) ? ', ' + P.by[k].idx.toFixed(1) + '/h' : ''}</span></div>`).join('') +
+    '<p class="note">Time in each position between lights off and on, and effort events per hour of sleep in it (shown after 10 min of sleep in that position).</p>';
+}
+function renderCal(Lv) {
+  const box = $('calBox'); if (!box) return;
+  if (!Lv.tilt) { box.innerHTML = '<p class="warn">No tilt data yet. Body position needs patch firmware 1.7 or later, and a connected patch.</p>'; box.__html = ''; return; }
+  const c = study.state.cal, row = (key, title, help) => {
+    const d = c[key], done = d ? `<small class="ok">Set${d.preset ? ' for the demo' : ' at ' + wallClock(d.t)}</small>` : `<small>${help}</small>`;
+    return `<div class="calrow"><span><b>${title}</b>${done}</span><button type="button" data-cal="${key}"${key === 'up' && !c.sup ? '' : ''}>${d ? 'Set again' : 'Set now'}</button></div>`;
+  };
+  const html = `<p class="note"><b>Calibration.</b> Two taps, each with the patient still for a few seconds.</p>` +
+    row('sup', '1. Lying on the back', 'Patient flat on the back. Needed for any position.') +
+    row('up', '2. Sitting up', 'Patient sitting up in bed. Tells left from right, and upright.') +
+    `<p class="note" id="calMsg">${calNote}</p>`;
+  if (box.__html !== html) { box.innerHTML = html; box.__html = html; }     // only when it changes, so taps are not lost
+}
+let logArm = null, calNote = '';
+function renderLogList(force) {
+  const box = $('logList'); if (!box) return;
+  const M = study.state.markers;
+  const key = M.map(m => m.id).join(',') + ':' + logArm;
+  if (!force && box.__key === key) return;
+  box.__key = key;
+  if (!M.length) { box.innerHTML = '<div class="empty">No entries yet. Start with lights off, then the starting pressure.</div>'; return; }
+  const text = m => m.kind === 'lightsOff' ? 'Lights off' : m.kind === 'lightsOn' ? 'Lights on' : m.kind === 'pressure' ? pressureLabel(m) + ' cmH₂O' : 'Note: ' + escapeHtml(m.text || '');
+  box.innerHTML = M.map(m => `<div class="hrow"><span>${text(m)}<small>${wallClock(m.t)}, ${clock(m.t)} into the recording</small></span><span></span><button type="button" data-del="${m.id}">${logArm === m.id ? 'Sure?' : 'Delete'}</button></div>`).join('');
+}
+const escapeHtml = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+function wireLogForm() {
+  const mode = $('lgMode');
+  const last = [...study.state.markers].reverse().find(m => m.kind === 'pressure');
+  if (last) { mode.value = last.mode; if (last.mode === 'BPAP') { $('lgIpap').value = last.ipap; $('lgEpap').value = last.epap; } else $('lgVal').value = last.value; }
+  const sync = () => { const b = mode.value === 'BPAP'; $('lgV').hidden = b; $('lgI').hidden = !b; $('lgE').hidden = !b; };
+  mode.addEventListener('change', sync); sync();
+}
+// time for a log entry: now, or the clock time typed in, placed within the recording
+function logTime() {
+  const v = $('lgTime') ? $('lgTime').value : '';
+  if (!v) return analytics.t;
+  const [hh, mm] = v.split(':').map(Number), d = new Date(sessionWall); d.setHours(hh, mm, 0, 0);
+  let t = (d.getTime() - sessionWall) / 1000;
+  if (t < -60) t += 86400;
+  if (t > analytics.t + 60) return NaN;
+  return Math.max(0, Math.min(analytics.t, t));
+}
+function logMsg(t) { if ($('lgMsg')) $('lgMsg').textContent = t; }
+function addLog(kind) {
+  if (!analytics.n) { logMsg('Start a session first. Entries are tied to the recording time.'); return; }
+  const t = logTime();
+  if (!fin(t)) { logMsg('That time is after the recording so far. Leave the time empty for now.'); return; }
+  const num = id => { const x = parseFloat(String($(id).value).replace(',', '.')); return fin(x) && x >= 0 && x <= 40 ? Math.round(x * 2) / 2 : NaN; };
+  let m = { kind, t };
+  if (kind === 'pressure') {
+    const mode = $('lgMode').value;
+    if (mode === 'BPAP') { const ip = num('lgIpap'), ep = num('lgEpap'); if (!fin(ip) || !fin(ep) || ep > ip) { logMsg('Enter IPAP and EPAP in cmH₂O, with EPAP not above IPAP.'); return; } Object.assign(m, { mode, ipap: ip, epap: ep }); }
+    else { const v = num('lgVal'); if (!fin(v)) { logMsg('Enter the pressure in cmH₂O, between 0 and 40.'); return; } Object.assign(m, { mode, value: v }); }
+  } else if (kind === 'note') {
+    const text = $('lgNote').value.trim(); if (!text) { logMsg('Type the note first.'); return; }
+    m.text = text.slice(0, 200); $('lgNote').value = '';
+  }
+  study.addMarker(m); persistMeta();
+  if ($('lgTime')) $('lgTime').value = '';
+  logMsg((kind === 'pressure' ? pressureLabel(m) + ' cmH₂O' : kind === 'note' ? 'Note' : kind === 'lightsOff' ? 'Lights off' : 'Lights on') + ' added at ' + wallClock(t) + '.');
+  studyCache = null; renderAll(true);
+}
+$('sbody').addEventListener('click', e => {
+  const b = e.target.closest('button[data-log], button[data-cal], button[data-del]'); if (!b) return;
+  if (b.dataset.log) addLog(b.dataset.log);
+  else if (b.dataset.cal) {
+    const r = study.calibrate(b.dataset.cal, analytics.t);
+    const msg = r === true ? (b.dataset.cal === 'sup' ? 'Back position set.' + (study.state.cal.up ? '' : ' Now sit the patient up and set step 2 to tell left from right.') : 'Sitting-up position set. Left and right are now known.')
+      : r === 'same' ? 'This is the same tilt as the other step. Change the patient\'s position first.' : 'No tilt in the last few seconds. Check the patch is connected.';
+    calNote = msg; persistMeta(); studyCache = null; renderAll(true);
+  } else if (b.dataset.del) {
+    if (logArm === b.dataset.del) { study.removeMarker(b.dataset.del); logArm = null; persistMeta(); studyCache = null; renderAll(true); }
+    else { logArm = b.dataset.del; renderLogList(true); }
+  }
+});
 function drawSeries(cv, pts, lo, hi, color, ribbon) {
   if (!cv) return;
   const [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
@@ -2148,19 +2859,22 @@ function drawTimeline() {
   const [ctx, w, h] = fit(cv); ctx.clearRect(0, 0, w, h);
   const T = Math.max(analytics.t, 60), padL = 96, padR = 14, pw = w - padL - padR, x = t => padL + t / T * pw;
   Object.assign(tlGeom, { T, padL, pw });
-  const lanes = [['Signal', 10], ['Rate', 54], ['Amplitude', 38], ['Pattern', 14], ['Pauses', 14]];
-  let yy = 14; const L = {};
+  const lanes = [['Signal', 10], ['Rate', 54], ['Amplitude', 38], ['Pattern', 14], ['Events', 14], ['Sleep', 12], ['Position', 12], ['Pressure', 14]];
+  const lg = 10, k = Math.min(1, (h - 34 - lg * lanes.length) / lanes.reduce((a, l) => a + l[1], 0));
+  let yy = 12; const L = {};
   ctx.font = '13px ' + C.font; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-  for (const [name, hh] of lanes) { L[name] = { y: yy, h: hh }; ctx.fillStyle = C.muted; ctx.fillText(name, 12, yy + hh / 2); yy += hh + 12; }
+  for (const [name, h0] of lanes) { const hh = Math.max(7, Math.round(h0 * k)); L[name] = { y: yy, h: hh }; ctx.fillStyle = C.muted; ctx.fillText(name, 12, yy + hh / 2); yy += hh + lg; }
   for (const e of review.epochs) { ctx.fillStyle = QCOL[e.label](); ctx.fillRect(x(e.t0), L.Signal.y, Math.max(1, x(e.t1) - x(e.t0) - 0.5), L.Signal.h); }
   const lane = (key, pts, lo, hi, color) => { const Lk = L[key]; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.beginPath(); let on = false; for (const p of pts) { if (!fin(p.v)) { on = false; continue; } const py = Lk.y + Lk.h - (Math.min(hi, Math.max(lo, p.v)) - lo) / (hi - lo) * Lk.h; on ? ctx.lineTo(x(p.t), py) : ctx.moveTo(x(p.t), py); on = true; } ctx.stroke(); ctx.lineWidth = 1; };
   lane('Rate', review.epochs.map(e => ({ t: (e.t0 + e.t1) / 2, v: e.rr })), 0, 40, C.breath);
   lane('Amplitude', review.trend().map(p => ({ t: (p.t0 + p.t1) / 2, v: p.amp })), 0, 1.6, C.label);
   for (const s of review.segments) { ctx.fillStyle = C.irregular; ctx.fillRect(x(s.t0), L.Pattern.y, Math.max(2, x(s.t1) - x(s.t0)), L.Pattern.h); }
-  for (const [ev, info] of review.pauseInfo) { ctx.fillStyle = info.confidence === 'confirmed' ? C.pause : C.uncertain; ctx.beginPath(); ctx.arc(x(ev.start + ev.dur / 2), L.Pauses.y + L.Pauses.h / 2, 4.5, 0, 2 * Math.PI); ctx.fill(); }
+  laneEvents(ctx, x, L.Events.y, L.Events.h);
+  laneSleep(ctx, x, L.Sleep.y, L.Sleep.h); lanePosition(ctx, x, L.Position.y, L.Position.h); lanePressure(ctx, x, L.Pressure.y, L.Pressure.h);
+  ctx.font = '13px ' + C.font;
   if (selected) { ctx.fillStyle = 'rgba(255, 255, 255, .10)'; ctx.fillRect(x(selected.t0), 6, Math.max(2, x(selected.t1) - x(selected.t0)), yy - 10); }
   ctx.fillStyle = C.faint; ctx.font = '12px ' + C.font; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  const step = T > 4 * 3600 ? 3600 : T > 3600 ? 1800 : T > 1200 ? 300 : T > 300 ? 60 : 30;
+  const step = tickStep(T, pw);
   for (let t = 0; t <= T; t += step) ctx.fillText(tlTime(t), Math.min(w - padR - 16, Math.max(padL + 14, x(t))), yy - 2);
 }
 function onTimelineClick(e) {
@@ -2183,14 +2897,17 @@ function unclearRuns() {
 function items() {
   const it = [];
   for (const [ev, info] of review.pauseInfo) it.push({ kind: 'pause', t0: ev.start, t1: ev.start + ev.dur, conf: info.confidence, title: info.confidence === 'confirmed' ? 'Pause, confirmed' : 'Pause, uncertain', sub: info.confidence === 'confirmed' ? 'Flat signal, clean breathing either side' : info.why });
+  for (const ev of analytics.events) if (ev.type === 'reduced' && ev.start + ev.dur < analytics.t - 2) { const q = epochLabelAt(ev.start); if (q === 'noisy' || q === 'movement') continue;
+    it.push({ kind: 'reduced', t0: ev.start, t1: ev.start + ev.dur, title: 'Reduced effort', sub: 'breaths down to ' + Math.round(100 * ev.minRel) + ' % of those before' + (study.hasTilt() && study.calibrated() !== 'none' ? ', ' + POS_NAME[study.posAt(ev.start)].toLowerCase() : '') }); }
   for (const s of review.segments) it.push({ kind: 'irregular', t0: s.t0, t1: s.t1, title: 'Irregular pattern', sub: s.reasons.join(', ') + (fin(s.rr) ? ', about ' + Math.round(s.rr) + ' br/min' : '') });
   for (const u of unclearRuns()) it.push({ kind: 'signal', t0: u.t0, t1: u.t1, title: u.labels.has('noisy') ? 'Noisy signal' : 'Uncertain signal', sub: [...u.why].filter(Boolean).slice(0, 2).join(', ') || 'values here are less reliable' });
   return it.sort((a, b) => b.t0 - a.t0);
 }
-const KCOL = { pause: () => C.pause, irregular: () => C.irregular, signal: () => C.uncertain };
+const KCOL = { pause: () => C.pause, irregular: () => C.irregular, signal: () => C.uncertain, reduced: () => REDUCED_COL };
+const inFilter = (i, f) => f === 'all' || i.kind === f || (f === 'pause' && i.kind === 'reduced');
 function renderList(force) {
   const box = $('revList'); if (!box) return;
-  const all = items(), shown = all.filter(i => listFilter === 'all' || i.kind === listFilter);
+  const all = items(), shown = all.filter(i => inFilter(i, listFilter));
   const key = listFilter + ':' + shown.length + ':' + shown.map(i => i.t1.toFixed(0)).join(',') + ':' + (selected ? selected.t0 : '');
   if (!force && key === lastListKey) return;
   lastListKey = key; box.__items = shown;
@@ -2234,7 +2951,7 @@ function drawSnap() {
 
 // ---------------------------------------------------------------- frame loop
 let lastFrame = performance.now(), carry = 0, lastSlow = 0, lastL = {}, lastSave = 0;
-function renderAll(force) { review.update(); seedsCache.e = -1; lastL = renderTiles(); renderSheet(force); }
+function renderAll(force) { review.update(); seedsCache.e = -1; lastL = renderTiles(); drawSleepBand(); renderSheet(force); }
 function frame(now) {
   const dt = Math.min(0.25, (now - lastFrame) / 1000); lastFrame = now;
   const backlog = queue.length / (FS * playRate);
@@ -2242,7 +2959,7 @@ function frame(now) {
   while (carry >= 1 && queue.length) { const [v, b, m] = queue.shift(); writeRing(v, b, m); carry -= 1; }
   if (!queue.length) carry = Math.min(carry, 1);
   if (source && source.kind !== 'file' && performance.now() - lastDataAt > 4000) { $('dot').className = 'dot stale'; $('connText').textContent = 'No data from the ' + (source.kind === 'demo' ? 'demo' : 'patch'); }
-  drawBloom(dt); drawAmpWave(); drawCycle(lastL); moveSpark();
+  drawBloom(dt); drawAmpWave(); drawCycle(lastL); drawPosGlyph(dt); moveSpark();
   drawDim();
   if (now - lastSlow > 1000 && !bulk) {
     lastSlow = now; renderAll(false);
@@ -2278,11 +2995,13 @@ async function idbDeleteSession(sid) {
   await idbReq('chunks', 'readwrite', st => { for (const c of ch) st.delete([sid, c.idx]); });
 }
 const stored = () => sessionMeta && (sessionMeta.kind === 'ble' || sessionMeta.kind === 'usb');
+function persistMeta() { if (stored()) idbPut('sessions', sessionMeta).catch(() => {}); }
 let storageOk = true, saving = false;
 
 function startSession(kind, device, fw) {
   recording = true; recStart = sessionWall;
-  sessionMeta = { id: 'bp-' + Date.now(), start: sessionWall, kind, device, fw: fw || '', status: 'running', saved: 0, chunks: 0, lastWall: Date.now(), gaps: [], details: {} };
+  sessionMeta = { id: 'bp-' + Date.now(), start: sessionWall, kind, device, fw: fw || '', status: 'running', saved: 0, chunks: 0, lastWall: Date.now(), gaps: [], details: {}, study: study.state, gSaved: 0 };
+  study.gaps = sessionMeta.gaps;
   if (stored()) idbPut('sessions', sessionMeta).catch(() => { storageOk = false; log('This browser will not keep the session if the page closes (storage is blocked). Keep the page open.'); });
   keepAwake(true); sessionUi(); armDim();
 }
@@ -2294,8 +3013,10 @@ async function saveProgress() {
   try {
     const v = new Float32Array(to - from), f = new Uint8Array(to - from);
     for (let i = from; i < to; i++) { v[i - from] = analytics.val(i); f[i - from] = analytics.flags(i); }
-    await idbPut('chunks', { sid: sessionMeta.id, idx: sessionMeta.chunks, from, v, f });
-    sessionMeta.chunks++; sessionMeta.saved = to; sessionMeta.lastWall = lastSampleWall || Date.now();
+    const gFrom = sessionMeta.gSaved || 0, gTo = study.gn, chunk = { sid: sessionMeta.id, idx: sessionMeta.chunks, from, v, f };
+    if (gTo > gFrom) { chunk.g = study.gravSeconds(gFrom, gTo); chunk.gFrom = gFrom; }
+    await idbPut('chunks', chunk);
+    sessionMeta.chunks++; sessionMeta.saved = to; sessionMeta.gSaved = Math.max(gFrom, gTo); sessionMeta.lastWall = lastSampleWall || Date.now();
     await idbPut('sessions', sessionMeta);
   } catch (_) { storageOk = false; }
   finally { saving = false; }
@@ -2338,7 +3059,8 @@ function drawDim() {
   const v = analytics.n ? Math.max(-1, Math.min(1, nowSignal() / scale)) : 0;
   $('dimOrb').style.transform = 'scale(' + (0.92 + 0.08 * v).toFixed(3) + ')';
   $('dimRr').textContent = $('rr').textContent;
-  $('dimT').textContent = 'Recording ' + clock(analytics.t);
+  const pr = study.live().pressure;
+  $('dimT').textContent = 'Recording ' + clock(analytics.t) + (pr ? ', ' + pr : '');
 }
 
 // Unfinished sessions: offer to continue, finish or discard when the app opens.
@@ -2355,6 +3077,9 @@ async function loadSession(meta, onDone) {
   stopSource();
   resetSession(meta.start);
   sessionMeta = meta;
+  meta.gaps = meta.gaps || [];
+  study.load(meta.study || null); meta.study = study.state; study.gaps = meta.gaps;
+  for (const c of chunks) if (c.g && c.g.length) study.setGravSeconds(c.gFrom || 0, c.g);
   let ci = 0, off = 0;
   ingest(total, () => {
     while (ci < chunks.length && off >= chunks[ci].v.length) { ci++; off = 0; }
@@ -2388,14 +3113,17 @@ async function startOrStop() {
 let wakeLock = null;
 async function keepAwake(on) { try { if (on && navigator.wakeLock && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen'); else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; } } catch (_) { wakeLock = null; } }
 document.addEventListener('visibilitychange', () => { if (recording && document.visibilityState === 'visible') keepAwake(true); });
-// report.js : the clinician PDF report for a BreathPatch session.
-// Runs inside the monitor page (uses analytics, review, items(), sessionMeta and sessionWall from it) and builds
+// report.js : the clinician PDF report for a BreathPatch session, made for use next to CPAP in a sleep study.
+// Part 1 is breathing: the five respiratory parameters, hour by hour trends and the night chart.
+// Part 2 is sleep: estimated sleep, effort events during sleep, body position, CPAP pressure steps and the study log.
+// Runs inside the monitor page (uses analytics, review, study, items(), sessionMeta and sessionWall from it) and builds
 // an A4 PDF with jsPDF, loaded on first use from jspdf.umd.min.js next to the page.
 
 const RP = {
   ink: [24, 24, 24], muted: [96, 96, 96], faint: [150, 150, 150], line: [222, 222, 222], soft: [246, 246, 246],
-  green: [18, 160, 92], cyan: [11, 143, 191], red: [214, 51, 59], amber: [222, 146, 22]
+  green: [18, 160, 92], cyan: [11, 143, 191], red: [214, 51, 59], amber: [222, 146, 22], violet: [139, 92, 214]
 };
+const RPOS = { supine: [18, 160, 92], left: [11, 143, 191], right: [96, 112, 230], prone: [222, 146, 22], upright: [150, 150, 150], side: [11, 143, 191] };
 const rgb = a => 'rgb(' + a.join(',') + ')';
 // standard PDF fonts only cover basic Latin, so typographic characters are swapped for plain ones
 const T = s => String(s ?? '').replace(/[–—]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"')
@@ -2424,7 +3152,7 @@ function reportTimeline(W, H, gaps) {
   const ctx = cv.getContext('2d'), k = W / 1000;
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
   const T0 = Math.max(analytics.t, 60), padL = 120 * k, padR = 14 * k, pw = W - padL - padR, x = t => padL + t / T0 * pw;
-  const lanes = [['Signal quality', 16], ['Rate (br/min)', 120], ['Amplitude', 80], ['Irregular', 22], ['Pauses', 22]];
+  const lanes = [['Signal quality', 16], ['Rate (br/min)', 120], ['Amplitude', 80], ['Irregular', 22], ['Events', 22]];
   const L = {}; let y = 10 * k;
   ctx.font = (13 * k) + 'px Helvetica, Arial, sans-serif'; ctx.textBaseline = 'middle';
   for (const [name, hh] of lanes) { L[name] = { y, h: hh * k }; ctx.fillStyle = rgb(RP.muted); ctx.textAlign = 'left'; ctx.fillText(name, 4 * k, y + hh * k / 2); y += (hh + 16) * k; }
@@ -2447,10 +3175,47 @@ function reportTimeline(W, H, gaps) {
   grid(L.Amplitude, 0, 1.6, [0, 0.5, 1, 1.5], v => Math.round(v * 100) + '%');
   line(L.Amplitude, review.trend().map(p => ({ t: (p.t0 + p.t1) / 2, v: p.amp })), 0, 1.6, rgb(RP.cyan));
   for (const s of review.segments) { ctx.fillStyle = rgb(RP.cyan); ctx.fillRect(x(s.t0), L.Irregular.y, Math.max(2 * k, x(s.t1) - x(s.t0)), L.Irregular.h); }
-  for (const [ev, info] of review.pauseInfo) { ctx.fillStyle = info.confidence === 'confirmed' ? rgb(RP.red) : rgb(RP.amber); ctx.beginPath(); ctx.arc(x(ev.start + ev.dur / 2), L.Pauses.y + L.Pauses.h / 2, 5 * k, 0, 2 * Math.PI); ctx.fill(); }
+  for (const ev of analytics.events) if (ev.type === 'reduced') { ctx.fillStyle = rgb(RP.violet); ctx.fillRect(x(ev.start), L.Events.y + 5 * k, Math.max(2 * k, x(ev.start + ev.dur) - x(ev.start)), L.Events.h - 10 * k); }
+  for (const [ev, info] of review.pauseInfo) { ctx.fillStyle = info.confidence === 'confirmed' ? rgb(RP.red) : rgb(RP.amber); ctx.beginPath(); ctx.arc(x(ev.start + ev.dur / 2), L.Events.y + L.Events.h / 2, 5 * k, 0, 2 * Math.PI); ctx.fill(); }
   ctx.fillStyle = rgb(RP.muted); ctx.font = (12 * k) + 'px Helvetica, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   const step = T0 > 6 * 3600 ? 3600 : T0 > 2 * 3600 ? 1800 : T0 > 3600 ? 900 : T0 > 1200 ? 300 : 60;
   for (let t = 0; t <= T0 + 1; t += step) ctx.fillText(hhmm(t), Math.min(W - padR - 18 * k, Math.max(padL + 18 * k, x(t))), y - 6 * k);
+  return cv.toDataURL('image/png');
+}
+// sleep and wake, position, events and CPAP pressure across the night, on white
+function reportStudyChart(W, H) {
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d'), k = W / 1000;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  const T0 = Math.max(analytics.t, 60), padL = 120 * k, padR = 14 * k, pw = W - padL - padR, x = t => padL + t / T0 * pw;
+  const lanes = [['Sleep (est.)', 26], ['Position', 26], ['Events', 26], ['Pressure', 30]];
+  const L = {}; let y = 10 * k;
+  ctx.font = (13 * k) + 'px Helvetica, Arial, sans-serif'; ctx.textBaseline = 'middle';
+  for (const [name, hh] of lanes) { L[name] = { y, h: hh * k }; ctx.fillStyle = rgb(RP.muted); ctx.textAlign = 'left'; ctx.fillText(name, 4 * k, y + hh * k / 2); y += (hh + 14) * k; }
+  const rep = study.sleep(), Ls = L['Sleep (est.)'];
+  ctx.fillStyle = '#e4e4e4'; ctx.fillRect(x(0), Ls.y, x(analytics.t) - x(0), Ls.h);
+  if (rep && rep.ready && rep.epochs) { ctx.fillStyle = rgb(RP.green); for (let e = 0; e < rep.epochs.length; e++) if (rep.epochs[e].state !== 'wake') ctx.fillRect(x(e * 30), Ls.y, Math.max(1, x((e + 1) * 30) - x(e * 30) + 0.5), Ls.h); }
+  const Lp = L.Position;
+  if (study.hasTilt() && study.calibrated() !== 'none') {
+    const P = study.positions(), step = Math.max(1, Math.floor(analytics.t / (pw / 1.5)));
+    for (let s0 = 0; s0 < P.n; s0 += step) { const key = POS_KEYS[P.arr[s0]]; if (!RPOS[key]) continue; ctx.fillStyle = rgb(RPOS[key]); ctx.fillRect(x(s0), Lp.y, Math.max(1, x(s0 + step) - x(s0) + 0.5), Lp.h); }
+  } else { ctx.fillStyle = rgb(RP.faint); ctx.textAlign = 'left'; ctx.fillText(study.hasTilt() ? 'Not calibrated' : 'No tilt data', padL + 4 * k, Lp.y + Lp.h / 2); }
+  const Le = L.Events;
+  for (const ev of analytics.events) if (ev.type === 'reduced') { ctx.fillStyle = rgb(RP.violet); ctx.fillRect(x(ev.start), Le.y + 5 * k, Math.max(2 * k, x(ev.start + ev.dur) - x(ev.start)), Le.h - 10 * k); }
+  for (const [ev, info] of review.pauseInfo) { ctx.fillStyle = info.confidence === 'confirmed' ? rgb(RP.red) : rgb(RP.amber); ctx.beginPath(); ctx.arc(x(ev.start + ev.dur / 2), Le.y + Le.h / 2, 5 * k, 0, 2 * Math.PI); ctx.fill(); }
+  const Lq = L.Pressure, M = study.state.markers, PR = M.filter(m => m.kind === 'pressure');
+  ctx.font = (12 * k) + 'px Helvetica, Arial, sans-serif'; ctx.textAlign = 'left';
+  PR.forEach((m, i) => {
+    const x0 = x(m.t), x1 = x(i + 1 < PR.length ? PR[i + 1].t : analytics.t);
+    ctx.fillStyle = i % 2 ? 'rgba(11,143,191,.30)' : 'rgba(11,143,191,.16)'; ctx.fillRect(x0, Lq.y, Math.max(1, x1 - x0 - 1), Lq.h);
+    const lab = pressureLabel(m); if (x1 - x0 > ctx.measureText(lab).width + 8 * k) { ctx.fillStyle = rgb(RP.ink); ctx.fillText(lab, x0 + 4 * k, Lq.y + Lq.h / 2); }
+  });
+  if (!PR.length) { ctx.fillStyle = rgb(RP.faint); ctx.fillText('No pressure entered in the study log', padL + 4 * k, Lq.y + Lq.h / 2); }
+  ctx.fillStyle = rgb(RP.ink);
+  for (const m of M) if (m.kind === 'lightsOff' || m.kind === 'lightsOn') { ctx.fillRect(x(m.t) - 1.5 * k, 4 * k, 3 * k, y - 14 * k); ctx.font = (11 * k) + 'px Helvetica, Arial, sans-serif'; }
+  ctx.fillStyle = rgb(RP.muted); ctx.font = (12 * k) + 'px Helvetica, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const step = T0 > 6 * 3600 ? 3600 : T0 > 2 * 3600 ? 1800 : T0 > 3600 ? 900 : T0 > 1200 ? 300 : 60;
+  for (let t = 0; t <= T0 + 1; t += step) ctx.fillText(hhmm(t), Math.min(W - padR - 18 * k, Math.max(padL + 18 * k, x(t))), y - 4 * k);
   return cv.toDataURL('image/png');
 }
 function reportSnap(item, W, H) {
@@ -2463,7 +3228,7 @@ function reportSnap(item, W, H) {
   const padT = 10 * k, rib = 10 * k, padB = 34 * k, ph = H - padT - padB - rib - 8 * k, x = t => 6 * k + (t - t0) / Math.max(1e-9, t1 - t0) * (W - 12 * k);
   let peak = 1; for (let i = i0; i <= i1; i++) peak = Math.max(peak, Math.abs(analytics.val(i)));
   const y = v => padT + ph / 2 - v / (peak * 1.15) * ph / 2;
-  ctx.fillStyle = item.kind === 'pause' ? 'rgba(214,51,59,.12)' : item.kind === 'irregular' ? 'rgba(11,143,191,.12)' : 'rgba(222,146,22,.12)';
+  ctx.fillStyle = item.kind === 'pause' ? 'rgba(214,51,59,.12)' : item.kind === 'irregular' ? 'rgba(11,143,191,.12)' : item.kind === 'reduced' ? 'rgba(139,92,214,.12)' : 'rgba(222,146,22,.12)';
   ctx.fillRect(x(item.t0), padT, x(item.t1) - x(item.t0), ph);
   ctx.strokeStyle = rgb(RP.line); ctx.lineWidth = 1 * k; ctx.beginPath(); ctx.moveTo(x(t0), y(0)); ctx.lineTo(x(t1), y(0)); ctx.stroke();
   ctx.fillStyle = 'rgba(0,0,0,.06)';
@@ -2489,6 +3254,8 @@ async function makeReportPdf(details = {}) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
   const W = 210, H = 297, M = 16, CW = W - 2 * M;
   const S = review.summary(), meta = sessionMeta || { start: sessionWall, kind: source ? source.kind : 'file', device: '', fw: '', gaps: [] };
+  const Y = study.summary(S), SL = Y.sleep, EV = Y.events, PB = Y.periodic, PO = Y.position, WIN = Y.window;
+  const TITLE = 'Breathing and sleep report';
   const gaps = meta.gaps || [], noData = gaps.reduce((a, g) => a + g.dur, 0);
   const startMs = sessionWall, endMs = sessionWall + analytics.t * 1000;
   const id = 'BP-' + localStamp(startMs).replace(/-/g, '').slice(2, 12);
@@ -2498,8 +3265,24 @@ async function makeReportPdf(details = {}) {
   const font = (size, style = 'normal', c = RP.ink) => { doc.setFont('helvetica', style); doc.setFontSize(size); color(c); };
   const text = (s, x, yy, o) => doc.text(T(s), x, yy, o);
   const ensure = need => { if (y + need > H - 22) { doc.addPage(); y = M + 4; smallHeader(); } };
-  function smallHeader() { font(9, 'bold', RP.green); text('BreathPatch', M, y); font(9, 'normal', RP.muted); text('Breathing effort report' + (name ? '  |  ' + name : ''), M + 22, y); color(RP.line, 'draw'); doc.setLineWidth(0.2); doc.line(M, y + 2.5, W - M, y + 2.5); y += 9; }
-  function heading(s) { ensure(14); font(12.5, 'bold', RP.ink); text(s, M, y); y += 2.5; color(RP.green, 'draw'); doc.setLineWidth(0.6); doc.line(M, y, M + 14, y); y += 6; }
+  function smallHeader() { font(9, 'bold', RP.green); text('BreathPatch', M, y); font(9, 'normal', RP.muted); text(TITLE + (name ? '  |  ' + name : ''), M + 22, y); color(RP.line, 'draw'); doc.setLineWidth(0.2); doc.line(M, y + 2.5, W - M, y + 2.5); y += 9; }
+  function heading(s, need = 14) { ensure(need); font(12.5, 'bold', RP.ink); text(s, M, y); y += 2.5; color(RP.green, 'draw'); doc.setLineWidth(0.6); doc.line(M, y, M + 14, y); y += 6; }
+  // the two parts of the report: breathing first, then sleep
+  function part(n, s) { ensure(40); color(RP.green, 'fill'); doc.rect(M, y - 5, CW, 8, 'F'); font(10, 'bold', [255, 255, 255]); text('PART ' + n + '   ' + s.toUpperCase(), M + 3, y + 0.4); y += 10; }
+  // a plain table: cols = [[title, width]], rows of strings; the first column bold
+  function table(cols, rows, opt = {}) {
+    const headRow = () => { color(RP.soft, 'fill'); doc.rect(M, y - 4, CW, 6.5, 'F'); font(8.5, 'bold', RP.muted); let xx = M + 2; for (const [h, w] of cols) { text(h, xx, y); xx += w; } y += 5.2; };
+    ensure(14); headRow();
+    for (const r of rows) {
+      font(9, 'normal'); const cells = r.map((c, i) => doc.splitTextToSize(T(c), cols[i][1] - 2.5)), hgt = Math.max(...cells.map(c => c.length)) * 4.1 + 2.4;
+      if (y + hgt > H - 22) { doc.addPage(); y = M + 4; smallHeader(); headRow(); }
+      let xx = M + 2;
+      cells.forEach((c, i) => { font(9.2, i === 0 || (opt.bold && opt.bold.includes(i)) ? 'bold' : 'normal', opt.green && opt.green.includes(i) ? RP.green : RP.ink); doc.text(c, xx, y); xx += cols[i][1]; });
+      y += hgt; color(RP.line, 'draw'); doc.setLineWidth(0.15); doc.line(M, y - 2.6, W - M, y - 2.6);
+    }
+    y += 3;
+  }
+  function para(s, size = 8.5, c = RP.muted) { font(size, 'normal', c); const l = doc.splitTextToSize(T(s), CW); ensure(l.length * 3.9 + 2); doc.text(l, M, y); y += l.length * 3.9 + 2; }
 
   // ---- header with the logo
   color(RP.green, 'draw'); doc.setLineWidth(0.5); doc.circle(M + 5, y + 4, 5, 'S');
@@ -2509,26 +3292,31 @@ async function makeReportPdf(details = {}) {
   for (let i = 1; i < wave.length; i++) doc.line(M + wave[i - 1][0] / 4, y - 1 + wave[i - 1][1] / 4, M + wave[i][0] / 4, y - 1 + wave[i][1] / 4);
   font(17, 'bold'); text('BreathPatch', M + 13, y + 3.5);
   font(8.5, 'normal', RP.muted); text('by Brainiac Healthcare', M + 13, y + 8);
-  font(13, 'bold'); text('Breathing effort report', W - M, y + 3, { align: 'right' });
+  font(13, 'bold'); text(TITLE, W - M, y + 3, { align: 'right' });
   font(8.5, 'normal', RP.muted); text('Report ' + id + '   |   Generated ' + dateLong(Date.now()) + ', ' + timeShort(Date.now()), W - M, y + 8, { align: 'right' });
-  y += 14; color(RP.line, 'draw'); doc.setLineWidth(0.3); doc.line(M, y, W - M, y); y += 7;
+  y += 14; color(RP.line, 'draw'); doc.setLineWidth(0.3); doc.line(M, y, W - M, y); y += 6;
+  color([255, 244, 225], 'fill'); doc.rect(M, y - 4, CW, 6.6, 'F'); font(8.6, 'bold', [150, 92, 8]);
+  text('Research use only. Breathing effort and position from a chest sensor, used alongside CPAP. Not validated for diagnosis.', M + 2.5, y + 0.2); y += 8;
 
   // ---- patient and session
   const kv = (rows, x0, colW) => { let yy = y; for (const [k, v] of rows) { font(8.5, 'normal', RP.muted); text(k, x0, yy); font(10, 'bold'); const lines = doc.splitTextToSize(T(v || '--'), colW - 32); doc.text(lines, x0 + 32, yy); yy += 5.6 * Math.max(1, lines.length); } return yy; };
   const leftEnd = kv([['Name or ID', name || 'Not given'], ['Age', details.age], ['Referred by', details.ref], ['Recorded at', details.place]], M, CW / 2);
   const rightEnd = kv([['Started', dateLong(startMs) + ', ' + timeShort(startMs)], ['Ended', dateLong(endMs) + ', ' + timeShort(endMs)], ['Duration', durText(analytics.t)],
     ['Usable signal', S.epochs ? Math.round(100 * (S.share.good + S.share.uncertain)) + ' % of the session' : '--'], ['Without data', noData > 0 ? durText(noData) + ' in ' + gaps.length + ' gap' + (gaps.length === 1 ? '' : 's') : 'None'],
-    ['Device', (meta.device || (meta.kind === 'demo' ? 'Demo, simulated data' : meta.kind === 'file' ? 'Recording file' : '--')) + (meta.fw ? ', firmware ' + meta.fw : '')]], M + CW / 2 + 2, CW / 2);
+    ['Device', (meta.device || (meta.kind === 'demo' ? 'Demo, simulated data' : meta.kind === 'file' ? 'Recording file' : '--')) + (meta.fw ? ', firmware ' + meta.fw : '')],
+    ['Lights off / on', (WIN.off ? hhmm(WIN.t0) : 'Not logged') + ' / ' + (WIN.on ? hhmm(WIN.t1) : 'Not logged')],
+    ['Position', !study.hasTilt() ? 'No tilt data' : { none: 'Not calibrated', back: 'Back only calibrated', full: 'Calibrated' }[study.calibrated()]]], M + CW / 2 + 2, CW / 2);
   y = Math.max(leftEnd, rightEnd) + 1;
   if ((details.notes || '').trim()) { font(8.5, 'normal', RP.muted); text('Notes', M, y); font(9.5, 'normal'); const l = doc.splitTextToSize(T(details.notes.trim()), CW - 32); doc.text(l, M + 32, y); y += 5 * l.length + 1; }
   if (meta.kind === 'demo' || meta.kind === 'file') { font(9, 'bold', RP.amber); text(meta.kind === 'demo' ? 'This report was made from simulated demo data.' : 'This report was made from a recording file.', M, y); y += 6; }
   y += 3;
 
-  // ---- results table
-  heading('Results');
+  // ================================================================ PART 1: breathing
+  part(1, 'Respiratory parameters and trends');
+  heading('Respiratory parameters');
   const P = S.pauses, I = S.irregular, tm = S.timing;
   const rows = [
-    ['Respiratory rate', fin(S.rr.mean) ? S.rr.mean.toFixed(1) + ' breaths/min' : '--', fin(S.rr.mean) ? 'Range ' + Math.round(S.rr.min) + ' to ' + Math.round(S.rr.max) + ' br/min across 30 s stretches. Measured in ' + Math.round(100 * (S.share.good + S.share.uncertain)) + ' % of the session.' : 'Not enough usable signal.'],
+    ['Respiratory rate', fin(S.rr.mean) ? S.rr.mean.toFixed(1) + ' breaths/min' : '--', fin(S.rr.mean) ? 'Range ' + Math.round(S.rr.min) + ' to ' + Math.round(S.rr.max) + ' br/min across 30 s stretches. Measured in ' + Math.round(100 * (S.share.good + S.share.uncertain)) + ' % of the session.' + (fin(SL.rrAsleep) ? ' Median ' + SL.rrAsleep.toFixed(1) + ' asleep' + (fin(SL.rrAwake) ? ', ' + SL.rrAwake.toFixed(1) + ' awake' : '') + '.' : '') : 'Not enough usable signal.'],
     ['Amplitude and variability', fin(S.amp.relMedian) ? Math.round(100 * S.amp.relMedian) + ' % of usual breath' : '--', 'Breath-to-breath amplitude variability ' + (fin(S.amp.cvMedian) ? Math.round(100 * S.amp.cvMedian) + ' %' : '--') + ' (median of 2 min windows). Weakest 10 % of breaths at ' + (fin(S.amp.relP10) ? Math.round(100 * S.amp.relP10) + ' %' : '--') + ' of usual.'],
     ['Timing', fin(tm.ibiMean) ? tm.ibiMean.toFixed(2) + ' s between breaths' : '--', 'Interval variability ' + (fin(tm.ibiCv) ? Math.round(100 * tm.ibiCv) + ' %' : '--') + ', RMSSD ' + (fin(tm.rmssd) ? tm.rmssd.toFixed(2) + ' s' : '--') + '. Breath in ' + (fin(tm.ti) ? tm.ti.toFixed(2) + ' s' : '--') + ', breath out ' + (fin(tm.te) ? tm.te.toFixed(2) + ' s' : '--') + ', from the ' + (fin(tm.usableShare) ? Math.round(100 * tm.usableShare) + ' %' : '--') + ' of breaths clean enough to time.'],
     ['Pauses', P.confirmed + ' confirmed' + (P.uncertain ? ', ' + P.uncertain + ' uncertain' : ''), (S.usableHours >= 0.25 && fin(P.perHour) ? P.perHour.toFixed(1) + ' confirmed per hour of usable signal. ' : '') + (fin(P.longest) ? 'Longest ' + Math.round(P.longest) + ' s. ' : '') + 'A pause is 10 s or more beyond one typical breath.'],
@@ -2547,14 +3335,33 @@ async function makeReportPdf(details = {}) {
   }
   y += 4;
 
-  // ---- session overview chart
-  heading('Session overview');
+  // ---- hour by hour
+  heading('Trends, ' + (analytics.t > 2 * 3600 ? 'hour by hour' : 'every 15 minutes'), 30);
+  {
+    const blk = analytics.t > 2 * 3600 ? 3600 : 900, rows2 = [], rep = study.sleep();
+    for (let t0 = 0; t0 < analytics.t - blk / 4; t0 += blk) {
+      const t1 = Math.min(analytics.t, t0 + blk), E = review.epochs.filter(e => e.t0 >= t0 && e.t0 < t1), U = E.filter(e => e.label === 'good' || e.label === 'uncertain');
+      const rr = median(U.map(e => e.rr).filter(fin)), amps = review.breathsIn(t0, t1).filter(r => !r.pause && fin(r.rel) && (review.epochAt(r.t) || {}).label === 'good').map(r => r.rel);
+      const acv = median(U.map(e => e.win && e.win.ampCv).filter(fin)), icv = median(U.map(e => e.win && e.win.ibiCv).filter(fin));
+      const np = [...review.pauseInfo.entries()].filter(([ev, i]) => i.confidence === 'confirmed' && ev.start >= t0 && ev.start < t1).length;
+      const nr = analytics.events.filter(ev => ev.type === 'reduced' && ev.start >= t0 && ev.start < t1 && !['noisy', 'movement'].includes((review.epochAt(ev.start) || {}).label)).length;
+      let sl = 0, ne = 0; if (rep && rep.ready && rep.epochs) for (let e = Math.floor(t0 / 30); e < Math.floor(t1 / 30) && e < rep.epochs.length; e++) { ne++; if (rep.epochs[e].state !== 'wake') sl++; }
+      const pr = study.pressureAt((t0 + t1) / 2), irr = U.length ? U.filter(e => e.irregular).length / U.length : NaN;
+      rows2.push([hhmm(t0) + '-' + hhmm(t1), fin(rr) ? rr.toFixed(1) : '--', amps.length ? Math.round(100 * median(amps)) + ' %' : '--', fin(acv) ? Math.round(100 * acv) + ' %' : '--', fin(icv) ? Math.round(100 * icv) + ' %' : '--',
+                  np + ' / ' + nr, fin(irr) ? Math.round(100 * irr) + ' %' : '--', ne ? Math.round(100 * sl / ne) + ' %' : '--', E.length ? Math.round(100 * U.length / E.length) + ' %' : '--', pr ? pressureLabel(pr) : '--']);
+    }
+    table([['Time', 24], ['Rate', 12], ['Ampl.', 14], ['Ampl. var.', 17], ['Int. var.', 16], ['Pauses/reduced', 27], ['Irregular', 17], ['Asleep', 15], ['Usable', 15], ['Pressure', CW - 157]], rows2);
+    para('Rate in breaths per minute and amplitude relative to the usual breath, from usable signal only. Ampl. var. and Int. var. are the amplitude and breath interval variability, median of 2 minute windows. Pauses and reduced effort are counted whether asleep or not here; Part 2 counts them during sleep only.');
+  }
+
+  // ---- night chart of the breathing
+  heading('Respiratory trends across the night', 20);
   const chartH = CW * 0.37;
   ensure(chartH + 12);
   doc.addImage(reportTimeline(2000, 740, gaps), 'PNG', M, y, CW, chartH, undefined, 'FAST');
   y += chartH + 3;
   font(8, 'normal', RP.muted);
-  const legend = [[RP.green, 'Good signal, rate'], [RP.amber, 'Uncertain signal, uncertain pause'], [[154, 154, 154], 'Noisy'], [[207, 207, 207], 'Movement'], [RP.cyan, 'Irregular, amplitude'], [RP.red, 'Confirmed pause']];
+  const legend = [[RP.green, 'Good signal, rate'], [RP.amber, 'Uncertain signal, uncertain pause'], [[154, 154, 154], 'Noisy'], [[207, 207, 207], 'Movement'], [RP.cyan, 'Irregular, amplitude'], [RP.red, 'Confirmed pause'], [RP.violet, 'Reduced effort']];
   let lx = M;
   for (const [c3, label] of legend) { color(c3, 'fill'); doc.rect(lx, y - 2.3, 3, 2.6, 'F'); color(RP.muted); text(label, lx + 4, y); lx += 5 + doc.getTextWidth(T(label)) + 4; if (lx > W - M - 30) { lx = M; y += 4.5; } }
   y += 5;
@@ -2562,32 +3369,73 @@ async function makeReportPdf(details = {}) {
   text('Signal quality across the session: good ' + Math.round(100 * (S.share.good || 0)) + ' %, uncertain ' + Math.round(100 * (S.share.uncertain || 0)) + ' %, noisy ' + Math.round(100 * (S.share.noisy || 0)) + ' %, movement or no data ' + Math.round(100 * (S.share.movement || 0)) + ' %. Shaded areas are time without data.', M, y, { maxWidth: CW });
   y += 9;
 
-  // ---- events for review
-  const evs = items().slice().reverse();
-  heading('Events for review');
-  if (!evs.length) { font(10, 'normal', RP.muted); text('No pauses, irregular periods or stretches of unclear signal were found.', M, y); y += 8; }
+
+  // ================================================================ PART 2: sleep
+  part(2, 'Sleep, events and position');
+  heading('Sleep, estimated');
+  if (!SL.ready) para(SL.need ? 'Too short for a sleep estimate. It needs at least ' + Math.round(SL.need / 60) + ' minutes of recording.' : 'No sleep was detected between lights off and lights on.', 9.5, RP.ink);
+  table([['Measure', 62], ['Value', 34], ['Note', CW - 96]], [
+    ['Time in bed', durText(SL.tib), WIN.off ? 'Lights off ' + hhmm(WIN.t0) + (WIN.on ? ' to lights on ' + hhmm(WIN.t1) : ' to the end of the recording') : 'No lights off in the log, so the whole recording is used'],
+    ['Estimated sleep time', SL.ready ? durText(SL.tst) : '--', 'From movement and breathing, not EEG. No sleep stages'],
+    ['Sleep efficiency', SL.ready ? pct(SL.se) : '--', 'Estimated sleep as a share of time in bed with data'],
+    ['Sleep onset', SL.ready && fin(SL.sol) ? durText(SL.sol) : '--', 'From lights off to the first sustained sleep'],
+    ['Wake after sleep onset', SL.ready ? durText(SL.waso) : '--', SL.ready ? SL.awakenings + ' awakening' + (SL.awakenings === 1 ? '' : 's') + ' of 1 min or more' : ''],
+    ['Movements while asleep', SL.ready && fin(SL.movesPerH) ? SL.movesPerH.toFixed(1) + ' per hour' : '--', 'Movement episodes seen by the sensor'],
+    ['Time without data', SL.noData > 0 ? durText(SL.noData) : 'None', 'Left out of sleep efficiency']
+  ], { green: [1] });
+
+  heading('Breathing events during sleep');
+  const hasS = SL.ready && SL.tst >= 600, ix = v => (hasS && fin(v) ? v.toFixed(1) + ' per hour' : '--');
+  table([['Event', 62], ['Count', 22], ['Rate', 30], ['Note', CW - 114]], [
+    ['Pauses (effort absent)', String(EV.pauses), ix(EV.pauseIdx), 'No breathing effort for 10 s or more. Suggests a central apnoea'],
+    ['Reduced effort', String(EV.reduced), ix(EV.reducedIdx), 'Effort down by 30 % or more for 10 s or more. Suggests a central hypopnoea'],
+    ['All effort events', String(EV.total), ix(EV.idx), 'Per hour of estimated sleep'],
+    ['Uncertain pauses', String(EV.uncertainPauses), '', 'Not counted above. Listed under events for review'],
+    ['Longest pause', fin(EV.longestPause) ? Math.round(EV.longestPause) + ' s' : '--', '', ''],
+    ['Periodic breathing', hasS ? durText(PB.sleepS) : '--', hasS && fin(PB.pct) ? pct(PB.pct) + ' of sleep' : '', fin(PB.cycle) ? 'Waxing and waning, cycle about ' + Math.round(PB.cycle) + ' s' : 'Waxing and waning of breathing effort'],
+    ['Cheyne-Stokes-like', hasS ? durText(PB.csrS) : '--', hasS && fin(PB.csrPct) ? pct(PB.csrPct) + ' of sleep' : '', 'Periodic breathing with cycles of 40 s or longer and 3 or more effort events']
+  ], { green: [1, 2] });
+  para('Obstructive events are not counted here. During an obstructive apnoea the chest keeps moving, often harder. Read obstructive events from the CPAP flow signal and compare their times with this report.');
+
+  heading('Body position');
+  if (!PO) para(!study.hasTilt() ? 'No tilt data in this recording. Body position needs patch firmware 1.7 or later.' : 'Position was not calibrated, so it is not reported. Calibrate with the patient on the back (and sitting up to tell left from right).', 9.5, RP.ink);
   else {
-    const cols = [22, 44, 22, CW - 88];
-    const headRow = () => { color(RP.soft, 'fill'); doc.rect(M, y - 4, CW, 6.5, 'F'); font(8.5, 'bold', RP.muted); let xx = M + 2; for (const [i, h] of ['Time', 'Event', 'Duration', 'Detail'].entries()) { text(h, xx, y); xx += cols[i]; } y += 5; };
-    headRow();
-    for (const e of evs) {
-      const detail = e.kind === 'pause' && e.conf === 'confirmed' ? 'Flat signal, clean breathing either side' : e.sub || '';
-      font(9, 'normal'); const dl = doc.splitTextToSize(T(detail.charAt(0).toUpperCase() + detail.slice(1)), cols[3] - 3), hgt = dl.length * 4.2 + 2.6;
-      if (y + hgt > H - 22) { doc.addPage(); y = M + 4; smallHeader(); headRow(); }
-      const col = e.kind === 'pause' ? (e.conf === 'confirmed' ? RP.red : RP.amber) : e.kind === 'irregular' ? RP.cyan : RP.amber;
-      color(col, 'fill'); doc.circle(M + 1, y - 1, 0.9, 'F');
-      font(9.5, 'bold'); text(hhmmss(e.t0), M + 3, y);
-      font(9.5, 'normal'); text(e.title, M + 2 + cols[0], y); text(durText(e.t1 - e.t0), M + 2 + cols[0] + cols[1], y);
-      font(9, 'normal', RP.muted); doc.text(dl, M + 2 + cols[0] + cols[1] + cols[2], y);
-      y += hgt;
-    }
-    y += 3;
+    const keys = POS_KEYS.filter(kk => kk !== 'unknown' && PO.by[kk].all > 0), tot = keys.reduce((a2, kk) => a2 + PO.by[kk].all, 0) || 1;
+    table([['Position', 40], ['Time', 30], ['Share', 20], ['Asleep', 30], ['Events', 20], ['Events per hour of sleep', CW - 140]],
+      keys.map(kk => [POS_NAME[kk], durText(PO.by[kk].all), pct(PO.by[kk].all / tot), durText(PO.by[kk].sleep), String(PO.by[kk].events), fin(PO.by[kk].idx) ? PO.by[kk].idx.toFixed(1) : 'under 10 min asleep']));
+    para('On the back for ' + pct(PO.supinePct) + ' of estimated sleep. Events per hour on the back ' + (fin(PO.supineIdx) ? PO.supineIdx.toFixed(1) : '--') + ', not on the back ' + (fin(PO.nonSupineIdx) ? PO.nonSupineIdx.toFixed(1) : '--') + '. ' + PO.changes + ' position changes.' + (PO.mode === 'back' ? ' Only the back position was calibrated, so left and right are not told apart.' : ''));
   }
 
+  heading('CPAP pressure steps');
+  if (!Y.steps.length) para('No pressure changes were entered in the study log.', 9.5, RP.ink);
+  else {
+    table([['Pressure', 26], ['From', 16], ['To', 16], ['Asleep', 24], ['Pauses', 16], ['Reduced', 17], ['Per hour', 18], ['On back', 18], ['Rate', CW - 151]],
+      Y.steps.map(st => [st.label, hhmm(st.t0), hhmm(st.t1), durText(st.sleepS), String(st.pauses), String(st.reduced), fin(st.idx) ? st.idx.toFixed(1) : '--', pct(st.supinePct), fin(st.rr) ? st.rr.toFixed(1) : '--']), { green: [6] });
+    para('Pressure in cmH2O as entered by the technologist. Per hour: pauses and reduced effort per hour of estimated sleep at that pressure (shown with 5 min of sleep or more). Rate: median breaths per minute asleep.');
+  }
+
+  heading('Night overview', 20);
+  {
+    const h2 = CW * 0.24; ensure(h2 + 12);
+    doc.addImage(reportStudyChart(2000, 480), 'PNG', M, y, CW, h2, undefined, 'FAST'); y += h2 + 3;
+    font(8, 'normal', RP.muted); let lx2 = M;
+    const lg2 = [[RP.green, 'Asleep (est.), on the back'], [RPOS.left, 'Left side'], [RPOS.right, 'Right side'], [RPOS.prone, 'Front'], [RPOS.upright, 'Upright'], [RP.red, 'Pause'], [RP.violet, 'Reduced effort'], [RP.ink, 'Lights off and on']];
+    for (const [c3, label] of lg2) { color(c3, 'fill'); doc.rect(lx2, y - 2.3, 3, 2.6, 'F'); color(RP.muted); text(label, lx2 + 4, y); lx2 += 5 + doc.getTextWidth(T(label)) + 4; if (lx2 > W - M - 30) { lx2 = M; y += 4.5; } }
+    y += 7;
+  }
+
+  if (Y.markers.length) {
+    heading('Study log');
+    const lab = m2 => m2.kind === 'lightsOff' ? 'Lights off' : m2.kind === 'lightsOn' ? 'Lights on' : m2.kind === 'pressure' ? 'Pressure ' + pressureLabel(m2) + ' cmH2O' : 'Note';
+    table([['Time', 24], ['Entry', 52], ['Note', CW - 76]], Y.markers.map(m2 => [hhmmss(m2.t), lab(m2), m2.kind === 'note' ? m2.text || '' : '']));
+  }
+
+  const evs = items().slice().reverse();
   // ---- example waveforms
   const pauses = evs.filter(e => e.kind === 'pause');
   const picks = [...pauses.filter(e => e.conf === 'confirmed').sort((a, b) => (b.t1 - b.t0) - (a.t1 - a.t0)).slice(0, 3),
                  ...pauses.filter(e => e.conf !== 'confirmed').slice(0, 1),
+                 ...evs.filter(e => e.kind === 'reduced').sort((a, b) => (b.t1 - b.t0) - (a.t1 - a.t0)).slice(0, 1),
                  ...evs.filter(e => e.kind === 'irregular').sort((a, b) => (b.t1 - b.t0) - (a.t1 - a.t0)).slice(0, 2)].sort((a, b) => a.t0 - b.t0);
   if (picks.length) {
     heading('Example waveforms');
@@ -2610,15 +3458,41 @@ async function makeReportPdf(details = {}) {
     'Every 30 s of the session is graded for signal quality. Rate, amplitude, timing and pattern are calculated only from usable stretches, and the share of usable time is stated with each result.',
     'Amplitude is relative to this person\'s usual breath during the session (100 %), so it shows change, not absolute depth.',
     'Breath-in and breath-out times come only from breaths clean enough to time, and depend on sensor position.',
-    'A pause is a gap between breaths at least 10 s longer than one typical breath. Confirmed: flat signal with clean breathing either side. Uncertain: the reason is listed, for example movement just before or a weak signal.',
+    'A pause is a gap between breaths at least 10 s longer than one typical breath. Confirmed: flat signal with clean breathing either side. Uncertain: the reason is listed, for example movement just before or a weak signal. Reduced effort is a run of breaths at 70 % or less of the breaths before it, lasting 10 s or more.',
     'Irregular pattern compares timing, amplitude and waveform shape with this person\'s own calm breathing in the same session. It is assessed only on good signal.',
-    'Limits: a single chest sensor cannot see airway obstruction directly, because the chest may keep moving during an obstructive event. This is not a sleep study and not a diagnosis. Results are for review by a qualified clinician alongside other findings.'
+    'Sleep is estimated from movement and how settled the breathing is, between lights off and lights on from the study log. It has no sleep stages and will miss quiet wakefulness. Events in Part 2 are counted only during estimated sleep.',
+    'Body position comes from the tilt of the patch after a calibration with the patient on the back and sitting up. CPAP pressures and lights off and on are as entered by the technologist.',
+    'With CPAP: flow stopped while effort continues points to an obstructive event; flow and effort both stopped points to a central event. Compare event times with the CPAP flow and the full study record.',
+    'Limits: a single chest sensor measures effort, not airflow, oxygen saturation or brain activity, and cannot see airway obstruction directly. These results have not been validated against polysomnography. Research use only, for review by a qualified clinician alongside other findings. Not a diagnosis.'
   ];
   for (const n of notes) { font(9, 'normal', RP.ink); const l = doc.splitTextToSize(T(n), CW - 5); ensure(l.length * 4.3 + 2); color(RP.green, 'fill'); doc.circle(M + 1, y - 1.1, 0.7, 'F'); font(9, 'normal', RP.ink); doc.text(l, M + 4, y); y += l.length * 4.3 + 1.6; }
   y += 6; ensure(22);
   color(RP.line, 'draw'); doc.setLineWidth(0.3);
   const sw = (CW - 8) / 3;
   for (const [i, lab] of ['Reviewed by', 'Signature', 'Date'].entries()) { const x0 = M + i * (sw + 4); doc.line(x0, y + 10, x0 + sw, y + 10); font(8.5, 'normal', RP.muted); text(lab, x0, y + 14.5); }
+
+  // ---- events for review
+  doc.addPage(); y = M + 4; smallHeader();
+  heading('Appendix: events for review');
+  para('Every pause, reduced effort, irregular period and stretch of unclear signal in the recording, asleep or awake, in time order.');
+  if (!evs.length) { font(10, 'normal', RP.muted); text('No pauses, reduced effort, irregular periods or stretches of unclear signal were found.', M, y); y += 8; }
+  else {
+    const cols = [22, 44, 22, CW - 88];
+    const headRow = () => { color(RP.soft, 'fill'); doc.rect(M, y - 4, CW, 6.5, 'F'); font(8.5, 'bold', RP.muted); let xx = M + 2; for (const [i, h] of ['Time', 'Event', 'Duration', 'Detail'].entries()) { text(h, xx, y); xx += cols[i]; } y += 5; };
+    headRow();
+    for (const e of evs) {
+      const detail = e.kind === 'pause' && e.conf === 'confirmed' ? 'Flat signal, clean breathing either side' : e.sub || '';
+      font(9, 'normal'); const dl = doc.splitTextToSize(T(detail.charAt(0).toUpperCase() + detail.slice(1)), cols[3] - 3), hgt = dl.length * 4.2 + 2.6;
+      if (y + hgt > H - 22) { doc.addPage(); y = M + 4; smallHeader(); headRow(); }
+      const col = e.kind === 'pause' ? (e.conf === 'confirmed' ? RP.red : RP.amber) : e.kind === 'irregular' ? RP.cyan : e.kind === 'reduced' ? RP.violet : RP.amber;
+      color(col, 'fill'); doc.circle(M + 1, y - 1, 0.9, 'F');
+      font(9.5, 'bold'); text(hhmmss(e.t0), M + 3, y);
+      font(9.5, 'normal'); text(e.title, M + 2 + cols[0], y); text(durText(e.t1 - e.t0), M + 2 + cols[0] + cols[1], y);
+      font(9, 'normal', RP.muted); doc.text(dl, M + 2 + cols[0] + cols[1] + cols[2], y);
+      y += hgt;
+    }
+    y += 3;
+  }
 
   // ---- footer on every page
   const pages = doc.getNumberOfPages();
@@ -2627,7 +3501,7 @@ async function makeReportPdf(details = {}) {
     color(RP.line, 'draw'); doc.setLineWidth(0.2); doc.line(M, H - 14, W - M, H - 14);
     font(7.5, 'normal', RP.faint);
     text('BreathPatch by Brainiac Healthcare  |  ' + (name || 'No name given') + '  |  ' + dateLong(startMs) + '  |  Report ' + id, M, H - 10);
-    text('For clinician review. Not a diagnosis.', M, H - 6.5);
+    text('Research use only. For clinician review. Not a diagnosis.', M, H - 6.5);
     text('Page ' + i + ' of ' + pages, W - M, H - 10, { align: 'right' });
   }
   const fname = 'BreathPatch-report-' + (name ? name.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' : '') + localStamp(startMs).slice(0, 16) + '.pdf';
@@ -2648,6 +3522,20 @@ function saveWaveform() {
 }
 function needData() { if (!review.epochs.length) { log('Nothing to save yet. The first values appear after 30 seconds of data.'); return true; } return false; }
 const EXPORTS = {
+  xStudy() {
+    if (needData()) return;
+    const Y = study.summary(), rows = [];
+    const asleep = t => Y.events.list.some(e => Math.abs(e.t - t) < 0.01);
+    for (const [ev, info] of review.pauseInfo) { const p = study.pressureAt(ev.start); rows.push([new Date(sessionWall + ev.start * 1000).toISOString(), c(ev.start, 1), 'pause_' + info.confidence, c(ev.dur, 1), study.posAt(ev.start), p ? pressureLabel(p) : '', asleep(ev.start) ? 1 : 0]); }
+    for (const ev of analytics.events) if (ev.type === 'reduced') { const p = study.pressureAt(ev.start); rows.push([new Date(sessionWall + ev.start * 1000).toISOString(), c(ev.start, 1), 'reduced_effort', c(ev.dur, 1), study.posAt(ev.start), p ? pressureLabel(p) : '', asleep(ev.start) ? 1 : 0]); }
+    rows.sort((a, b) => +a[1] - +b[1]);
+    save('breathpatch-study-events-' + stamp() + '.csv', 'time_iso,t_s,event,duration_s,position,pressure_cmH2O,scored_in_sleep', rows);
+  },
+  xLog() {
+    if (needData()) return;
+    const rows = study.state.markers.map(m => [new Date(sessionWall + m.t * 1000).toISOString(), c(m.t, 1), m.kind, m.kind === 'pressure' ? pressureLabel(m) : '', m.kind === 'note' ? '"' + String(m.text || '').replace(/"/g, '""') + '"' : '']);
+    save('breathpatch-study-log-' + stamp() + '.csv', 'time_iso,t_s,entry,pressure_cmH2O,note', rows);
+  },
   xRate() {
     if (needData()) return;
     const rows = [];
@@ -2696,6 +3584,8 @@ $('btnUsb').addEventListener('click', closeMenu(connectUsb));
 $('btnDemo').addEventListener('click', closeMenu(startDemo));
 $('btnNight').addEventListener('click', closeMenu(simulateNight));
 $('btnSession').addEventListener('click', closeMenu(() => openSheet('session')));
+$('btnLog').addEventListener('click', closeMenu(() => openSheet('log')));
+$('logChip').addEventListener('click', () => openSheet('log'));
 $('speed').addEventListener('change', () => { if (source && source.kind === 'demo') playRate = +$('speed').value; });
 $('fileIn').addEventListener('change', e => { menu.hidden = true; const file = e.target.files[0]; if (file) openRecording(file); e.target.value = ''; });
 $('btnStop').addEventListener('click', closeMenu(() => { stopSource(); log('Disconnected.'); }));
@@ -2735,7 +3625,7 @@ requestAnimationFrame(frame);
   else if (navigator.bluetooth) log('Tap Start to connect the patch. Recording runs until you tap Stop.');
 })();
 window.BreathPatch = { parseSummary, parseWave, parseLine, analytics, review, items, select, openSheet, closeSheet, seeds: () => seedsCache.list,
-  session: () => sessionMeta, makeReportPdf: (d) => makeReportPdf(d), idbAllSessions };   // exposed for testing
+  session: () => sessionMeta, makeReportPdf: (d) => makeReportPdf(d), idbAllSessions, study };   // exposed for testing
 </script>
 </body>
 </html>
