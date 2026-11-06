@@ -130,6 +130,8 @@ header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tF .val { left: 50%; top: 55%; transform: translate(-50%, -50%); font-size: max(16px, 34cqmin); text-align: center; }
 .tF .lbl { left: 50%; transform: translateX(-50%); }
 .spiral { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; }
+/* the spiral still sets the proportions, but the line itself is not drawn (display stays on: fitGolden reads it) */
+.spiral { visibility: hidden; }
 /* study log chip: replaces the seed hint in the bloom while a session runs */
 .logChip { position: absolute; right: 4cqmin; bottom: 2.4cqmin; z-index: 4; display: none; padding: 6px 13px; font-size: max(12px, 2.2cqmin); font-weight: 600; border-color: #3a3a3a; background: rgba(38, 38, 38, .9); }
 .logChip.on { display: inline-flex; align-items: center; gap: 6px; }
